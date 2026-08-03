@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSignIn, useSignUp } from "@clerk/nextjs";
 import type { OAuthStrategy } from "@clerk/shared/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Mail } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+
 import { Header } from "@/components/header";
 import { useI18n } from "@/components/i18n-provider";
 import {
@@ -83,6 +84,7 @@ function DecorativeCard({
       )}
     >
       <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+
       <div className="relative h-full w-full">
         <Image
           src={image}
@@ -92,6 +94,7 @@ function DecorativeCard({
           sizes="360px"
         />
       </div>
+
       <div className="absolute inset-x-6 bottom-6 z-20">
         <h3 className="mb-1 text-2xl font-semibold text-white">{title}</h3>
         <p className="text-base text-white/70">{description}</p>
@@ -103,9 +106,8 @@ function DecorativeCard({
 function createEmailSchema(t: (key: string) => string) {
   return z.object({
     email: z
-      .string()
+      .email(t("auth.emailInvalid"))
       .min(1, t("auth.emailRequired"))
-      .email(t("auth.emailInvalid")),
   });
 }
 
@@ -138,11 +140,13 @@ function AuthForm({
 }) {
   const { t } = useI18n();
   const router = useRouter();
+
   const { signIn, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, fetchStatus: signUpFetchStatus } = useSignUp();
 
   const [verifying, setVerifying] = useState(false);
-  const [oauthLoading, setOauthLoading] = useState<OAuthStrategy | null>(null);
+  const [oauthLoading, setOauthLoading] =
+    useState<OAuthStrategy | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
   const emailSchema = useMemo(() => createEmailSchema(t), [t]);
@@ -150,17 +154,24 @@ function AuthForm({
 
   const emailForm = useForm<EmailValues>({
     resolver: zodResolver(emailSchema),
-    defaultValues: { email },
-    values: { email },
+    defaultValues: {
+      email,
+    },
+    values: {
+      email,
+    },
   });
 
   const codeForm = useForm<CodeValues>({
     resolver: zodResolver(codeSchema),
-    defaultValues: { code: "" },
+    defaultValues: {
+      code: "",
+    },
   });
 
   useEffect(() => {
     if (!switchHint) return;
+
     setFormError(switchHint);
     onClearSwitchHint();
   }, [switchHint, onClearSwitchHint]);
@@ -190,6 +201,7 @@ function AuthForm({
     } else {
       await signUp.reset();
     }
+
     setVerifying(false);
     setFormError(null);
     codeForm.reset();
@@ -209,13 +221,20 @@ function AuthForm({
           onSwitchMode("sign-up", t("auth.accountNotFound"));
           return;
         }
-        setFormError(createError.longMessage || createError.message);
+
+        setFormError(
+          createError.longMessage || createError.message,
+        );
         return;
       }
 
-      const { error: sendError } = await signIn.emailCode.sendCode();
+      const { error: sendError } =
+        await signIn.emailCode.sendCode();
+
       if (sendError) {
-        setFormError(sendError.longMessage || sendError.message);
+        setFormError(
+          sendError.longMessage || sendError.message,
+        );
         return;
       }
 
@@ -235,13 +254,20 @@ function AuthForm({
         onSwitchMode("sign-in", t("auth.accountExists"));
         return;
       }
-      setFormError(createError.longMessage || createError.message);
+
+      setFormError(
+        createError.longMessage || createError.message,
+      );
       return;
     }
 
-    const { error: sendError } = await signUp.verifications.sendEmailCode();
+    const { error: sendError } =
+      await signUp.verifications.sendEmailCode();
+
     if (sendError) {
-      setFormError(sendError.longMessage || sendError.message);
+      setFormError(
+        sendError.longMessage || sendError.message,
+      );
       return;
     }
 
@@ -252,10 +278,15 @@ function AuthForm({
     setFormError(null);
 
     if (mode === "sign-in") {
-      const { error } = await signIn.emailCode.verifyCode({ code: values.code });
+      const { error } =
+        await signIn.emailCode.verifyCode({
+          code: values.code,
+        });
 
       if (error) {
-        setFormError(error.longMessage || error.message);
+        setFormError(
+          error.longMessage || error.message,
+        );
         return;
       }
 
@@ -265,9 +296,11 @@ function AuthForm({
       }
 
       if (signIn.status === "needs_client_trust") {
-        const emailCodeFactor = signIn.supportedSecondFactors?.find(
-          (factor) => factor.strategy === "email_code",
-        );
+        const emailCodeFactor =
+          signIn.supportedSecondFactors?.find(
+            (factor) => factor.strategy === "email_code",
+          );
+
         if (emailCodeFactor) {
           await signIn.mfa.sendEmailCode();
           setFormError(t("auth.codeSentAgain"));
@@ -279,12 +312,15 @@ function AuthForm({
       return;
     }
 
-    const { error } = await signUp.verifications.verifyEmailCode({
-      code: values.code,
-    });
+    const { error } =
+      await signUp.verifications.verifyEmailCode({
+        code: values.code,
+      });
 
     if (error) {
-      setFormError(error.longMessage || error.message);
+      setFormError(
+        error.longMessage || error.message,
+      );
       return;
     }
 
@@ -301,25 +337,29 @@ function AuthForm({
     setFormError(t("auth.genericError"));
   };
 
-  const continueWithOAuth = async (strategy: OAuthStrategy) => {
+  const continueWithOAuth = async (
+    strategy: OAuthStrategy,
+  ) => {
     setFormError(null);
     setOauthLoading(strategy);
 
     const { error } =
       mode === "sign-in"
         ? await signIn.sso({
-            strategy,
-            redirectUrl: "/",
-            redirectCallbackUrl: "/sso-callback",
-          })
+          strategy,
+          redirectUrl: "/",
+          redirectCallbackUrl: "/sso-callback",
+        })
         : await signUp.sso({
-            strategy,
-            redirectUrl: "/",
-            redirectCallbackUrl: "/sso-callback",
-          });
+          strategy,
+          redirectUrl: "/",
+          redirectCallbackUrl: "/sso-callback",
+        });
 
     if (error) {
-      setFormError(error.longMessage || error.message);
+      setFormError(
+        error.longMessage || error.message,
+      );
       setOauthLoading(null);
     }
   };
@@ -329,6 +369,7 @@ function AuthForm({
       await signIn.emailCode.sendCode();
       return;
     }
+
     await signUp.verifications.sendEmailCode();
   };
 
@@ -344,7 +385,10 @@ function AuthForm({
             <p className="text-sm text-[#6b6570] dark:text-[#888888]">
               {t("auth.codeSubtitle")}
             </p>
-            <p className="text-sm text-[#131313] dark:text-white">{email}</p>
+
+            <p className="text-sm text-[#131313] dark:text-white">
+              {email}
+            </p>
           </div>
 
           <FormField
@@ -355,6 +399,7 @@ function AuthForm({
                 <FormLabel className="px-1 font-mono text-xs font-medium uppercase tracking-[0.05em] text-[#6b6570] dark:text-[#888888]">
                   {t("auth.code")}
                 </FormLabel>
+
                 <FormControl>
                   <Input
                     inputMode="numeric"
@@ -364,13 +409,16 @@ function AuthForm({
                     {...field}
                   />
                 </FormControl>
+
                 <FormMessage className="px-1 text-xs" />
               </FormItem>
             )}
           />
 
           {formError ? (
-            <p className="px-1 text-xs text-destructive">{formError}</p>
+            <p className="px-1 text-xs text-destructive">
+              {formError}
+            </p>
           ) : null}
 
           <button
@@ -394,6 +442,7 @@ function AuthForm({
             >
               {t("auth.resendCode")}
             </button>
+
             <button
               type="button"
               className="hover:text-[#131313] dark:hover:text-white"
@@ -426,11 +475,13 @@ function AuthForm({
                 <FormLabel className="px-1 font-mono text-xs font-medium uppercase tracking-[0.05em] text-[#6b6570] dark:text-[#888888]">
                   {t("auth.email")}
                 </FormLabel>
+
                 <div className="auth-input-glow flex h-10 items-center rounded-lg border border-black/10 bg-white/80 px-3 transition-all duration-300 has-[[aria-invalid=true]]:border-destructive dark:border-[#262626] dark:bg-[#1b1b1b]/50">
                   <Mail
                     className="mr-2.5 size-4 shrink-0 text-[#6b6570] dark:text-[#888888]"
                     strokeWidth={1.5}
                   />
+
                   <FormControl>
                     <Input
                       type="email"
@@ -445,13 +496,16 @@ function AuthForm({
                     />
                   </FormControl>
                 </div>
+
                 <FormMessage className="px-1 text-xs" />
               </FormItem>
             )}
           />
 
           {formError ? (
-            <p className="px-1 text-xs text-destructive">{formError}</p>
+            <p className="px-1 text-xs text-destructive">
+              {formError}
+            </p>
           ) : null}
 
           <button
@@ -474,9 +528,11 @@ function AuthForm({
 
       <div className="relative flex items-center py-2">
         <div className="flex-grow border-t border-black/10 dark:border-[#262626]" />
+
         <span className="mx-4 shrink-0 font-mono text-xs uppercase tracking-[0.05em] text-[#6b6570] dark:text-[#888888]">
           {t("auth.orContinue")}
         </span>
+
         <div className="flex-grow border-t border-black/10 dark:border-[#262626]" />
       </div>
 
@@ -484,7 +540,9 @@ function AuthForm({
         <button
           type="button"
           disabled={isBusy}
-          onClick={() => void continueWithOAuth("oauth_google")}
+          onClick={() =>
+            void continueWithOAuth("oauth_google")
+          }
           className="flex h-10 items-center justify-center rounded-lg border border-black/10 bg-white/60 text-sm text-[#131313] transition-colors duration-300 hover:bg-white disabled:opacity-70 dark:border-[#262626] dark:bg-transparent dark:text-[#e2e2e2] dark:hover:bg-[#1f1f1f]"
         >
           {oauthLoading === "oauth_google" ? (
@@ -496,10 +554,13 @@ function AuthForm({
             </>
           )}
         </button>
+
         <button
           type="button"
           disabled={isBusy}
-          onClick={() => void continueWithOAuth("oauth_apple")}
+          onClick={() =>
+            void continueWithOAuth("oauth_apple")
+          }
           className="flex h-10 items-center justify-center rounded-lg border border-black/10 bg-white/60 text-sm text-[#131313] transition-colors duration-300 hover:bg-white disabled:opacity-70 dark:border-[#262626] dark:bg-transparent dark:text-[#e2e2e2] dark:hover:bg-[#1f1f1f]"
         >
           {oauthLoading === "oauth_apple" ? (
@@ -518,14 +579,33 @@ function AuthForm({
 
 export function AuthPage() {
   const { t, language } = useI18n();
-  const [mode, setMode] = useState<AuthMode>("sign-in");
+  const searchParams = useSearchParams();
+
+  /*
+   * If the URL is:
+   *
+   * /sign-in?create-account=true
+   *
+   * start on the Create Account tab.
+   *
+   * Otherwise default to Sign In.
+   */
+  const [mode, setMode] = useState<AuthMode>(() =>
+    searchParams.get("create-account") === "true"
+      ? "sign-up"
+      : "sign-in",
+  );
+
   const [email, setEmail] = useState("");
   const [switchHint, setSwitchHint] = useState<string | null>(null);
 
-  const handleSwitchMode = useCallback((nextMode: AuthMode, hint?: string) => {
-    setSwitchHint(hint ?? null);
-    setMode(nextMode);
-  }, []);
+  const handleSwitchMode = useCallback(
+    (nextMode: AuthMode, hint?: string) => {
+      setSwitchHint(hint ?? null);
+      setMode(nextMode);
+    },
+    [],
+  );
 
   const clearSwitchHint = useCallback(() => {
     setSwitchHint(null);
@@ -541,6 +621,7 @@ export function AuthPage() {
             <h1 className="text-4xl font-bold tracking-tighter text-[#131313] md:text-5xl md:leading-[56px] dark:text-white">
               {t("auth.screenTitle")}
             </h1>
+
             <p className="text-base leading-6 text-[#6b6570] dark:text-[#888888]">
               {mode === "sign-in"
                 ? t("auth.signInSubtitle")
@@ -552,7 +633,10 @@ export function AuthPage() {
             <Tabs
               value={mode}
               onValueChange={(value) => {
-                if (value === "sign-in" || value === "sign-up") {
+                if (
+                  value === "sign-in" ||
+                  value === "sign-up"
+                ) {
                   setSwitchHint(null);
                   setMode(value);
                 }
@@ -566,6 +650,7 @@ export function AuthPage() {
                 >
                   {t("auth.tabSignIn")}
                 </TabsTrigger>
+
                 <TabsTrigger
                   value="sign-up"
                   className="rounded-sm! text-xs uppercase tracking-[0.08em] text-[#6b6570] hover:text-gray-400! data-active:bg-[#131313] data-active:text-white data-active:hover:text-gray-300! dark:text-[#888888] dark:hover:text-gray-400! dark:data-active:bg-white dark:data-active:text-[#0e0e0e] dark:data-active:hover:text-gray-400!"
@@ -595,6 +680,7 @@ export function AuthPage() {
         description={t("auth.card1Description")}
         rotate="left"
       />
+
       <DecorativeCard
         image="/images/headphones.png"
         title={t("auth.card2Title")}
@@ -605,6 +691,3 @@ export function AuthPage() {
     </div>
   );
 }
-
-/** @deprecated Use AuthPage */
-export const SignInPage = AuthPage;

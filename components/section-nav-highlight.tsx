@@ -57,8 +57,6 @@ export function SectionNavHighlight() {
 
       const id = sectionIdFromHref(link.getAttribute("href"));
       if (!id || !HIGHLIGHT_IDS.has(id)) return;
-
-      // Let the browser update the hash, then highlight after scroll starts
       window.requestAnimationFrame(() => {
         highlightSection(id);
       });

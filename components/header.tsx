@@ -103,7 +103,7 @@ export const Header = ({ className }: { className?: string }) => {
               item={t("nav.getStarted")}
             >
               <div className="flex flex-col space-y-4 text-sm">
-                <HoveredLink href="/sign-in?create-account=true">{t("cta.button")}</HoveredLink>
+                <HoveredLink href="/sign-up">{t("cta.button")}</HoveredLink>
                 <HoveredLink href="/sign-in">{t("nav.signIn")}</HoveredLink>
               </div>
             </MenuItem>

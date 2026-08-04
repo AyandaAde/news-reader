@@ -23,7 +23,7 @@ export function CtaSection() {
             </p>
           </div>
           <Link
-            href="/sign-in"
+            href="/sign-up"
             className="inline-flex h-auto shrink-0 items-center justify-center rounded-lg bg-background px-5 py-2 text-sm font-bold text-primary transition-colors hover:bg-[#1a1a1c]"
           >
             {t("cta.button")}

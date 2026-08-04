@@ -577,24 +577,20 @@ function AuthForm({
   );
 }
 
-export function AuthPage() {
+export function AuthPage({
+  initialMode = "sign-in",
+}: {
+  initialMode?: AuthMode;
+}) {
   const { t, language } = useI18n();
   const searchParams = useSearchParams();
 
-  /*
-   * If the URL is:
-   *
-   * /sign-in?create-account=true
-   *
-   * start on the Create Account tab.
-   *
-   * Otherwise default to Sign In.
-   */
-  const [mode, setMode] = useState<AuthMode>(() =>
-    searchParams.get("create-account") === "true"
-      ? "sign-up"
-      : "sign-in",
-  );
+  const [mode, setMode] = useState<AuthMode>(() => {
+    if (searchParams.get("create-account") === "true") {
+      return "sign-up";
+    }
+    return initialMode;
+  });
 
   const [email, setEmail] = useState("");
   const [switchHint, setSwitchHint] = useState<string | null>(null);

@@ -22,7 +22,7 @@ export function EiloLogo({
         )}
       />
       <Image
-        src="/images/logo-dark-2.png"
+        src="/images/logo-dark.png"
         alt="Eilo"
         width={120}
         height={40}

@@ -1,184 +1,392 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import {
-  CirclePlus,
-  Headphones,
-  Mail,
-  Mic,
-  Play,
-  Plus,
-} from "lucide-react";
+  ExpandableCards,
+  type ExpandableCardItem,
+} from "@/components/platform/expandable-cards";
+import { PlatformScrollSectionHeader } from "@/components/platform/platform-scroll-section-header";
+import { useHorizontalScroll } from "@/components/platform/use-horizontal-scroll";
+import { usePlatformPlayback } from "@/components/platform/platform-playback-provider";
 import { cn } from "@/lib/utils";
+import { TOPIC_OPTIONS } from "@/lib/onboarding";
 
-const filters = ["For You", "Discover", "Trending"] as const;
-
-const feed = [
+const forYouItems = [
   {
-    title: "Your Previous Briefings",
-    meta: "1 episode • Updated yesterday",
-    description: "FWD:Re: UGC - Recap of your most important messages...",
-    time: "10:45 AM",
-    icon: Mail,
-    accent: "#00E5FF",
+    title: "Echoes of Tomorrow",
+    description: "Futuristic soundscapes and ambient textures.",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAogK2hZgKLLZlRizvLE-Rk5uKBjXBcmhkmQ8nkPT8niwK-4jf8Ld1TdxvuLymnV4Ihi2ZZUyChPFHoGqBZHYlYX4fuXo8DLaE_0EbHYMCo-na2UKLratjAx95zlSDc4IwV4rJMJ2df9Q6d7Ws-0WzsWfYSB_Ts1dLbfnZPg1Rd2tzPNl6AuXHSGqwUNXSa4j4RvQ22feFu1GiIV1-u5661WYN2Q_KDwA9Qd2NQBsfubbWfc28Am5Kw",
   },
   {
-    title: "Stock Market Updates",
-    meta: "Business • 1 episode",
-    description:
-      "The latest on stock market tickers and global financial trends.",
-    time: "LIVE",
-    icon: Mic,
-    accent: "#EAB308",
-  },
-  {
-    title: "Ambient Focus Loop",
-    meta: "Relaxation • Daily Refresh",
-    description:
-      "Curated soundscape for deep concentration and creative work.",
-    time: "45m",
-    icon: Headphones,
-    accent: "#EC4899",
+    title: "Midnight Pulse",
+    description: "Deep bass and rhythmic patterns for focus.",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuCidp2f8SewIj2wChLAH9YpBkbgrbMX5_JLX20wxIwC8PtZ5iG4AEexWEwznGt_cS_ztnyBeQ-dhZtRxCj25uskeQLCC1XXkcWAuCmCRYC70BA5l60ksNrSZ0E4zyBwj6HtXeDVZvspL2XZZO-58Tq2Y9qgFuXT9TRLsi1OnPh3Ktv1K8Z459lgP6_SZ4GYQ-TBqorVuxF3uCFr3xgMGND9OGAjd8c8RxXK8ObhbskcMd_WIBHvuoh7",
   },
 ] as const;
 
-function greetingForHour(hour: number) {
-  if (hour < 12) return "Good morning";
-  if (hour < 18) return "Good afternoon";
-  return "Good evening";
+const topBriefingsItems = [
+  {
+    title: "Morning Markets Wrap",
+    description: "Business • 8 mins • Today",
+    image:
+      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=400",
+  },
+  {
+    title: "Tech & AI Digest",
+    description: "Technology • 10 mins • Today",
+    image:
+      "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=400",
+  },
+  {
+    title: "World Headlines",
+    description: "World News • 6 mins • Yesterday",
+    image:
+      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=400",
+  },
+  {
+    title: "Climate & Energy",
+    description: "Climate • 7 mins • Yesterday",
+    image:
+      "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=400",
+  },
+  {
+    title: "Sports Roundup",
+    description: "Sports • 5 mins • 2 days ago",
+    image:
+      "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=400",
+  },
+  {
+    title: "Health & Wellness",
+    description: "Health • 9 mins • 2 days ago",
+    image:
+      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=400",
+  },
+  {
+    title: "Culture & Arts",
+    description: "Entertainment • 11 mins • 3 days ago",
+    image:
+      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=400",
+  },
+  {
+    title: "Policy & Politics",
+    description: "World News • 8 mins • 3 days ago",
+    image:
+      "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=400",
+  },
+] as const;
+
+const trendingItems = [
+  {
+    title: "The AI Pulse",
+    meta: "Trending in Tech • 5m ago",
+    image:
+      "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=400",
+  },
+  {
+    title: "Global Markets",
+    meta: "Business • 12m ago",
+    image: null,
+  },
+  {
+    title: "Cyber Security",
+    meta: "Tech • 1h ago",
+    image:
+      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=400",
+  },
+] as const;
+
+const madeForYouItems = [
+  {
+    tag: "AI",
+    episode: "EP 42",
+    title: "Neural Networks & The Creative Class",
+    meta: "12 mins • Just now",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuB1IEj9IZoAPbJe2obW53DgD_dCNh2x6NfUD8pxrSyboLrSWwbsi2WuoZNqKgTDPbQRf05xDUUI5ikWVy5U_AQxtE_Y7PYBKsmLkU1P_o7aKq5fC0Aqj72UJbOtGL8_xwaV6L8_ok1WtY_KX-SJaBb4iftkVjETFsXbykYcjw6sSeusnf1-1c_2v9FWc-cz_nm3fTFny2jQCSBYbnafLonfTRQP1Y9eNhbsu4Zrfk8qzLI9nOLJbTAS",
+  },
+  {
+    tag: "BUSINESS",
+    episode: "EP 128",
+    title: "The Decentralized Economy: 2024 Outlook",
+    meta: "24 mins • 2 hours ago",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuAMYazcSqDs6uLyQJ95RDBDX28UQ8HLnqNyGjZK0yU-azssgC3JJHLawktaCcJ_YZ2LLodTnDPKmdpkDHOX_UFZdNQ4Ee_8TGiy-xRoRE_pUO0dnprCZGgluydAwTOUMyVCpAdu_gj2ONAReUMsW7i6Uy5xYmrgXCpeZ73XI1Vuk-ibm4RSOby8EesjuFDbmDv_SHE3kyTYQVk8VJLZd7RtFeaAoiU89YnsWaFBlewfRkPTXBXdCxWy",
+  },
+  {
+    tag: "AUDIO",
+    episode: "EP 05",
+    title: "Designing Silence: A Studio Guide",
+    meta: "18 mins • Yesterday",
+    image:
+      "https://lh3.googleusercontent.com/aida-public/AB6AXuA1ZXXm7BYxcvHo3VLNOVW9TVGrWqv7EokIFMK4C2pAkr522u0vnbrTmVvZCy9M8yU-37iAydQtpKHHowTHQz-ieJXsWYWlTazXT9AdtNKLh4hV5VzvlQxq2KoCnv7M89ka1Sy_N5V56fRJJ98dv7MBp6oBnMBch13qOgQS9IWxXRrC9G4GrujOnJ3-y-2NcXKL8KRkTxuEHBgtTnk-4bdbCKBDEhQgPh0HR1CyIxcX6ofIUFMSN85b",
+  },
+] as const;
+
+const discoverFilters = ["All", "My Casts", ...TOPIC_OPTIONS] as const;
+
+const trendingPlaceholderImage =
+  "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=400";
+
+function MaterialIcon({
+  name,
+  filled,
+  className,
+}: {
+  name: string;
+  filled?: boolean;
+  className?: string;
+}) {
+  return (
+    <span
+      className={cn("material-symbols-outlined", className)}
+      style={
+        filled
+          ? { fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }
+          : undefined
+      }
+    >
+      {name}
+    </span>
+  );
+}
+
+function toTopBriefingsCards(
+  items: typeof topBriefingsItems,
+): ExpandableCardItem[] {
+  return items.map((item) => ({
+    id: item.title,
+    title: item.title,
+    description: item.description,
+    src: item.image,
+    ctaText: "Play",
+    content: (
+      <p>
+        {item.title} — {item.description}. A curated audio briefing pulled from
+        your top stories, ready to play in one tap.
+      </p>
+    ),
+  }));
+}
+
+function toForYouCards(
+  items: typeof forYouItems,
+): ExpandableCardItem[] {
+  return items.map((item) => ({
+    id: item.title,
+    title: item.title,
+    description: item.description,
+    src: item.image,
+    ctaText: "Play",
+    content: (
+      <p>
+        {item.description} Tap play to start listening to this curated briefing
+        — a calm two-voice conversation built around your interests and routine.
+      </p>
+    ),
+  }));
+}
+
+function toTrendingCards(
+  items: typeof trendingItems,
+): ExpandableCardItem[] {
+  return items.map((item) => ({
+    id: item.title,
+    title: item.title,
+    description: item.meta,
+    badge: "Trending",
+    src: item.image ?? trendingPlaceholderImage,
+    ctaText: "Play",
+    content: (
+      <p>
+        {item.title} — {item.meta}. This story is trending across the platform
+        right now. Tap play for a quick audio briefing on what happened and why
+        it matters.
+      </p>
+    ),
+  }));
+}
+
+function toDiscoverCards(
+  items: typeof madeForYouItems,
+): ExpandableCardItem[] {
+  return items.map((item) => ({
+    id: item.title,
+    title: item.title,
+    description: item.meta,
+    badge: `${item.tag} • ${item.episode}`,
+    src: item.image,
+    ctaText: "Play",
+    content: (
+      <p>
+        {item.title} — {item.meta}. This episode is part of your personalized
+        daily brief, shaped by the topics you follow and the stories that matter
+        most right now.
+      </p>
+    ),
+  }));
 }
 
 export function PlatformHomeScreen() {
-  const { user } = useUser();
-  const [filter, setFilter] = useState<(typeof filters)[number]>("For You");
+  const [discoverFilter, setDiscoverFilter] =
+    useState<(typeof discoverFilters)[number]>("All");
+  const { play } = usePlatformPlayback();
+  const topBriefingsScroll = useHorizontalScroll();
+  const trendingScroll = useHorizontalScroll();
 
-  const firstName =
-    user?.firstName || user?.fullName?.split(" ")[0] || "there";
+  const topBriefingsCards = useMemo(
+    () => toTopBriefingsCards(topBriefingsItems),
+    [],
+  );
+  const forYouCards = useMemo(() => toForYouCards(forYouItems), []);
+  const trendingCards = useMemo(() => toTrendingCards(trendingItems), []);
+  const discoverCards = useMemo(() => toDiscoverCards(madeForYouItems), []);
 
-  const { greeting, briefDate } = useMemo(() => {
-    const now = new Date();
-    return {
-      greeting: greetingForHour(now.getHours()),
-      briefDate: now.toLocaleDateString("en-US", {
+  const briefDate = useMemo(
+    () =>
+      new Date().toLocaleDateString("en-US", {
         weekday: "long",
         month: "short",
         day: "numeric",
       }),
-    };
-  }, []);
+    [],
+  );
 
   return (
-    <div>
-      <section className="mb-6">
-        <p className="text-base leading-6 text-[#c4c7c8] opacity-80">
-          {greeting}, {firstName}
-        </p>
-        <h2 className="mt-1 text-2xl font-semibold leading-8 text-white">
-          Welcome Home
+    <>
+      <section className="mb-10">
+        <h2 className="mb-2 text-2xl font-semibold leading-8 text-white">
+          Your Top Briefing
         </h2>
-      </section>
 
-      <section className="mb-12">
-        <div className="platform-glass group relative overflow-hidden rounded-xl p-6">
-          <div className="pointer-events-none absolute -right-20 -top-20 size-64 rounded-full bg-white/5 blur-[80px]" />
-          <div className="relative z-10">
-            <p className="mb-2 font-mono text-[12px] font-medium uppercase tracking-[0.05em] text-[#c4c7c8]">
-              Your daily brief
-            </p>
-            <h3 className="mb-2 text-4xl font-bold tracking-tight text-white">
-              {briefDate}
-            </h3>
-            <p className="mb-6 text-base leading-6 text-[#c4c7c8]">
-              25 stories curated for you
-            </p>
-            <div className="flex flex-wrap gap-4">
-              <button
-                type="button"
-                className="flex h-12 items-center gap-2 rounded-full bg-white px-8 font-bold text-[#131313] transition-all hover:shadow-lg hover:shadow-white/10 active:scale-95"
-              >
-                <Play className="size-5 fill-current" />
-                Play
-              </button>
-              <button
-                type="button"
-                className="flex h-12 items-center gap-2 rounded-full border border-[#262626] bg-transparent px-6 text-white transition-all hover:bg-white/5 active:scale-95"
-              >
-                <CirclePlus className="size-5" />
-                New Brief
-              </button>
+        <div className="mx-auto w-full rounded-xl border border-white/10 bg-gradient-to-br from-[#1a2b4a] to-[#0a1428] p-6 shadow-2xl">
+          <div className="flex flex-col items-center gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="flex w-full flex-grow flex-col items-start text-left">
+              <p className="mb-2 font-mono text-[12px] uppercase tracking-widest text-white/60">
+                Your Daily Brief
+              </p>
+              <h3 className="mb-1 text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl md:leading-[56px]">
+                {briefDate}
+              </h3>
+              <p className="mb-6 text-lg leading-7 text-white/80">
+                11 stories curated for you
+              </p>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() =>
+                    play({
+                      id: "daily-brief",
+                      title: briefDate,
+                      subtitle: "11 stories curated for you",
+                      image: forYouItems[0].image,
+                      elapsed: "0:00",
+                      duration: "12:00",
+                    })
+                  }
+                  className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-black transition-colors hover:bg-white/90"
+                >
+                  <MaterialIcon name="play_arrow" filled className="text-[20px]" />
+                  Play
+                </button>
+                <button
+                  type="button"
+                  className="flex items-center gap-2 rounded-full border border-white/30 px-6 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white/10"
+                >
+                  <MaterialIcon name="mic" className="text-[20px]" />
+                  New Brief
+                </button>
+              </div>
+            </div>
+
+            <div className="flex w-full flex-col items-end text-right md:w-auto">
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-semibold leading-8 text-white">
+                      70°F
+                    </span>
+                    <span className="font-mono text-[12px] tracking-[0.05em] text-white/80">
+                      Partly Cloudy
+                    </span>
+                  </div>
+                  <span className="font-mono text-[12px] tracking-[0.05em] text-white/60">
+                    Pittsburgh, Pennsylvania
+                  </span>
+                </div>
+                <MaterialIcon
+                  name="partly_cloudy_day"
+                  className="text-[32px] text-white"
+                />
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section className="mb-6 flex items-center justify-between gap-4 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div className="flex shrink-0 gap-2">
-          {filters.map((item) => (
+      <section className="mb-10">
+        <PlatformScrollSectionHeader
+          title="Your Top Briefings"
+          onPrevious={topBriefingsScroll.scrollPrevious}
+          onNext={topBriefingsScroll.scrollNext}
+        />
+        <ExpandableCards
+          cards={topBriefingsCards}
+          layout="scroll"
+          scrollRef={topBriefingsScroll.ref}
+        />
+      </section>
+
+      <section className="mb-10">
+        <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
+          For You
+        </h2>
+        <ExpandableCards cards={forYouCards} />
+      </section>
+
+      <section className="mb-10">
+        <PlatformScrollSectionHeader
+          title="Trending"
+          onPrevious={trendingScroll.scrollPrevious}
+          onNext={trendingScroll.scrollNext}
+        />
+        <ExpandableCards
+          cards={trendingCards}
+          layout="scroll"
+          scrollRef={trendingScroll.ref}
+        />
+      </section>
+
+      <section className="mb-10">
+        <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
+          Discover
+        </h2>
+        <div className="hide-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+          {discoverFilters.map((filter) => (
             <button
-              key={item}
+              key={filter}
               type="button"
-              onClick={() => setFilter(item)}
+              onClick={() => setDiscoverFilter(filter)}
               className={cn(
-                "rounded-full px-4 py-2 font-mono text-[12px] font-medium uppercase tracking-[0.05em] transition-colors active:scale-95",
-                filter === item
-                  ? "bg-white text-[#131313]"
-                  : "border border-[#262626] bg-[#1f1f1f] text-[#c4c7c8] hover:text-white",
+                "shrink-0 rounded-full px-6 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] transition-colors",
+                discoverFilter === filter
+                  ? "bg-white text-black"
+                  : "border border-[#262626] bg-[#1f1f1f] text-[#c4c7c8] hover:bg-white/10",
               )}
             >
-              {item}
+              {filter}
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          className="flex shrink-0 items-center gap-1 rounded-full bg-[#22C55E] px-4 py-2 font-mono text-[12px] font-medium uppercase tracking-[0.05em] text-white transition-all hover:brightness-110 active:scale-95"
-        >
-          <Plus className="size-[18px]" />
-          Create
-        </button>
       </section>
 
-      <section className="space-y-4">
-        {feed.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.title}
-              type="button"
-              className="platform-glass group flex w-full cursor-pointer items-start gap-4 rounded-xl p-4 text-left transition-transform hover:border-white/30 active:scale-[0.98]"
-            >
-              <div
-                className="flex size-16 shrink-0 items-center justify-center rounded-lg border"
-                style={{
-                  background: `linear-gradient(to bottom right, ${item.accent}33, ${item.accent}14)`,
-                  borderColor: `${item.accent}33`,
-                }}
-              >
-                <Icon className="size-8" style={{ color: item.accent }} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-start justify-between gap-3">
-                  <h4 className="text-lg font-bold leading-7 text-white">
-                    {item.title}
-                  </h4>
-                  <span className="shrink-0 text-[12px] text-[#c4c7c8] opacity-60">
-                    {item.time}
-                  </span>
-                </div>
-                <p className="mb-1 font-mono text-[12px] font-medium tracking-[0.05em] text-[#c4c7c8]">
-                  {item.meta}
-                </p>
-                <p className="line-clamp-1 text-base leading-6 text-[#c4c7c8] opacity-80">
-                  {item.description}
-                </p>
-              </div>
-            </button>
-          );
-        })}
+      <section className="mb-16">
+        <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
+          {discoverFilter}
+        </h2>
+        <ExpandableCards cards={discoverCards} />
       </section>
-
-      <div className="h-8" />
-    </div>
+    </>
   );
 }

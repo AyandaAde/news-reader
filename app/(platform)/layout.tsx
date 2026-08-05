@@ -1,6 +1,6 @@
-import { PlatformBottomNav } from "@/components/platform/platform-bottom-nav";
-import { PlatformHeader } from "@/components/platform/platform-header";
-import { PlatformMiniPlayer } from "@/components/platform/platform-mini-player";
+import { PlatformShell } from "@/components/platform/platform-shell";
+import { googleSans } from "@/lib/fonts/google-sans";
+import { cn } from "@/lib/utils";
 
 export default function PlatformLayout({
   children,
@@ -8,14 +8,14 @@ export default function PlatformLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-svh overflow-x-hidden bg-[#131313] text-white antialiased">
-      <div className="pointer-events-none fixed inset-0 z-0" />
-      <PlatformHeader />
-      <main className="relative z-10 mx-auto max-w-[1200px] px-4 pb-32 pt-24">
-        {children}
-      </main>
-      <PlatformMiniPlayer />
-      <PlatformBottomNav />
+    <div
+      className={cn(
+        "platform-shell min-h-svh overflow-x-hidden bg-black text-[#e2e2e2] antialiased",
+        googleSans.variable,
+        googleSans.className,
+      )}
+    >
+      <PlatformShell>{children}</PlatformShell>
     </div>
   );
 }

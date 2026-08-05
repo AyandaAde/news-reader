@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { EiloLogo } from "@/components/eilo-logo";
 import Link from "next/link";
 import { FooterLanguageSelect } from "@/components/footer-language-select";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -46,13 +46,7 @@ export function Footer() {
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-8">
             <div>
               <Link href="/" className="mb-5 inline-flex" aria-label="Eilo home">
-                <Image
-                  src="/images/logo-2.png"
-                  alt="Eilo"
-                  width={120}
-                  height={40}
-                  className="h-6 w-auto object-contain sm:h-7"
-                />
+                <EiloLogo />
               </Link>
               <p className="mb-8 max-w-xs text-sm leading-6 text-[#6b6570] dark:text-[#968da1]">
                 {t("footer.description")}

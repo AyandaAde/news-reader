@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Show, UserButton } from "@clerk/nextjs";
+import { EiloLogo } from "@/components/eilo-logo";
 import {
   Menu,
   MenuItem,
@@ -32,14 +32,7 @@ export const Header = ({ className }: { className?: string }) => {
           className="relative z-50 flex shrink-0 items-center"
           aria-label="Eilo home"
         >
-          <Image
-            src="/images/logo-2.png"
-            alt="Eilo"
-            width={120}
-            height={40}
-            className="h-6 w-auto object-contain sm:h-7"
-            priority
-          />
+          <EiloLogo priority />
         </Link>
 
         <div className="hidden flex-1 justify-center lg:flex">

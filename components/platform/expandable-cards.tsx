@@ -84,6 +84,8 @@ export function ExpandableCards({
 
   useOutsideClick(ref, () => setActive(null));
 
+  const isCardActive = (cardId: string) => active?.id === cardId;
+
   return (
     <>
       <AnimatePresence>
@@ -93,45 +95,51 @@ export function ExpandableCards({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 z-[60] h-full w-full bg-black/60"
+            onClick={() => setActive(null)}
           />
         ) : null}
       </AnimatePresence>
 
       <AnimatePresence>
         {active ? (
-          <div className="fixed inset-0 z-[70] grid place-items-center p-4">
-            <motion.button
-              key={`button-close-${active.id}-${id}`}
-              layout
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0, transition: { duration: 0.05 } }}
-              className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-full bg-[#262626] lg:hidden"
-              onClick={() => setActive(null)}
-              aria-label="Close"
-            >
-              <CloseIcon />
-            </motion.button>
-
+          <div className="pointer-events-none fixed inset-0 z-[70] overflow-y-auto overscroll-y-contain px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:grid sm:place-items-center sm:p-4 sm:pb-4">
             <motion.div
               layoutId={`card-${active.id}-${id}`}
               ref={ref}
-              className="flex h-full max-h-[90vh] w-full max-w-[500px] flex-col overflow-hidden rounded-3xl border border-[#262626] bg-[#0D0D0D] sm:h-fit md:max-h-[90%]"
+              onClick={(event) => event.stopPropagation()}
+              className="pointer-events-auto relative mx-auto flex w-full max-w-[500px] flex-col overflow-hidden rounded-3xl border border-[#262626] bg-[#0D0D0D] max-h-[min(85dvh,calc(100dvh-6rem))] sm:max-h-[90%]"
             >
+              <motion.button
+                key={`button-close-${active.id}-${id}`}
+                layout
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0, transition: { duration: 0.05 } }}
+                className="absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-full bg-[#262626]/90 backdrop-blur-sm"
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setActive(null);
+                }}
+                aria-label="Close"
+              >
+                <CloseIcon />
+              </motion.button>
+
               <motion.div
                 layoutId={`image-${active.id}-${id}`}
-                className="shrink-0"
+                className="shrink-0 overflow-hidden rounded-t-3xl"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={active.src}
                   alt={active.title}
-                  className="h-64 w-full object-cover object-center sm:rounded-t-3xl"
+                  className="h-48 w-full object-cover object-center sm:h-64"
                 />
               </motion.div>
 
-              <div className="flex flex-col">
-                <div className="flex items-start justify-between gap-4 p-4">
+              <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+                <div className="flex flex-col gap-3 p-4 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                   <div className="min-w-0">
                     {active.badge ? (
                       <motion.span
@@ -191,6 +199,7 @@ export function ExpandableCards({
             layout === "scroll"
               ? "hide-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-1"
               : "grid grid-cols-2 gap-4 md:grid-cols-3",
+            active && "pointer-events-none",
             className,
           )}
         >
@@ -202,6 +211,7 @@ export function ExpandableCards({
               className={cn(
                 "group cursor-pointer overflow-hidden rounded-lg border border-[#262626] bg-[#0D0D0D] transition-colors hover:border-[#3a3a3a] active:scale-[0.98]",
                 layout === "scroll" && "w-[140px] shrink-0",
+                isCardActive(card.id) && "opacity-0",
               )}
             >
               <motion.div
@@ -243,42 +253,51 @@ export function ExpandableCards({
           ))}
         </ul>
       ) : (
-        <ul className={cn("flex w-full flex-col gap-3", className)}>
+        <ul
+          className={cn(
+            "flex w-full flex-col gap-3",
+            active && "pointer-events-none",
+            className,
+          )}
+        >
           {cards.map((card) => (
             <motion.li
               key={card.id}
               layoutId={`card-${card.id}-${id}`}
               onClick={() => setActive(card)}
-              className="flex cursor-pointer flex-col items-center justify-between rounded-xl border border-transparent p-3 transition-colors hover:border-[#262626] hover:bg-white/5 active:scale-[0.98] md:flex-row md:items-center"
+              className={cn(
+                "flex cursor-pointer flex-row items-center justify-between rounded-xl border border-transparent p-3 transition-colors hover:border-[#262626] hover:bg-white/5 active:scale-[0.98]",
+                isCardActive(card.id) && "opacity-0",
+              )}
             >
-              <div className="flex w-full flex-col items-center gap-4 md:flex-row md:items-center">
+              <div className="flex min-w-0 flex-1 flex-row items-center gap-3 sm:gap-4">
                 <motion.div layoutId={`image-${card.id}-${id}`} className="shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={card.src}
                     alt={card.title}
-                    className="size-16 rounded-lg object-cover"
+                    className="size-14 rounded-lg object-cover sm:size-16"
                   />
                 </motion.div>
 
-                <div className="min-w-0 flex-1 text-center md:text-left">
+                <div className="min-w-0 flex-1 text-left">
                   {card.badge ? (
                     <motion.span
                       layoutId={`badge-${card.id}-${id}`}
-                      className="mb-1 inline-block rounded-full border border-[#262626] bg-[#1F1F1F] px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-[#c4c7c8]"
+                      className="mb-1 inline-block max-w-full truncate rounded-full border border-[#262626] bg-[#1F1F1F] px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-[#c4c7c8]"
                     >
                       {card.badge}
                     </motion.span>
                   ) : null}
                   <motion.h3
                     layoutId={`title-${card.id}-${id}`}
-                    className="font-medium text-white"
+                    className="truncate font-medium text-white"
                   >
                     {card.title}
                   </motion.h3>
                   <motion.p
                     layoutId={`description-${card.id}-${id}`}
-                    className="mt-1 font-mono text-[12px] tracking-[0.05em] text-[#888888]"
+                    className="mt-1 truncate font-mono text-[12px] tracking-[0.05em] text-[#888888]"
                   >
                     {card.description}
                   </motion.p>
@@ -289,7 +308,7 @@ export function ExpandableCards({
                 layoutId={`button-${card.id}-${id}`}
                 type="button"
                 onClick={(event) => handlePlay(card, event)}
-                className="mt-3 rounded-full border border-[#262626] bg-[#1f1f1f] px-4 py-2 font-mono text-[12px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white hover:text-black md:mt-0"
+                className="ml-2 shrink-0 rounded-full border border-[#262626] bg-[#1f1f1f] px-3 py-2 font-mono text-[11px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white hover:text-black sm:ml-3 sm:px-4 sm:text-[12px]"
               >
                 {card.ctaText ?? "Play"}
               </motion.button>

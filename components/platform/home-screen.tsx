@@ -257,22 +257,19 @@ export function PlatformHomeScreen() {
     <>
       <section className="mb-10">
         <h2 className="mb-2 text-2xl font-semibold leading-8 text-white">
-          Your Top Briefing
+          Your Daily Brief
         </h2>
 
         <div className="mx-auto w-full rounded-xl border border-white/10 bg-gradient-to-br from-[#1a2b4a] to-[#0a1428] p-6 shadow-2xl">
           <div className="flex flex-col items-center gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex w-full flex-grow flex-col items-start text-left">
-              <p className="mb-2 font-mono text-[12px] uppercase tracking-widest text-white/60">
-                Your Daily Brief
-              </p>
+            <div className="flex w-full flex-grow flex-col items-center text-center md:items-start md:text-left">
               <h3 className="mb-1 text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl md:leading-[56px]">
                 {briefDate}
               </h3>
               <p className="mb-6 text-lg leading-7 text-white/80">
                 11 stories curated for you
               </p>
-              <div className="flex gap-3">
+              <div className="flex justify-center gap-3 md:justify-start">
                 <button
                   type="button"
                   onClick={() =>
@@ -300,9 +297,9 @@ export function PlatformHomeScreen() {
               </div>
             </div>
 
-            <div className="flex w-full flex-col items-end text-right md:w-auto">
+            <div className="flex w-full flex-col items-center text-center md:w-auto md:items-end md:text-right">
               <div className="flex items-center gap-3">
-                <div className="flex flex-col items-end">
+                <div className="flex flex-col items-center md:items-end">
                   <div className="flex items-baseline gap-2">
                     <span className="text-2xl font-semibold leading-8 text-white">
                       70°F

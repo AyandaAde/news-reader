@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
+import { PlatformLiveScreen } from "@/components/platform/live-screen";
+
+export const metadata: Metadata = {
+  title: "Live | EILO",
+  description: "Experience real-time news, market insights, and live audio curations.",
+};
+
 export default function StudioPage() {
-  return (
-    <div className="py-8">
-      <h1 className="text-2xl font-semibold text-white">Studio</h1>
-      <p className="mt-2 text-[#888888]">Coming soon.</p>
-    </div>
-  );
+  return <PlatformLiveScreen />;
 }

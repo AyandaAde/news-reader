@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type MouseEvent, type RefObject } from "react";
+import Link from "next/link";
 import { AnimatePresence, motion } from "motion/react";
 import { usePlatformPlayback } from "@/components/platform/platform-playback-provider";
 import { useOutsideClick } from "@/hooks/use-outside-click";
@@ -14,6 +15,8 @@ export type ExpandableCardItem = {
   src: string;
   ctaText?: string;
   badge?: string;
+  viewHref?: string;
+  viewLabel?: string;
   content: React.ReactNode | (() => React.ReactNode);
 };
 
@@ -79,7 +82,10 @@ export function ExpandableCards({
 
     document.body.style.overflow = active ? "hidden" : "auto";
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = "auto";
+    };
   }, [active]);
 
   useOutsideClick(ref, () => setActive(null));
@@ -163,14 +169,25 @@ export function ExpandableCards({
                     </motion.p>
                   </div>
 
-                  <motion.button
-                    layoutId={`button-${active.id}-${id}`}
-                    type="button"
-                    onClick={(event) => handlePlay(active, event)}
-                    className="shrink-0 rounded-full bg-white px-4 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-black"
-                  >
-                    {active.ctaText ?? "Play"}
-                  </motion.button>
+                  <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+                    {active.viewHref ? (
+                      <Link
+                        href={active.viewHref}
+                        onClick={() => setActive(null)}
+                        className="rounded-full border border-[#262626] bg-[#1f1f1f] px-4 py-2.5 text-center font-mono text-[12px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white/10"
+                      >
+                        {active.viewLabel ?? "View Briefing"}
+                      </Link>
+                    ) : null}
+                    <motion.button
+                      layoutId={`button-${active.id}-${id}`}
+                      type="button"
+                      onClick={(event) => handlePlay(active, event)}
+                      className="rounded-full bg-white px-4 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-black"
+                    >
+                      {active.ctaText ?? "Play"}
+                    </motion.button>
+                  </div>
                 </div>
 
                 <div className="relative px-4 pb-6">
@@ -304,14 +321,25 @@ export function ExpandableCards({
                 </div>
               </div>
 
-              <motion.button
-                layoutId={`button-${card.id}-${id}`}
-                type="button"
-                onClick={(event) => handlePlay(card, event)}
-                className="ml-2 shrink-0 rounded-full border border-[#262626] bg-[#1f1f1f] px-3 py-2 font-mono text-[11px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white hover:text-black sm:ml-3 sm:px-4 sm:text-[12px]"
-              >
-                {card.ctaText ?? "Play"}
-              </motion.button>
+              <div className="ml-2 flex shrink-0 items-center gap-2 sm:ml-3">
+                {card.viewHref ? (
+                  <Link
+                    href={card.viewHref}
+                    onClick={(event) => event.stopPropagation()}
+                    className="rounded-full border border-[#262626] bg-[#1f1f1f] px-3 py-2 font-mono text-[11px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white/10 sm:px-4 sm:text-[12px]"
+                  >
+                    {card.viewLabel ?? "View Briefing"}
+                  </Link>
+                ) : null}
+                <motion.button
+                  layoutId={`button-${card.id}-${id}`}
+                  type="button"
+                  onClick={(event) => handlePlay(card, event)}
+                  className="rounded-full border border-[#262626] bg-[#1f1f1f] px-3 py-2 font-mono text-[11px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white hover:text-black sm:px-4 sm:text-[12px]"
+                >
+                  {card.ctaText ?? "Play"}
+                </motion.button>
+              </div>
             </motion.li>
           ))}
         </ul>

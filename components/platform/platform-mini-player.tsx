@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { usePlatformPlayback } from "@/components/platform/platform-playback-provider";
 import { cn } from "@/lib/utils";
 
@@ -29,10 +30,13 @@ function MaterialIcon({
 }
 
 export function PlatformMiniPlayer() {
+  const pathname = usePathname();
   const { current, isPlaying, togglePlay, close } = usePlatformPlayback();
   const [progress, setProgress] = useState(40.4);
 
-  if (!current) {
+  const isBriefingPage = pathname.startsWith("/briefings/");
+
+  if (!current || isBriefingPage) {
     return null;
   }
 

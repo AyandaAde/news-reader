@@ -6,6 +6,6 @@ export const metadata: Metadata = {
   description: "Experience real-time news, market insights, and live audio curations.",
 };
 
-export default function StudioPage() {
+export default function LivePage() {
   return <PlatformLiveScreen />;
 }

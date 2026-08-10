@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import {
   ExpandableCards,
@@ -8,8 +9,10 @@ import {
 import { PlatformScrollSectionHeader } from "@/components/platform/platform-scroll-section-header";
 import { useHorizontalScroll } from "@/components/platform/use-horizontal-scroll";
 import { usePlatformPlayback } from "@/components/platform/platform-playback-provider";
+import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
 import { cn } from "@/lib/utils";
 import { TOPIC_OPTIONS } from "@/lib/onboarding";
+import { topBriefingsItems } from "@/lib/platform-briefings";
 
 const forYouItems = [
   {
@@ -23,57 +26,6 @@ const forYouItems = [
     description: "Deep bass and rhythmic patterns for focus.",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCidp2f8SewIj2wChLAH9YpBkbgrbMX5_JLX20wxIwC8PtZ5iG4AEexWEwznGt_cS_ztnyBeQ-dhZtRxCj25uskeQLCC1XXkcWAuCmCRYC70BA5l60ksNrSZ0E4zyBwj6HtXeDVZvspL2XZZO-58Tq2Y9qgFuXT9TRLsi1OnPh3Ktv1K8Z459lgP6_SZ4GYQ-TBqorVuxF3uCFr3xgMGND9OGAjd8c8RxXK8ObhbskcMd_WIBHvuoh7",
-  },
-] as const;
-
-const topBriefingsItems = [
-  {
-    title: "Morning Markets Wrap",
-    description: "Business • 8 mins • Today",
-    image:
-      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    title: "Tech & AI Digest",
-    description: "Technology • 10 mins • Today",
-    image:
-      "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    title: "World Headlines",
-    description: "World News • 6 mins • Yesterday",
-    image:
-      "https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    title: "Climate & Energy",
-    description: "Climate • 7 mins • Yesterday",
-    image:
-      "https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    title: "Sports Roundup",
-    description: "Sports • 5 mins • 2 days ago",
-    image:
-      "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    title: "Health & Wellness",
-    description: "Health • 9 mins • 2 days ago",
-    image:
-      "https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    title: "Culture & Arts",
-    description: "Entertainment • 11 mins • 3 days ago",
-    image:
-      "https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&q=80&w=400",
-  },
-  {
-    title: "Policy & Politics",
-    description: "World News • 8 mins • 3 days ago",
-    image:
-      "https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&q=80&w=400",
   },
 ] as const;
 
@@ -126,6 +78,12 @@ const madeForYouItems = [
 
 const discoverFilters = ["All", "My Casts", ...TOPIC_OPTIONS] as const;
 
+const homeSearchPlaceholders = [
+  "Search briefings, stories, and topics...",
+  "Try 'Morning Markets' or 'Tech & AI Digest'",
+  "Find podcasts and news briefings",
+] as const;
+
 const trendingPlaceholderImage =
   "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=400";
 
@@ -156,11 +114,13 @@ function toTopBriefingsCards(
   items: typeof topBriefingsItems,
 ): ExpandableCardItem[] {
   return items.map((item) => ({
-    id: item.title,
+    id: item.id,
     title: item.title,
     description: item.description,
     src: item.image,
     ctaText: "Play",
+    viewHref: `/briefings/${item.id}`,
+    viewLabel: "View Briefing",
     content: (
       <p>
         {item.title} — {item.description}. A curated audio briefing pulled from
@@ -229,6 +189,7 @@ function toDiscoverCards(
 }
 
 export function PlatformHomeScreen() {
+  const router = useRouter();
   const [discoverFilter, setDiscoverFilter] =
     useState<(typeof discoverFilters)[number]>("All");
   const { play } = usePlatformPlayback();
@@ -255,6 +216,25 @@ export function PlatformHomeScreen() {
 
   return (
     <>
+      <section className="mb-10">
+        <PlaceholdersAndVanishInput
+          placeholders={[...homeSearchPlaceholders]}
+          onChange={() => {}}
+          onSubmit={(event) => {
+            event.preventDefault();
+            router.push("/discover");
+          }}
+          className={cn(
+            "mx-0 h-11 max-w-none !bg-[#1f1f1f] border border-[#262626] shadow-none",
+            "has-[input:focus-visible]:border-white/30",
+            "[&_input]:text-white [&_input]:placeholder:text-transparent",
+            "[&_p]:text-[#888888]",
+            "[&_button:not(:disabled)]:bg-white [&_button:not(:disabled)_svg]:text-black",
+            "[&_button:disabled]:bg-[#2a2a2a] [&_button:disabled_svg]:text-[#666]",
+          )}
+        />
+      </section>
+
       <section className="mb-10">
         <h2 className="mb-2 text-2xl font-semibold leading-8 text-white">
           Your Daily Brief
@@ -324,7 +304,7 @@ export function PlatformHomeScreen() {
 
       <section className="mb-10">
         <PlatformScrollSectionHeader
-          title="Your Top Briefings"
+          title="Your Briefings"
           onPrevious={topBriefingsScroll.scrollPrevious}
           onNext={topBriefingsScroll.scrollNext}
         />

@@ -7,6 +7,10 @@ import { setStoryReplyDraft } from "@/lib/story-reply-drafts";
 
 type SpeechRecognitionConstructor = new () => SpeechRecognition;
 
+type UseStoryDictationOptions = {
+  onTranscript?: (text: string) => void;
+};
+
 function storyKey(briefingId: string, storyId: string) {
   return `${briefingId}:${storyId}`;
 }
@@ -28,7 +32,7 @@ function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null 
   );
 }
 
-export function useStoryDictation() {
+export function useStoryDictation(options?: UseStoryDictationOptions) {
   const router = useRouter();
   const [isListening, setIsListening] = useState(false);
   const [activeStoryKey, setActiveStoryKey] = useState<string | null>(null);
@@ -37,12 +41,42 @@ export function useStoryDictation() {
   const pendingTargetRef = useRef<{ briefingId: string; storyId: string } | null>(
     null,
   );
+  const onTranscriptRef = useRef(options?.onTranscript);
+
+  useEffect(() => {
+    onTranscriptRef.current = options?.onTranscript;
+  }, [options?.onTranscript]);
 
   useEffect(() => {
     return () => {
       recognitionRef.current?.abort();
     };
   }, []);
+
+  const completeDictation = useCallback(() => {
+    const target = pendingTargetRef.current;
+    pendingTargetRef.current = null;
+
+    const draft = transcriptRef.current.trim();
+    transcriptRef.current = "";
+
+    if (onTranscriptRef.current) {
+      if (draft) {
+        onTranscriptRef.current(draft);
+      }
+      return;
+    }
+
+    if (!target) {
+      return;
+    }
+
+    if (draft) {
+      setStoryReplyDraft(target.briefingId, target.storyId, draft);
+    }
+
+    router.push(`/briefings/${target.briefingId}/stories/${target.storyId}`);
+  }, [router]);
 
   const toggleDictation = useCallback(
     (briefingId: string, storyId: string) => {
@@ -88,24 +122,7 @@ export function useStoryDictation() {
         setIsListening(false);
         setActiveStoryKey(null);
         recognitionRef.current = null;
-
-        const target = pendingTargetRef.current;
-        pendingTargetRef.current = null;
-
-        if (!target) {
-          return;
-        }
-
-        const draft = transcriptRef.current.trim();
-        transcriptRef.current = "";
-
-        if (draft) {
-          setStoryReplyDraft(target.briefingId, target.storyId, draft);
-        }
-
-        router.push(
-          `/briefings/${target.briefingId}/stories/${target.storyId}`,
-        );
+        completeDictation();
       };
 
       recognition.onerror = (event) => {
@@ -125,7 +142,7 @@ export function useStoryDictation() {
       setIsListening(true);
       recognition.start();
     },
-    [activeStoryKey, isListening, router],
+    [activeStoryKey, completeDictation, isListening],
   );
 
   return {

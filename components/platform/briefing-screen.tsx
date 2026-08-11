@@ -12,6 +12,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { usePlatformPlayback } from "@/components/platform/platform-playback-provider";
+import { PlatformAskAiChat } from "@/components/platform/platform-ask-ai-chat";
 import { PlatformStoriesList } from "@/components/platform/stories-list";
 import type { PlatformBriefing } from "@/lib/platform-briefings";
 import { cn } from "@/lib/utils";
@@ -246,7 +247,10 @@ export function PlatformBriefingScreen({ briefing }: { briefing: PlatformBriefin
       </section>
 
       <section>
-        <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">Stories</h2>
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <h2 className="text-2xl font-semibold leading-8 text-white">Stories</h2>
+          <PlatformAskAiChat context="briefing" briefing={briefing} />
+        </div>
         <div className="hide-scrollbar max-h-[280px] overflow-y-auto overscroll-y-contain rounded-2xl bg-[#1a1a1a] px-5 py-2 touch-pan-y md:max-h-[min(420px,50vh)] [-webkit-overflow-scrolling:touch]">
           <PlatformStoriesList
             briefingId={briefing.id}

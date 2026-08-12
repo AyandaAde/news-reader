@@ -17,6 +17,7 @@ export type ExpandableCardItem = {
   badge?: string;
   viewHref?: string;
   viewLabel?: string;
+  accent?: boolean;
   content: React.ReactNode | (() => React.ReactNode);
 };
 
@@ -226,7 +227,10 @@ export function ExpandableCards({
               layoutId={`card-${card.id}-${id}`}
               onClick={() => setActive(card)}
               className={cn(
-                "group cursor-pointer overflow-hidden rounded-lg border border-[#262626] bg-[#0D0D0D] transition-colors hover:border-[#3a3a3a] active:scale-[0.98]",
+                "group cursor-pointer overflow-hidden rounded-lg bg-[#0D0D0D] transition-colors active:scale-[0.98]",
+                card.accent
+                  ? "border-0"
+                  : "border border-[#262626] hover:border-[#3a3a3a]",
                 layout === "scroll" && "w-[140px] shrink-0",
                 isCardActive(card.id) && "opacity-0",
               )}
@@ -239,7 +243,10 @@ export function ExpandableCards({
                 <img
                   src={card.src}
                   alt={card.title}
-                  className="size-full object-cover object-center grayscale transition-transform duration-700 group-hover:scale-105"
+                  className={cn(
+                    "size-full object-cover object-center transition-transform duration-700 group-hover:scale-105",
+                    card.accent ? "saturate-125" : "grayscale",
+                  )}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                 {card.badge ? (

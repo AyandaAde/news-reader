@@ -55,6 +55,7 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --animate-caret-blink: caret-blink 1.2s ease-out infinite;
 }
 
 :root {
@@ -166,6 +167,19 @@
   width: 100% !important;
   height: 100% !important;
   display: block;
+}
+
+@keyframes caret-blink {
+  0%,
+  70%,
+  100% {
+    opacity: 1;
+  }
+
+  20%,
+  50% {
+    opacity: 0;
+  }
 }
 
 @keyframes section-nav-highlight {

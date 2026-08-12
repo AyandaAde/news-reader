@@ -74,7 +74,7 @@ const BRIEF_ICONS: Record<string, ReactNode> = {
 
 function StepLabel({ step }: { step: OnboardingStep }) {
   return (
-    <div className="mb-1 text-[13px] text-[#898989]">
+    <div className="mb-1 text-[13px] text-[#6b6570] dark:text-[#898989]">
       Step {stepIndex(step)} of 6
     </div>
   );
@@ -96,7 +96,7 @@ function PrimaryButton({
       type={type}
       disabled={disabled}
       onClick={onClick}
-      className="flex h-12 w-full items-center justify-center rounded-[14px] bg-[#fafafa] text-base font-semibold text-black transition-colors hover:bg-[#e0e0e0] disabled:opacity-70"
+      className="flex h-12 w-full items-center justify-center rounded-[14px] bg-[#131313] text-base font-semibold text-white transition-colors hover:bg-[#2a2a2c] disabled:opacity-70 dark:bg-[#fafafa] dark:text-black dark:hover:bg-[#e0e0e0]"
     >
       {children}
     </button>
@@ -114,7 +114,7 @@ function SkipButton({
     <button
       type="button"
       onClick={onClick}
-      className="w-full bg-transparent text-center text-sm text-[#898989] transition-colors hover:text-[#bbb]"
+      className="w-full bg-transparent text-center text-sm text-[#6b6570] transition-colors hover:text-[#131313] dark:text-[#898989] dark:hover:text-[#bbb]"
     >
       {children}
     </button>
@@ -135,16 +135,20 @@ function ConnectionRow({
   onToggle?: () => void;
 }) {
   return (
-    <div className="flex items-center gap-3.5 rounded-[14px] bg-[#141414] p-4">
-      <div className="flex size-11 items-center justify-center rounded-[10px] bg-[#1e1e1e] text-lg">
+    <div className="flex items-center gap-3.5 rounded-[14px] border border-black/10 bg-white/80 p-4 dark:border-transparent dark:bg-[#141414]">
+      <div className="flex size-11 items-center justify-center rounded-[10px] bg-[#ececef] text-lg text-[#131313] dark:bg-[#1e1e1e] dark:text-white">
         {name === "Gmail" ? "G" : name === "Google Calendar" ? "C" : "O"}
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[15px] font-semibold text-white">{name}</div>
+        <div className="text-[15px] font-semibold text-[#131313] dark:text-white">
+          {name}
+        </div>
         <div
           className={cn(
             "text-xs",
-            connected ? "text-emerald-400" : "text-[#898989]",
+            connected
+              ? "text-emerald-600 dark:text-emerald-400"
+              : "text-[#6b6570] dark:text-[#898989]",
           )}
         >
           {status}
@@ -157,7 +161,9 @@ function ConnectionRow({
         aria-label={`Toggle ${name}`}
         className={cn(
           "relative h-[26px] w-[46px] rounded-full transition-colors disabled:opacity-50",
-          connected ? "bg-[#3d3d3d]" : "bg-[#2a2a2a]",
+          connected
+            ? "bg-[#131313] dark:bg-[#3d3d3d]"
+            : "bg-black/15 dark:bg-[#2a2a2a]",
         )}
       >
         <span
@@ -165,7 +171,7 @@ function ConnectionRow({
             "absolute top-0.5 size-[22px] rounded-full transition-all",
             connected
               ? "right-0.5 bg-white"
-              : "left-0.5 bg-[#898989]",
+              : "left-0.5 bg-white dark:bg-[#898989]",
           )}
         />
       </button>
@@ -369,25 +375,25 @@ export function OnboardingContinue() {
 
   if (!isLoaded || !hydrated) {
     return (
-      <div className="flex min-h-svh items-center justify-center bg-black text-[#888888]">
+      <div className="flex min-h-svh items-center justify-center bg-[#f5f5f7] text-[#6b6570] dark:bg-black dark:text-[#888888]">
         <Loader2 className="size-5 animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="auth-premium-gradient flex min-h-svh justify-center bg-black text-[#fafafa]">
+    <div className="auth-premium-gradient flex min-h-svh justify-center bg-[#f5f5f7] text-[#131313] dark:bg-black dark:text-[#fafafa]">
       <div className="flex w-full max-w-md flex-col px-5 py-10">
         {step === "name" ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-[#1e1e1e] text-2xl font-bold">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-[#ececef] text-2xl font-bold text-[#131313] dark:bg-[#1e1e1e] dark:text-white">
               E
             </div>
             <StepLabel step="name" />
-            <h2 className="text-[26px] font-bold leading-tight">
+            <h2 className="text-[26px] font-bold leading-tight text-[#131313] dark:text-white">
               What&apos;s your name?
             </h2>
-            <p className="text-[15px] leading-relaxed text-[#d9d9d9]">
+            <p className="text-[15px] leading-relaxed text-[#6b6570] dark:text-[#d9d9d9]">
               We&apos;ll personalize your AI radio experience just for you.
             </p>
             <input
@@ -397,7 +403,7 @@ export function OnboardingContinue() {
               }
               placeholder="Enter your name"
               autoComplete="name"
-              className="mt-2 h-14 w-full rounded-[14px] border border-[#313131] bg-[#1e1e1e] px-5 text-base text-white outline-none placeholder:text-[#898989]"
+              className="mt-2 h-14 w-full rounded-[14px] border border-black/10 bg-white/80 px-5 text-base text-[#131313] outline-none placeholder:text-[#6b6570]/50 dark:border-[#313131] dark:bg-[#1e1e1e] dark:text-white dark:placeholder:text-[#898989]"
             />
             {error ? <p className="text-xs text-destructive">{error}</p> : null}
             <PrimaryButton
@@ -417,8 +423,10 @@ export function OnboardingContinue() {
         {step === "integration" ? (
           <div className="flex flex-1 flex-col">
             <StepLabel step="integration" />
-            <h2 className="mb-1.5 text-2xl font-bold">Connect your accounts</h2>
-            <p className="mb-5 text-sm text-[#d9d9d9]">
+            <h2 className="mb-1.5 text-2xl font-bold text-[#131313] dark:text-white">
+              Connect your accounts
+            </h2>
+            <p className="mb-5 text-sm text-[#6b6570] dark:text-[#d9d9d9]">
               Link your email and calendar so Eilo can include them in your
               daily brief.
             </p>
@@ -457,8 +465,10 @@ export function OnboardingContinue() {
         {step === "topics" ? (
           <div className="flex flex-1 flex-col">
             <StepLabel step="topics" />
-            <h2 className="mb-1.5 text-2xl font-bold">Pick your topics</h2>
-            <p className="mb-5 text-sm text-[#d9d9d9]">
+            <h2 className="mb-1.5 text-2xl font-bold text-[#131313] dark:text-white">
+              Pick your topics
+            </h2>
+            <p className="mb-5 text-sm text-[#6b6570] dark:text-[#d9d9d9]">
               Choose what you&apos;re interested in. We&apos;ll curate your daily
               brief around these.
             </p>
@@ -480,8 +490,8 @@ export function OnboardingContinue() {
                     className={cn(
                       "inline-flex items-center gap-1.5 rounded-[20px] border px-[18px] py-2.5 text-sm transition-colors",
                       selected
-                        ? "border-[#fafafa] bg-[#fafafa] text-black"
-                        : "border-[#313131] bg-[#1e1e1e] text-[#d9d9d9] hover:bg-[#2a2a2a]",
+                        ? "border-[#131313] bg-[#131313] text-white dark:border-[#fafafa] dark:bg-[#fafafa] dark:text-black"
+                        : "border-black/10 bg-white/80 text-[#131313] hover:bg-white dark:border-[#313131] dark:bg-[#1e1e1e] dark:text-[#d9d9d9] dark:hover:bg-[#2a2a2a]",
                     )}
                   >
                     {TOPIC_ICONS[topic]}
@@ -501,7 +511,14 @@ export function OnboardingContinue() {
         {step === "location" ? (
           <div className="relative flex flex-1 flex-col overflow-hidden">
             <div
-              className="pointer-events-none absolute inset-0 opacity-25"
+              className="pointer-events-none absolute inset-0 opacity-30 dark:opacity-25"
+              style={{
+                backgroundImage:
+                  "radial-gradient(circle at 30% 20%, #c5d4e8 0%, transparent 45%), radial-gradient(circle at 70% 80%, #b8c8dc 0%, transparent 40%)",
+              }}
+            />
+            <div
+              className="pointer-events-none absolute inset-0 hidden opacity-25 dark:block"
               style={{
                 backgroundImage:
                   "radial-gradient(circle at 30% 20%, #3a4a5a 0%, transparent 45%), radial-gradient(circle at 70% 80%, #2a3540 0%, transparent 40%)",
@@ -509,8 +526,10 @@ export function OnboardingContinue() {
             />
             <div className="relative z-10 flex flex-1 flex-col">
               <StepLabel step="location" />
-              <h2 className="mb-1.5 text-2xl font-bold">Enable local weather</h2>
-              <p className="mb-5 text-sm text-[#d9d9d9]">
+              <h2 className="mb-1.5 text-2xl font-bold text-[#131313] dark:text-white">
+                Enable local weather
+              </h2>
+              <p className="mb-5 text-sm text-[#6b6570] dark:text-[#d9d9d9]">
                 Eilo uses your location to include today&apos;s local weather in
                 your daily brief. Your location is never stored on our servers.
               </p>
@@ -522,7 +541,15 @@ export function OnboardingContinue() {
                     "Allow location access"
                   )}
                 </PrimaryButton>
-                <SkipButton onClick={() => goNext("location")}>
+                <SkipButton
+                  onClick={() =>
+                    goNext("location", {
+                      lat: null,
+                      lon: null,
+                      briefItems: data.briefItems.filter((id) => id !== "weather"),
+                    })
+                  }
+                >
                   Not now
                 </SkipButton>
               </div>
@@ -532,14 +559,14 @@ export function OnboardingContinue() {
 
         {step === "notifications" ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-            <div className="flex size-14 items-center justify-center rounded-2xl bg-[#1e1e1e]">
+            <div className="flex size-14 items-center justify-center rounded-2xl bg-[#ececef] text-[#131313] dark:bg-[#1e1e1e] dark:text-white">
               <Bell className="size-7" />
             </div>
             <StepLabel step="notifications" />
-            <h2 className="text-[26px] font-bold leading-tight">
+            <h2 className="text-[26px] font-bold leading-tight text-[#131313] dark:text-white">
               Stay in the loop
             </h2>
-            <p className="text-[15px] leading-relaxed text-[#d9d9d9]">
+            <p className="text-[15px] leading-relaxed text-[#6b6570] dark:text-[#d9d9d9]">
               Get notified when your daily brief is ready, or when a live station
               you follow goes on air.
             </p>
@@ -564,10 +591,10 @@ export function OnboardingContinue() {
         {step === "customize" ? (
           <div className="flex flex-1 flex-col">
             <StepLabel step="customize" />
-            <h2 className="mb-1.5 text-2xl font-bold">
+            <h2 className="mb-1.5 text-2xl font-bold text-[#131313] dark:text-white">
               Customize your daily brief
             </h2>
-            <p className="mb-5 text-sm text-[#d9d9d9]">
+            <p className="mb-5 text-sm text-[#6b6570] dark:text-[#d9d9d9]">
               Choose what Eilo includes in your personalized daily brief each
               morning.
             </p>
@@ -577,14 +604,16 @@ export function OnboardingContinue() {
                 return (
                   <label
                     key={item.id}
-                    className="flex cursor-pointer items-center gap-3.5 px-1 py-3.5 transition-colors hover:bg-[#1a1a1a]"
+                    className="flex cursor-pointer items-center gap-3.5 rounded-[10px] px-1 py-3.5 transition-colors hover:bg-black/5 dark:hover:bg-[#1a1a1a]"
                   >
-                    <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#1e1e1e] text-[#d9d9d9]">
+                    <div className="flex size-10 items-center justify-center rounded-[10px] bg-[#ececef] text-[#131313] dark:bg-[#1e1e1e] dark:text-[#d9d9d9]">
                       {BRIEF_ICONS[item.id]}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-[15px]">{item.label}</div>
-                      <div className="text-xs text-[#898989]">
+                      <div className="text-[15px] text-[#131313] dark:text-inherit">
+                        {item.label}
+                      </div>
+                      <div className="text-xs text-[#6b6570] dark:text-[#898989]">
                         {item.description}
                       </div>
                     </div>

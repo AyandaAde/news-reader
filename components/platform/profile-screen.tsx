@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { PlatformEditProfileModal } from "@/components/platform/platform-edit-profile-modal";
-import { PlatformSignOutButton } from "@/components/platform/platform-sign-out-button";
+import { ProfileMenuDropdown } from "@/components/platform/profile-menu-dropdown";
 import { ProfileSettingsPanel } from "@/components/platform/profile-settings-panel";
 import {
   listeningByDay,
@@ -147,32 +147,29 @@ export function PlatformProfileScreen() {
             </h1>
             <p className="mt-1 text-sm text-[#888888]">{emailAddress}</p>
             <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-[#888888] sm:justify-start">
-              <span>
+              <button
+                type="button"
+                onClick={() => setActiveTab("Podcasts")}
+                className="transition-opacity hover:opacity-80"
+              >
                 <span className="font-semibold text-white">182</span> Following
-              </span>
-              <span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("My Briefings")}
+                className="transition-opacity hover:opacity-80"
+              >
                 <span className="font-semibold text-white">12</span> Briefings
-              </span>
+              </button>
             </div>
           </div>
         </div>
 
         <div className="flex items-center justify-center gap-3 sm:justify-end">
-          <button
-            type="button"
-            onClick={() => setEditOpen(true)}
-            className="rounded-full bg-white px-6 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-black transition-colors hover:bg-white/90"
-          >
-            Edit Profile
-          </button>
-          <PlatformSignOutButton />
-          <button
-            type="button"
-            aria-label="Share profile"
-            className="flex size-10 items-center justify-center rounded-full border border-[#262626] bg-[#1f1f1f] text-white transition-colors hover:border-white/30 hover:bg-white/10"
-          >
-            <MaterialIcon name="share" className="text-[20px]" />
-          </button>
+          <ProfileMenuDropdown
+            profileName={displayName}
+            onEditProfile={() => setEditOpen(true)}
+          />
         </div>
       </section>
 

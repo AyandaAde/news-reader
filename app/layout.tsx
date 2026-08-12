@@ -4,6 +4,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { I18nProvider } from "@/components/i18n-provider";
 import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
@@ -54,7 +55,10 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <I18nProvider>{children}</I18nProvider>
+            <I18nProvider>
+              {children}
+              <Toaster richColors closeButton position="top-center" />
+            </I18nProvider>
           </ThemeProvider>
         </ClerkProvider>
       </body>

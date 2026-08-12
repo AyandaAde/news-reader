@@ -1,17 +1,20 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSignIn, useSignUp } from "@clerk/nextjs";
 import type { OAuthStrategy } from "@clerk/shared/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Loader2, Mail } from "lucide-react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
+import { toast } from "sonner";
 import { z } from "zod";
 
 import { Header } from "@/components/header";
 import { useI18n } from "@/components/i18n-provider";
+import { saveVerificationLocale } from "@/lib/auth/save-verification-locale";
 import {
   Form,
   FormControl,
@@ -20,12 +23,21 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { navigateAfterAuth } from "@/lib/clerk-nav";
 import { cn } from "@/lib/utils";
 
 type AuthMode = "sign-in" | "sign-up";
+const OTP_LENGTH = 6;
+const RESEND_COOLDOWN_SECONDS = 30;
+const OTP_SLOT_CLASSNAME = "size-12 text-lg sm:size-14 sm:text-xl";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -116,7 +128,7 @@ function createCodeSchema(t: (key: string) => string) {
     code: z
       .string()
       .min(1, t("auth.codeRequired"))
-      .min(6, t("auth.codeInvalid")),
+      .length(OTP_LENGTH, t("auth.codeInvalid")),
   });
 }
 
@@ -138,7 +150,7 @@ function AuthForm({
   switchHint: string | null;
   onClearSwitchHint: () => void;
 }) {
-  const { t } = useI18n();
+  const { t, language } = useI18n();
   const router = useRouter();
 
   const { signIn, fetchStatus: signInFetchStatus } = useSignIn();
@@ -148,6 +160,9 @@ function AuthForm({
   const [oauthLoading, setOauthLoading] =
     useState<OAuthStrategy | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  const [resendSecondsLeft, setResendSecondsLeft] = useState(0);
+  const [isResending, setIsResending] = useState(false);
+  const verifyingRef = useRef(false);
 
   const emailSchema = useMemo(() => createEmailSchema(t), [t]);
   const codeSchema = useMemo(() => createCodeSchema(t), [t]);
@@ -168,6 +183,7 @@ function AuthForm({
       code: "",
     },
   });
+  const code = useWatch({ control: codeForm.control, name: "code" });
 
   useEffect(() => {
     if (!switchHint) return;
@@ -175,6 +191,18 @@ function AuthForm({
     setFormError(switchHint);
     onClearSwitchHint();
   }, [switchHint, onClearSwitchHint]);
+
+  useEffect(() => {
+    if (!verifying || resendSecondsLeft <= 0) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      setResendSecondsLeft((current) => Math.max(0, current - 1));
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [verifying, resendSecondsLeft]);
 
   const isBusy =
     emailForm.formState.isSubmitting ||
@@ -204,7 +232,13 @@ function AuthForm({
 
     setVerifying(false);
     setFormError(null);
+    setResendSecondsLeft(0);
     codeForm.reset();
+  };
+
+  const startVerificationStep = () => {
+    setVerifying(true);
+    setResendSecondsLeft(RESEND_COOLDOWN_SECONDS);
   };
 
   const onEmailSubmit = async (values: EmailValues) => {
@@ -238,7 +272,8 @@ function AuthForm({
         return;
       }
 
-      setVerifying(true);
+      startVerificationStep();
+      void saveVerificationLocale(values.email, language);
       return;
     }
 
@@ -271,15 +306,63 @@ function AuthForm({
       return;
     }
 
-    setVerifying(true);
+    startVerificationStep();
+    void saveVerificationLocale(values.email, language);
   };
 
   const onCodeSubmit = async (values: CodeValues) => {
+    if (
+      values.code.length !== OTP_LENGTH ||
+      verifyingRef.current ||
+      isBusy
+    ) {
+      return;
+    }
+
+    verifyingRef.current = true;
     setFormError(null);
 
-    if (mode === "sign-in") {
+    try {
+      if (mode === "sign-in") {
+        const { error } =
+          await signIn.emailCode.verifyCode({
+            code: values.code,
+          });
+
+        if (error) {
+          setFormError(
+            error.longMessage || error.message,
+          );
+          codeForm.setValue("code", "");
+          return;
+        }
+
+        if (signIn.status === "complete") {
+          await finalizeSignIn();
+          return;
+        }
+
+        if (signIn.status === "needs_client_trust") {
+          const emailCodeFactor =
+            signIn.supportedSecondFactors?.find(
+              (factor) => factor.strategy === "email_code",
+            );
+
+          if (emailCodeFactor) {
+            await signIn.mfa.sendEmailCode();
+            toast.success(t("auth.codeSentAgain"));
+            codeForm.setValue("code", "");
+            return;
+          }
+        }
+
+        setFormError(t("auth.genericError"));
+        codeForm.setValue("code", "");
+        return;
+      }
+
       const { error } =
-        await signIn.emailCode.verifyCode({
+        await signUp.verifications.verifyEmailCode({
           code: values.code,
         });
 
@@ -287,54 +370,25 @@ function AuthForm({
         setFormError(
           error.longMessage || error.message,
         );
+        codeForm.setValue("code", "");
         return;
       }
 
-      if (signIn.status === "complete") {
-        await finalizeSignIn();
+      if (signUp.status === "complete") {
+        await finalizeSignUp();
         return;
       }
 
-      if (signIn.status === "needs_client_trust") {
-        const emailCodeFactor =
-          signIn.supportedSecondFactors?.find(
-            (factor) => factor.strategy === "email_code",
-          );
-
-        if (emailCodeFactor) {
-          await signIn.mfa.sendEmailCode();
-          setFormError(t("auth.codeSentAgain"));
-          return;
-        }
+      if (signUp.status === "missing_requirements") {
+        router.push("/sign-in/continue");
+        return;
       }
 
       setFormError(t("auth.genericError"));
-      return;
+      codeForm.setValue("code", "");
+    } finally {
+      verifyingRef.current = false;
     }
-
-    const { error } =
-      await signUp.verifications.verifyEmailCode({
-        code: values.code,
-      });
-
-    if (error) {
-      setFormError(
-        error.longMessage || error.message,
-      );
-      return;
-    }
-
-    if (signUp.status === "complete") {
-      await finalizeSignUp();
-      return;
-    }
-
-    if (signUp.status === "missing_requirements") {
-      router.push("/sign-in/continue");
-      return;
-    }
-
-    setFormError(t("auth.genericError"));
   };
 
   const continueWithOAuth = async (
@@ -364,13 +418,38 @@ function AuthForm({
     }
   };
 
+  const canResend =
+    resendSecondsLeft === 0 && !isResending && !isBusy;
+
   const resendCode = async () => {
-    if (mode === "sign-in") {
-      await signIn.emailCode.sendCode();
+    if (!canResend) {
       return;
     }
 
-    await signUp.verifications.sendEmailCode();
+    setIsResending(true);
+    setFormError(null);
+
+    try {
+      if (mode === "sign-in") {
+        const { error } = await signIn.emailCode.sendCode();
+        if (error) {
+          setFormError(error.longMessage || error.message);
+          return;
+        }
+      } else {
+        const { error } = await signUp.verifications.sendEmailCode();
+        if (error) {
+          setFormError(error.longMessage || error.message);
+          return;
+        }
+      }
+
+      setResendSecondsLeft(RESEND_COOLDOWN_SECONDS);
+      codeForm.setValue("code", "");
+      toast.success(t("auth.codeSentAgain"));
+    } finally {
+      setIsResending(false);
+    }
   };
 
   if (verifying) {
@@ -394,20 +473,54 @@ function AuthForm({
           <FormField
             control={codeForm.control}
             name="code"
-            render={({ field }) => (
-              <FormItem className="space-y-2">
+            render={({ field, fieldState }) => (
+              <FormItem className="w-full space-y-2">
                 <FormLabel className="px-1 font-mono text-xs font-medium uppercase tracking-[0.05em] text-[#6b6570] dark:text-[#888888]">
                   {t("auth.code")}
                 </FormLabel>
 
                 <FormControl>
-                  <Input
+                  <InputOTP
+                    maxLength={OTP_LENGTH}
+                    pattern={REGEXP_ONLY_DIGITS}
                     inputMode="numeric"
                     autoComplete="one-time-code"
-                    placeholder="123456"
-                    className="auth-input-glow h-10 rounded-lg border border-black/10 bg-white/80 px-3 text-sm text-[#131313] placeholder:text-[#6b6570]/50 dark:border-[#262626] dark:bg-[#1b1b1b]/50 dark:text-white dark:placeholder:text-[#888888]/50"
-                    {...field}
-                  />
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    disabled={isBusy}
+                    onComplete={(value) => {
+                      field.onChange(value);
+                      void codeForm.handleSubmit(onCodeSubmit)();
+                    }}
+                    containerClassName="justify-center"
+                  >
+                    <InputOTPGroup>
+                      {[0, 1, 2].map((index) => (
+                        <InputOTPSlot
+                          key={index}
+                          index={index}
+                          aria-invalid={!!fieldState.error}
+                          className={cn(
+                            OTP_SLOT_CLASSNAME,
+                            index === 2 && "rounded-r-lg border-r",
+                          )}
+                        />
+                      ))}
+                      <InputOTPSeparator className="mx-1 [&_svg:not([class*='size-'])]:size-5" />
+                      {[3, 4, 5].map((index) => (
+                        <InputOTPSlot
+                          key={index}
+                          index={index}
+                          aria-invalid={!!fieldState.error}
+                          className={cn(
+                            OTP_SLOT_CLASSNAME,
+                            index === 3 && "rounded-l-lg border-l",
+                          )}
+                        />
+                      ))}
+                    </InputOTPGroup>
+                  </InputOTP>
                 </FormControl>
 
                 <FormMessage className="px-1 text-xs" />
@@ -423,7 +536,7 @@ function AuthForm({
 
           <button
             type="submit"
-            disabled={isBusy}
+            disabled={isBusy || (code ?? "").length !== OTP_LENGTH}
             className="mt-2 flex h-10 w-full items-center justify-center rounded-lg bg-[#131313] text-sm font-semibold text-white transition-all duration-300 hover:bg-[#2a2a2c] active:scale-[0.98] disabled:opacity-70 dark:bg-white dark:text-[#0e0e0e] dark:hover:bg-[#e2e2e2]"
           >
             {isBusy ? (
@@ -434,14 +547,27 @@ function AuthForm({
           </button>
 
           <div className="flex items-center justify-between gap-3 text-xs text-[#6b6570] dark:text-[#888888]">
-            <button
-              type="button"
-              className="hover:text-[#131313] dark:hover:text-white"
-              disabled={isBusy}
-              onClick={() => void resendCode()}
-            >
-              {t("auth.resendCode")}
-            </button>
+            {canResend ? (
+              <button
+                type="button"
+                className="hover:text-[#131313] dark:hover:text-white"
+                disabled={isResending}
+                onClick={() => void resendCode()}
+              >
+                {isResending ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  t("auth.resendCode")
+                )}
+              </button>
+            ) : (
+              <span>
+                {t("auth.resendCooldown").replace(
+                  "{{seconds}}",
+                  String(resendSecondsLeft),
+                )}
+              </span>
+            )}
 
             <button
               type="button"

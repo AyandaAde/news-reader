@@ -121,6 +121,7 @@ function toTopBriefingsCards(
     ctaText: "Play",
     viewHref: `/briefings/${item.id}`,
     viewLabel: "View Briefing",
+    accent: true,
     content: (
       <p>
         {item.title} — {item.description}. A curated audio briefing pulled from
@@ -271,7 +272,7 @@ export function PlatformHomeScreen() {
                   type="button"
                   className="flex items-center gap-2 rounded-full border border-white/30 px-6 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white/10"
                 >
-                  <MaterialIcon name="mic" className="text-[20px]" />
+                  <MaterialIcon name="add" className="text-[20px]" />
                   New Brief
                 </button>
               </div>

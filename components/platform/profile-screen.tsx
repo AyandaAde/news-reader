@@ -122,7 +122,7 @@ export function PlatformProfileScreen() {
   );
 
   return (
-    <div className="pb-8">
+    <div className={cn(activeTab !== "Settings" && "pb-8")}>
       <section className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
           <div className="relative size-28 shrink-0 overflow-hidden rounded-full border-2 border-[#262626] sm:size-32">

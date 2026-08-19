@@ -15,7 +15,8 @@ export function PlatformBottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 z-50 flex h-16 w-full items-center justify-around border-t border-[#262626] bg-[#131313]/70 px-4 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+    <nav className="fixed bottom-0 left-0 z-50 w-full border-t border-[#262626] bg-[#131313]/70 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl">
+      <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-around px-4 md:px-10">
       {items.map(({ href, label, icon }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
@@ -23,12 +24,13 @@ export function PlatformBottomNav() {
             key={href}
             href={href}
             className={cn(
-              "flex flex-col items-center justify-center pt-2 transition-transform active:scale-90",
-              active
-                ? "border-t-2 border-white font-bold text-white"
-                : "text-[#c4c7c8] hover:text-white",
+              "relative flex flex-col items-center justify-center px-3 py-2 transition-transform active:scale-90",
+              active ? "font-bold text-white" : "text-[#c4c7c8] hover:text-white",
             )}
           >
+            {active ? (
+              <span className="absolute inset-x-3 top-0 h-0.5 rounded-full bg-white" />
+            ) : null}
             <span
               className="material-symbols-outlined"
               style={
@@ -48,6 +50,7 @@ export function PlatformBottomNav() {
           </Link>
         );
       })}
+      </div>
     </nav>
   );
 }

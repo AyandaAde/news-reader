@@ -44,7 +44,8 @@ export function PlatformMiniPlayer() {
   const duration = current.duration ?? "3:28";
 
   return (
-    <div className="fixed bottom-20 left-4 right-4 z-40">
+    <div className="pointer-events-none fixed bottom-20 left-0 right-0 z-40 px-4 md:px-10">
+      <div className="pointer-events-auto mx-auto max-w-[1200px]">
       <div className="platform-player-bar flex flex-col gap-2 rounded-2xl p-2.5">
         <div className="flex items-center gap-2.5">
           <div className="relative size-9 shrink-0 overflow-hidden rounded-lg bg-white/10">
@@ -128,6 +129,7 @@ export function PlatformMiniPlayer() {
             {duration}
           </span>
         </div>
+      </div>
       </div>
     </div>
   );

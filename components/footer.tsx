@@ -58,6 +58,7 @@ export function Footer() {
               links={[
                 { label: t("nav.features"), href: "#features" },
                 { label: t("nav.listen"), href: "#listen" },
+                { label: t("nav.download"), href: "#download" },
                 { label: t("nav.getStarted"), href: "#get-started" },
               ]}
             />

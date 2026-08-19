@@ -1,4 +1,5 @@
 import type { Resource } from "i18next";
+import { downloadNavLabels, downloadTranslations } from "./download-i18n";
 
 export const defaultLanguage = "en";
 
@@ -33,6 +34,7 @@ const en = {
     features: "Features",
     listen: "Listen",
     getStarted: "Get Started",
+    download: downloadNavLabels.en,
     signIn: "Sign In",
   },
   hero: {
@@ -108,6 +110,7 @@ const en = {
       "Keep up without looking down. Start your first Eilo briefing in minutes.",
     button: "Get Started",
   },
+  download: downloadTranslations.en,
   footer: {
     description:
       "Your personal audio companion a calmer way to keep up with what matters.",
@@ -170,6 +173,7 @@ const es = {
     features: "Funciones",
     listen: "Escuchar",
     getStarted: "Empezar",
+    download: downloadNavLabels.es,
     signIn: "Iniciar sesión",
   },
   hero: {
@@ -245,6 +249,7 @@ const es = {
       "Mantente al día sin mirar abajo. Empieza tu primer briefing de Eilo en minutos.",
     button: "Empezar",
   },
+  download: downloadTranslations.es,
   footer: {
     description:
       "Tu compañero de audio personal una forma más calmada de seguir lo que importa.",
@@ -307,6 +312,7 @@ const zh = {
     features: "功能",
     listen: "收听",
     getStarted: "开始使用",
+    download: downloadNavLabels.zh,
     signIn: "登录",
   },
   hero: {
@@ -371,6 +377,7 @@ const zh = {
     description: "不必低头刷屏也能跟上。几分钟即可开始你的第一份 Eilo 简报。",
     button: "开始使用",
   },
+  download: downloadTranslations.zh,
   footer: {
     description: "你的个人音频伴侣 更平静地跟上真正重要的事。",
     product: "产品",
@@ -430,6 +437,7 @@ const hi = {
     features: "विशेषताएँ",
     listen: "सुनें",
     getStarted: "शुरू करें",
+    download: downloadNavLabels.hi,
     signIn: "साइन इन",
   },
   hero: {
@@ -505,6 +513,7 @@ const hi = {
       "नीचे देखे बिना अपडेट रहें। कुछ ही मिनटों में अपनी पहली Eilo ब्रीफिंग शुरू करें।",
     button: "शुरू करें",
   },
+  download: downloadTranslations.hi,
   footer: {
     description:
       "आपका व्यक्तिगत ऑडियो साथी जो महत्वपूर्ण है उसे शांति से फॉलो करने का तरीका।",
@@ -566,6 +575,7 @@ const pt = {
     features: "Recursos",
     listen: "Ouvir",
     getStarted: "Começar",
+    download: downloadNavLabels.pt,
     signIn: "Entrar",
   },
   hero: {
@@ -641,6 +651,7 @@ const pt = {
       "Acompanhe sem olhar para baixo. Comece seu primeiro briefing da Eilo em minutos.",
     button: "Começar",
   },
+  download: downloadTranslations.pt,
   footer: {
     description:
       "Seu companheiro de áudio pessoal uma forma mais calma de acompanhar o que importa.",
@@ -703,6 +714,7 @@ const fr = {
     features: "Fonctionnalités",
     listen: "Écouter",
     getStarted: "Commencer",
+    download: downloadNavLabels.fr,
     signIn: "Connexion",
   },
   hero: {
@@ -778,6 +790,7 @@ const fr = {
       "Restez à jour sans baisser les yeux. Lancez votre premier briefing Eilo en quelques minutes.",
     button: "Commencer",
   },
+  download: downloadTranslations.fr,
   footer: {
     description:
       "Votre compagnon audio personnel une façon plus calme de suivre ce qui compte.",
@@ -839,6 +852,7 @@ const ar = {
     features: "الميزات",
     listen: "استمع",
     getStarted: "ابدأ",
+    download: downloadNavLabels.ar,
     signIn: "تسجيل الدخول",
   },
   hero: {
@@ -914,6 +928,7 @@ const ar = {
       "تابع دون أن تنظر للأسفل. ابدأ أول إحاطة من Eilo في دقائق.",
     button: "ابدأ",
   },
+  download: downloadTranslations.ar,
   footer: {
     description:
       "رفيقك الصوتي الشخصي طريقة أكثر هدوءًا لمتابعة ما يهم.",
@@ -976,6 +991,7 @@ const ja = {
     features: "機能",
     listen: "聴く",
     getStarted: "はじめる",
+    download: downloadNavLabels.ja,
     signIn: "サインイン",
   },
   hero: {
@@ -1051,6 +1067,7 @@ const ja = {
       "下を向かずにキャッチアップ。数分で最初のEiloブリーフィングを始めましょう。",
     button: "はじめる",
   },
+  download: downloadTranslations.ja,
   footer: {
     description:
       "あなたのパーソナルオーディオコンパニオン 大切なことを、より穏やかに追い続ける方法。",
@@ -1112,6 +1129,7 @@ const de = {
     features: "Funktionen",
     listen: "Hören",
     getStarted: "Loslegen",
+    download: downloadNavLabels.de,
     signIn: "Anmelden",
   },
   hero: {
@@ -1187,6 +1205,7 @@ const de = {
       "Bleib auf dem Laufenden, ohne nach unten zu schauen. Starte dein erstes Eilo-Briefing in Minuten.",
     button: "Loslegen",
   },
+  download: downloadTranslations.de,
   footer: {
     description:
       "Dein persönlicher Audio-Begleiter ein ruhigerer Weg, dem zu folgen, was zählt.",
@@ -1248,6 +1267,7 @@ const id = {
     features: "Fitur",
     listen: "Dengarkan",
     getStarted: "Mulai",
+    download: downloadNavLabels.id,
     signIn: "Masuk",
   },
   hero: {
@@ -1323,6 +1343,7 @@ const id = {
       "Tetap update tanpa menunduk. Mulai briefing Eilo pertamamu dalam hitungan menit.",
     button: "Mulai",
   },
+  download: downloadTranslations.id,
   footer: {
     description:
       "Pendamping audio pribadimu cara lebih tenang untuk mengikuti yang penting.",
@@ -1385,6 +1406,7 @@ const ms = {
     features: "Ciri",
     listen: "Dengar",
     getStarted: "Mulakan",
+    download: downloadNavLabels.ms,
     signIn: "Log masuk",
   },
   hero: {
@@ -1460,6 +1482,7 @@ const ms = {
       "Kekal mengikuti tanpa menunduk. Mulakan taklimat Eilo pertama anda dalam beberapa minit.",
     button: "Mulakan",
   },
+  download: downloadTranslations.ms,
   footer: {
     description:
       "Rakan audio peribadi anda cara yang lebih tenang untuk mengikuti perkara penting.",

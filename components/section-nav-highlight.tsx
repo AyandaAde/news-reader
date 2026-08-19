@@ -13,6 +13,7 @@ const HIGHLIGHT_IDS = new Set([
   "listen-email-inbox",
   "listen-web-news",
   "listen-routine",
+  "download",
 ]);
 const HIGHLIGHT_MS = 1600;
 

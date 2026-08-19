@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type MouseEvent, type RefObject } from "react";
 import Link from "next/link";
-import { AnimatePresence, motion } from "motion/react";
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
+import { useEffect, useId, useRef, useState, type MouseEvent, type RefObject } from "react";
 import { usePlatformPlayback } from "@/components/platform/platform-playback-provider";
 import { useOutsideClick } from "@/hooks/use-outside-click";
 import type { PlatformPlaybackItem } from "@/lib/platform-playback";
@@ -94,7 +94,8 @@ export function ExpandableCards({
   const isCardActive = (cardId: string) => active?.id === cardId;
 
   return (
-    <>
+    <LayoutGroup id={id}>
+      <>
       <AnimatePresence>
         {active ? (
           <motion.div
@@ -231,7 +232,7 @@ export function ExpandableCards({
                 card.accent
                   ? "border-0"
                   : "border border-[#262626] hover:border-[#3a3a3a]",
-                layout === "scroll" && "w-[140px] shrink-0",
+                layout === "scroll" && "w-[148px] shrink-0 sm:w-[168px] md:w-[196px]",
                 isCardActive(card.id) && "opacity-0",
               )}
             >
@@ -351,6 +352,7 @@ export function ExpandableCards({
           ))}
         </ul>
       )}
-    </>
+      </>
+    </LayoutGroup>
   );
 }

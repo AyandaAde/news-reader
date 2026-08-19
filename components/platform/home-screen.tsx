@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ExpandableCards,
   type ExpandableCardItem,
@@ -205,19 +205,21 @@ export function PlatformHomeScreen() {
   const trendingCards = useMemo(() => toTrendingCards(trendingItems), []);
   const discoverCards = useMemo(() => toDiscoverCards(madeForYouItems), []);
 
-  const briefDate = useMemo(
-    () =>
+  const [briefDate, setBriefDate] = useState("");
+
+  useEffect(() => {
+    setBriefDate(
       new Date().toLocaleDateString("en-US", {
         weekday: "long",
         month: "short",
         day: "numeric",
       }),
-    [],
-  );
+    );
+  }, []);
 
   return (
     <>
-      <section className="mb-10">
+      <section className="mb-8 md:mb-10">
         <PlaceholdersAndVanishInput
           placeholders={[...homeSearchPlaceholders]}
           onChange={() => {}}
@@ -226,7 +228,7 @@ export function PlatformHomeScreen() {
             router.push("/discover");
           }}
           className={cn(
-            "mx-0 h-11 max-w-none !bg-[#1f1f1f] border border-[#262626] shadow-none",
+            "mx-0 h-11 max-w-none overflow-hidden !bg-[#1f1f1f] border border-[#262626] shadow-none",
             "has-[input:focus-visible]:border-white/30",
             "[&_input]:text-white [&_input]:placeholder:text-transparent",
             "[&_p]:text-[#888888]",
@@ -236,21 +238,24 @@ export function PlatformHomeScreen() {
         />
       </section>
 
-      <section className="mb-10">
-        <h2 className="mb-2 text-2xl font-semibold leading-8 text-white">
+      <section className="mb-8 md:mb-10">
+        <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
           Your Daily Brief
         </h2>
 
-        <div className="mx-auto w-full rounded-xl border border-white/10 bg-gradient-to-br from-[#1a2b4a] to-[#0a1428] p-6 shadow-2xl">
-          <div className="flex flex-col items-center gap-6 md:flex-row md:items-center md:justify-between">
-            <div className="flex w-full flex-grow flex-col items-center text-center md:items-start md:text-left">
-              <h3 className="mb-1 text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl md:leading-[56px]">
-                {briefDate}
+        <div className="w-full overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-[#1a2b4a] to-[#0a1428] p-5 shadow-2xl md:p-6">
+          <div className="flex flex-col gap-5 md:flex-row md:items-start md:justify-between md:gap-6">
+            <div className="min-w-0 flex-1">
+              <h3
+                className="mb-1 text-3xl font-bold leading-tight tracking-tight text-white md:text-4xl"
+                suppressHydrationWarning
+              >
+                {briefDate || "\u00A0"}
               </h3>
-              <p className="mb-6 text-lg leading-7 text-white/80">
+              <p className="mb-5 text-base leading-7 text-white/80 md:mb-6 md:text-lg">
                 11 stories curated for you
               </p>
-              <div className="flex justify-center gap-3 md:justify-start">
+              <div className="flex flex-wrap gap-3">
                 <button
                   type="button"
                   onClick={() =>
@@ -278,10 +283,10 @@ export function PlatformHomeScreen() {
               </div>
             </div>
 
-            <div className="flex w-full flex-col items-center text-center md:w-auto md:items-end md:text-right">
+            <div className="flex shrink-0 flex-col items-start md:items-end md:text-right">
               <div className="flex items-center gap-3">
-                <div className="flex flex-col items-center md:items-end">
-                  <div className="flex items-baseline gap-2">
+                <div className="flex flex-col items-start md:items-end">
+                  <div className="flex flex-wrap items-baseline justify-start gap-x-2 gap-y-1 md:justify-end">
                     <span className="text-2xl font-semibold leading-8 text-white">
                       70°F
                     </span>
@@ -295,7 +300,7 @@ export function PlatformHomeScreen() {
                 </div>
                 <MaterialIcon
                   name="partly_cloudy_day"
-                  className="text-[32px] text-white"
+                  className="shrink-0 text-[32px] text-white"
                 />
               </div>
             </div>
@@ -303,7 +308,7 @@ export function PlatformHomeScreen() {
         </div>
       </section>
 
-      <section className="mb-10">
+      <section className="mb-8 md:mb-10">
         <PlatformScrollSectionHeader
           title="Your Briefings"
           onPrevious={topBriefingsScroll.scrollPrevious}
@@ -316,14 +321,14 @@ export function PlatformHomeScreen() {
         />
       </section>
 
-      <section className="mb-10">
+      <section className="mb-8 md:mb-10">
         <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
           For You
         </h2>
-        <ExpandableCards cards={forYouCards} />
+        <ExpandableCards cards={forYouCards} layout="grid" />
       </section>
 
-      <section className="mb-10">
+      <section className="mb-8 md:mb-10">
         <PlatformScrollSectionHeader
           title="Trending"
           onPrevious={trendingScroll.scrollPrevious}
@@ -336,7 +341,7 @@ export function PlatformHomeScreen() {
         />
       </section>
 
-      <section className="mb-10">
+      <section className="mb-8 md:mb-10">
         <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
           Discover
         </h2>
@@ -359,11 +364,11 @@ export function PlatformHomeScreen() {
         </div>
       </section>
 
-      <section className="mb-16">
+      <section className="mb-12 md:mb-16">
         <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
-          {discoverFilter}
+          {discoverFilter === "All" ? "Made For You" : discoverFilter}
         </h2>
-        <ExpandableCards cards={discoverCards} />
+        <ExpandableCards cards={discoverCards} layout="grid" />
       </section>
     </>
   );

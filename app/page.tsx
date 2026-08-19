@@ -4,6 +4,7 @@ import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { FeaturesSection } from "@/components/features-section";
 import { IntegrationSection } from "@/components/integration-section";
+import { DownloadAppSection } from "@/components/download-app-section";
 import { CtaSection } from "@/components/cta-section";
 import { Footer } from "@/components/footer";
 import { SectionNavHighlight } from "@/components/section-nav-highlight";
@@ -18,6 +19,7 @@ export default function Home() {
         <Hero />
         <FeaturesSection />
         <IntegrationSection />
+        <DownloadAppSection />
         <CtaSection />
       </main>
       <Footer />

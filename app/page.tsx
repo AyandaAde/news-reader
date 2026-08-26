@@ -14,7 +14,7 @@ export default function Home() {
   return (
     <>
       <SectionNavHighlight />
-      <Header />
+      <Header logoVariant="wordmark" />
       <main>
         <Hero />
         <FeaturesSection />

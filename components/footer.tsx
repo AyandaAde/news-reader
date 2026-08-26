@@ -2,6 +2,7 @@
 
 import { EiloLogo } from "@/components/eilo-logo";
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
 import { FooterLanguageSelect } from "@/components/footer-language-select";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useI18n } from "@/components/i18n-provider";
@@ -37,6 +38,7 @@ function FooterLinkColumn({
 
 export function Footer() {
   const { t } = useI18n();
+  const { isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const year = new Date().getFullYear();
 
   return (
@@ -46,7 +48,7 @@ export function Footer() {
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr] lg:gap-8">
             <div>
               <Link href="/" className="mb-5 inline-flex" aria-label="Eilo home">
-                <EiloLogo />
+                <EiloLogo variant="wordmark" />
               </Link>
               <p className="mb-8 max-w-xs text-sm leading-6 text-[#6b6570] dark:text-[#968da1]">
                 {t("footer.description")}
@@ -59,7 +61,9 @@ export function Footer() {
                 { label: t("nav.features"), href: "#features" },
                 { label: t("nav.listen"), href: "#listen" },
                 { label: t("nav.download"), href: "#download" },
-                { label: t("nav.getStarted"), href: "#get-started" },
+                ...(isSignedIn
+                  ? [{ label: t("nav.platform"), href: "/home" }]
+                  : [{ label: t("nav.getStarted"), href: "#get-started" }]),
               ]}
             />
 

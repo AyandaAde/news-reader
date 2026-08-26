@@ -83,7 +83,7 @@ export function PlatformMiniPlayer() {
             >
               <MaterialIcon
                 name={isPlaying ? "pause" : "play_arrow"}
-                filled={isPlaying}
+                filled
                 className="text-[20px]"
               />
             </button>

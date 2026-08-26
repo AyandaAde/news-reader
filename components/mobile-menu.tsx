@@ -3,7 +3,9 @@
 import { cn } from "@/lib/utils";
 import * as Dialog from "@radix-ui/react-dialog";
 import Link from "next/link";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { useI18n } from "@/components/i18n-provider";
 
 interface MobileMenuProps {
@@ -12,14 +14,26 @@ interface MobileMenuProps {
 
 export const MobileMenu = ({ className }: MobileMenuProps) => {
   const { t } = useI18n();
+  const { isSignedIn } = useAuth({ treatPendingAsSignedOut: false });
   const [isOpen, setIsOpen] = useState(false);
 
-  const menuItems = [
-    { name: t("nav.features"), href: "/#features" },
-    { name: t("nav.listen"), href: "/#listen" },
-    { name: t("nav.download"), href: "/#download" },
-    { name: t("nav.getStarted"), href: "/#get-started" },
-  ];
+  const menuItems = useMemo(
+    () =>
+      isSignedIn
+        ? [
+            { name: t("nav.features"), href: "/#features" },
+            { name: t("nav.listen"), href: "/#listen" },
+            { name: t("nav.platform"), href: "/home" },
+            { name: t("nav.download"), href: "/#download" },
+          ]
+        : [
+            { name: t("nav.features"), href: "/#features" },
+            { name: t("nav.listen"), href: "/#listen" },
+            { name: t("nav.download"), href: "/#download" },
+            { name: t("nav.getStarted"), href: "/#get-started" },
+          ],
+    [isSignedIn, t],
+  );
 
   const handleLinkClick = () => {
     setIsOpen(false);
@@ -79,12 +93,16 @@ export const MobileMenu = ({ className }: MobileMenuProps) => {
             </div>
 
             <Link
-              href="/sign-in"
+              href={isSignedIn ? "/home" : "/sign-in"}
               onClick={handleLinkClick}
               className="mt-10 font-mono text-2xl uppercase tracking-[0.12em] text-[#e8c547] transition-colors duration-150 hover:text-[#f0d35c]"
             >
-              {t("nav.signIn")}
+              {isSignedIn ? t("nav.platform") : t("nav.signIn")}
             </Link>
+
+            <div className="mt-8">
+              <ThemeToggle variant="onDark" className="my-0" />
+            </div>
           </nav>
         </Dialog.Content>
       </Dialog.Portal>

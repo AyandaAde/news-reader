@@ -7,7 +7,10 @@ import {
   ExpandableCards,
   type ExpandableCardItem,
 } from "@/components/platform/expandable-cards";
-import { PlatformScrollSectionHeader } from "@/components/platform/platform-scroll-section-header";
+import {
+  PlatformScrollNavButtons,
+  PlatformScrollSectionHeader,
+} from "@/components/platform/platform-scroll-section-header";
 import { usePlatformPlayback } from "@/components/platform/platform-playback-provider";
 import { useHorizontalScroll } from "@/components/platform/use-horizontal-scroll";
 import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
@@ -256,24 +259,13 @@ export function PlatformDiscoverScreen() {
       <section className="mb-10">
         <div className="mb-3 flex items-center justify-between gap-4">
           <h2 className="text-2xl font-semibold leading-8 text-white">Live</h2>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={liveScroll.scrollPrevious}
-              aria-label="Scroll Live left"
-              className="flex size-9 cursor-pointer items-center justify-center rounded-full border border-[#262626] bg-[#1f1f1f] text-white transition-colors hover:bg-white/10 active:scale-95"
-            >
-              <MaterialIcon name="chevron_left" className="text-[20px]" />
-            </button>
-            <button
-              type="button"
-              onClick={liveScroll.scrollNext}
-              aria-label="Scroll Live right"
-              className="flex size-9 cursor-pointer items-center justify-center rounded-full border border-[#262626] bg-[#1f1f1f] text-white transition-colors hover:bg-white/10 active:scale-95"
-            >
-              <MaterialIcon name="chevron_right" className="text-[20px]" />
-            </button>
-          </div>
+          <PlatformScrollNavButtons
+            title="Live"
+            onPrevious={liveScroll.scrollPrevious}
+            onNext={liveScroll.scrollNext}
+            canScrollPrevious={liveScroll.canScrollPrevious}
+            canScrollNext={liveScroll.canScrollNext}
+          />
         </div>
         <ul
           ref={liveScroll.ref}
@@ -323,7 +315,7 @@ export function PlatformDiscoverScreen() {
               <div className="p-3">
                 <h4 className="mb-0.5 text-sm font-bold text-white">{station.title}</h4>
                 <div className="flex items-center gap-1.5 text-[#888888]">
-                  <MaterialIcon name="group" className="text-[12px]" />
+                  <MaterialIcon name="headphones" className="text-[12px]" />
                   <span className="text-[11px] font-medium tracking-[0.05em]">
                     {station.listeners} listening
                   </span>
@@ -337,35 +329,14 @@ export function PlatformDiscoverScreen() {
 
       <section className="mb-10">
         <div className="mb-3 flex items-center justify-between gap-4">
-          <div className="flex min-w-0 items-baseline gap-3">
-            <h2 className="text-2xl font-semibold leading-8 text-white">
-              Trending Now
-            </h2>
-            <button
-              type="button"
-              className="shrink-0 text-[12px] font-medium tracking-[0.05em] text-[#888888] transition-colors hover:text-white"
-            >
-              View All
-            </button>
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={trendingScroll.scrollPrevious}
-              aria-label="Scroll Trending Now left"
-              className="flex size-9 cursor-pointer items-center justify-center rounded-full border border-[#262626] bg-[#1f1f1f] text-white transition-colors hover:bg-white/10 active:scale-95"
-            >
-              <MaterialIcon name="chevron_left" className="text-[20px]" />
-            </button>
-            <button
-              type="button"
-              onClick={trendingScroll.scrollNext}
-              aria-label="Scroll Trending Now right"
-              className="flex size-9 cursor-pointer items-center justify-center rounded-full border border-[#262626] bg-[#1f1f1f] text-white transition-colors hover:bg-white/10 active:scale-95"
-            >
-              <MaterialIcon name="chevron_right" className="text-[20px]" />
-            </button>
-          </div>
+          <h2 className="text-2xl font-semibold leading-8 text-white">Trending Now</h2>
+          <PlatformScrollNavButtons
+            title="Trending Now"
+            onPrevious={trendingScroll.scrollPrevious}
+            onNext={trendingScroll.scrollNext}
+            canScrollPrevious={trendingScroll.canScrollPrevious}
+            canScrollNext={trendingScroll.canScrollNext}
+          />
         </div>
 
         <ul
@@ -431,6 +402,8 @@ export function PlatformDiscoverScreen() {
           title="Curated for you"
           onPrevious={podcastScroll.scrollPrevious}
           onNext={podcastScroll.scrollNext}
+          canScrollPrevious={podcastScroll.canScrollPrevious}
+          canScrollNext={podcastScroll.canScrollNext}
         />
         <ExpandableCards
           cards={podcastCards}

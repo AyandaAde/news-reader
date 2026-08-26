@@ -1,4 +1,10 @@
 import { sendEmail } from "@/lib/emails/mailer";
+import {
+  getNewDeviceSignInEmailSubject,
+  parseNewDeviceSignInDetails,
+  renderNewDeviceSignInEmail,
+  renderNewDeviceSignInEmailText,
+} from "@/lib/emails/new-device-sign-in-email";
 import { resolveVerificationLocale } from "@/lib/emails/resolve-verification-locale";
 import {
   getVerificationEmailSubject,
@@ -17,6 +23,8 @@ const VERIFICATION_CODE_SLUGS = new Set([
   "sign_up_code",
 ]);
 
+const NEW_DEVICE_SIGN_IN_SLUG = "new_device_sign_in";
+
 type ClerkEmailData = {
   slug?: string | null;
   to_email_address?: string | null;
@@ -29,6 +37,7 @@ type ClerkEmailData = {
     [key: string]: unknown;
   } | null;
   user?: {
+    first_name?: string | null;
     unsafe_metadata?: { locale?: string | null } | null;
     public_metadata?: { locale?: string | null } | null;
   } | null;
@@ -53,7 +62,30 @@ function isVerificationEmailSlug(slug: string) {
   return /verification|sign[_-]?in|sign[_-]?up/i.test(slug);
 }
 
-async function handleEmailCreated(data: ClerkEmailData) {
+async function handleNewDeviceSignInEmail(data: ClerkEmailData) {
+  const to = data.to_email_address ?? "";
+
+  if (!to) {
+    console.error("Clerk webhook: new device sign-in email skipped", {
+      hasTo: false,
+    });
+    return new NextResponse("Ignored email event", { status: 200 });
+  }
+
+  const locale = resolveVerificationLocale({ clerkUser: data.user });
+  const details = parseNewDeviceSignInDetails(data.data);
+
+  await sendEmail({
+    to,
+    subject: getNewDeviceSignInEmailSubject(locale),
+    html: renderNewDeviceSignInEmail({ details, locale }),
+    text: renderNewDeviceSignInEmailText({ details, locale }),
+  });
+
+  return new NextResponse("New device sign-in email sent", { status: 200 });
+}
+
+async function handleVerificationEmail(data: ClerkEmailData) {
   const slug = data.slug ?? "";
   const to = data.to_email_address ?? "";
   const otpCode = readOtpCode(data);
@@ -79,6 +111,16 @@ async function handleEmailCreated(data: ClerkEmailData) {
   });
 
   return new NextResponse("Verification email sent", { status: 200 });
+}
+
+async function handleEmailCreated(data: ClerkEmailData) {
+  const slug = data.slug ?? "";
+
+  if (slug === NEW_DEVICE_SIGN_IN_SLUG) {
+    return handleNewDeviceSignInEmail(data);
+  }
+
+  return handleVerificationEmail(data);
 }
 
 export async function POST(req: NextRequest) {

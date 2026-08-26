@@ -56,11 +56,13 @@ export function ExpandableCards({
   cards,
   className,
   layout = "list",
+  size = "default",
   scrollRef,
 }: {
   cards: ExpandableCardItem[];
   className?: string;
   layout?: "list" | "grid" | "scroll";
+  size?: "default" | "compact" | "medium";
   scrollRef?: RefObject<HTMLUListElement | null>;
 }) {
   const [active, setActive] = useState<ExpandableCardItem | null>(null);
@@ -92,6 +94,45 @@ export function ExpandableCards({
   useOutsideClick(ref, () => setActive(null));
 
   const isCardActive = (cardId: string) => active?.id === cardId;
+  const gridSize =
+    layout === "grid" && size !== "default"
+      ? size
+      : layout === "grid"
+        ? "default"
+        : null;
+
+  const gridClassName =
+    gridSize === "compact"
+      ? "grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6"
+      : gridSize === "medium"
+        ? "grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5"
+        : "grid grid-cols-2 gap-4 md:grid-cols-3";
+
+  const imageHeightClassName =
+    gridSize === "compact" ? "h-[96px]" : gridSize === "medium" ? "h-[118px]" : "h-[140px]";
+
+  const bodyPaddingClassName = gridSize === "default" ? "p-2.5" : "p-2";
+
+  const titleClassName =
+    gridSize === "compact"
+      ? "text-[10px]"
+      : gridSize === "medium"
+        ? "text-[11px]"
+        : "text-[12px]";
+
+  const descriptionClassName =
+    gridSize === "compact"
+      ? "text-[9px]"
+      : gridSize === "medium"
+        ? "text-[9px]"
+        : "text-[10px]";
+
+  const badgeClassName =
+    gridSize === "compact"
+      ? "px-1.5 py-0.5 text-[8px]"
+      : gridSize === "medium"
+        ? "px-1.5 py-0.5 text-[9px]"
+        : "px-2 py-0.5 text-[10px]";
 
   return (
     <LayoutGroup id={id}>
@@ -217,7 +258,7 @@ export function ExpandableCards({
           className={cn(
             layout === "scroll"
               ? "hide-scrollbar -mx-4 flex gap-4 overflow-x-auto px-4 pb-1"
-              : "grid grid-cols-2 gap-4 md:grid-cols-3",
+              : gridClassName,
             active && "pointer-events-none",
             className,
           )}
@@ -238,7 +279,7 @@ export function ExpandableCards({
             >
               <motion.div
                 layoutId={`image-${card.id}-${id}`}
-                className="relative h-[140px] overflow-hidden"
+                className={cn("relative overflow-hidden", imageHeightClassName)}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -253,23 +294,32 @@ export function ExpandableCards({
                 {card.badge ? (
                   <motion.span
                     layoutId={`badge-${card.id}-${id}`}
-                    className="absolute left-2 top-2 rounded-full border border-[#262626] bg-[#1F1F1F]/90 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-[#c4c7c8] backdrop-blur-sm"
+                    className={cn(
+                      "absolute left-2 top-2 rounded-full border border-[#262626] bg-[#1F1F1F]/90 font-mono uppercase tracking-widest text-[#c4c7c8] backdrop-blur-sm",
+                      badgeClassName,
+                    )}
                   >
                     {card.badge}
                   </motion.span>
                 ) : null}
               </motion.div>
 
-              <div className="p-2.5">
+              <div className={bodyPaddingClassName}>
                 <motion.h3
                   layoutId={`title-${card.id}-${id}`}
-                  className="truncate font-mono text-[12px] font-medium leading-tight tracking-[0.05em] text-white"
+                  className={cn(
+                    "truncate font-mono font-medium leading-tight tracking-[0.05em] text-white",
+                    titleClassName,
+                  )}
                 >
                   {card.title}
                 </motion.h3>
                 <motion.p
                   layoutId={`description-${card.id}-${id}`}
-                  className="mt-0.5 truncate font-mono text-[10px] tracking-[0.05em] text-[#888888]"
+                  className={cn(
+                    "mt-0.5 truncate font-mono tracking-[0.05em] text-[#888888]",
+                    descriptionClassName,
+                  )}
                 >
                   {card.description}
                 </motion.p>

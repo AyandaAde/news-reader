@@ -2,12 +2,13 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useSignIn, useSignUp } from "@clerk/nextjs";
+import { useSignIn, useSignUp, useAuth } from "@clerk/nextjs";
 import type { OAuthStrategy } from "@clerk/shared/types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { Loader2, Mail } from "lucide-react";
+import { Loader2, Mail, User } from "lucide-react";
 import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -32,6 +33,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { navigateAfterAuth } from "@/lib/clerk-nav";
+import { splitDisplayName } from "@/lib/onboarding";
 import { cn } from "@/lib/utils";
 
 type AuthMode = "sign-in" | "sign-up";
@@ -115,11 +117,21 @@ function DecorativeCard({
   );
 }
 
-function createEmailSchema(t: (key: string) => string) {
+function createAuthFormSchema(t: (key: string) => string, mode: AuthMode) {
+  const email = z
+    .email(t("auth.emailInvalid"))
+    .min(1, t("auth.emailRequired"));
+
   return z.object({
-    email: z
-      .email(t("auth.emailInvalid"))
-      .min(1, t("auth.emailRequired"))
+    email,
+    name:
+      mode === "sign-up"
+        ? z.string().trim().min(1, t("auth.displayNameRequired"))
+        : z.string(),
+    acceptedTerms:
+      mode === "sign-up"
+        ? z.literal(true, { message: t("auth.termsRequired") })
+        : z.boolean(),
   });
 }
 
@@ -132,26 +144,131 @@ function createCodeSchema(t: (key: string) => string) {
   });
 }
 
-type EmailValues = z.infer<ReturnType<typeof createEmailSchema>>;
+type AuthFormValues = {
+  email: string;
+  name: string;
+  acceptedTerms: boolean;
+};
 type CodeValues = z.infer<ReturnType<typeof createCodeSchema>>;
+
+function getSignUpProfileFields(rawName: string) {
+  const { firstName, lastName } = splitDisplayName(rawName.trim());
+  const resolvedFirstName = firstName || "Friend";
+
+  return {
+    firstName: resolvedFirstName,
+    lastName: lastName || resolvedFirstName,
+  };
+}
+
+function buildSignUpCompletionParams(rawName: string) {
+  return {
+    ...getSignUpProfileFields(rawName),
+    legalAccepted: true,
+  };
+}
+
+function isSignUpReadyToFinalize(signUp: {
+  status: string;
+  createdSessionId?: string | null;
+}) {
+  return signUp.status === "complete" || Boolean(signUp.createdSessionId);
+}
+
+function buildSignUpUpdateParams(
+  rawName: string,
+  missingFields: readonly string[],
+) {
+  const missing = new Set(missingFields);
+  const params: {
+    firstName?: string;
+    lastName?: string;
+    legalAccepted?: boolean;
+  } = {};
+
+  if (missing.has("first_name") || missing.has("last_name")) Object.assign(params, getSignUpProfileFields(rawName));
+
+  if (missing.has("legal_accepted")) params.legalAccepted = true;
+
+
+  return Object.keys(params).length > 0 ? params : null;
+}
+
+function isExistingAccountError(
+  code?: string | null,
+  message?: string | null,
+) {
+  const normalizedCode = code?.toLowerCase() ?? "";
+  if (
+    normalizedCode === "form_identifier_exists" ||
+    normalizedCode === "identification_exists" ||
+    normalizedCode.includes("identifier_exists")
+  ) {
+    return true;
+  }
+
+  const normalizedMessage = message?.toLowerCase() ?? "";
+  return (
+    normalizedMessage.includes("already") &&
+    (normalizedMessage.includes("account") ||
+      normalizedMessage.includes("exists") ||
+      normalizedMessage.includes("taken"))
+  );
+}
+
+function isAlreadySignedInError(
+  code?: string | null,
+  message?: string | null,
+) {
+  const normalizedCode = code?.toLowerCase() ?? "";
+  if (
+    normalizedCode === "identifier_already_signed_in" ||
+    normalizedCode === "session_exists" ||
+    normalizedCode.includes("already_signed_in")
+  ) {
+    return true;
+  }
+
+  const normalizedMessage = message?.toLowerCase() ?? "";
+  return normalizedMessage.includes("already signed in");
+}
+
+function isClerkEmptyResponseError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("Unexpected end of JSON input") ||
+    message.includes("Failed to execute 'json' on 'Response'")
+  );
+}
 
 function AuthForm({
   mode,
   email,
+  name,
+  acceptedTerms,
   onEmailChange,
+  onNameChange,
+  onAcceptedTermsChange,
   onSwitchMode,
   switchHint,
   onClearSwitchHint,
 }: {
   mode: AuthMode;
   email: string;
+  name: string;
+  acceptedTerms: boolean;
   onEmailChange: (email: string) => void;
+  onNameChange: (name: string) => void;
+  onAcceptedTermsChange: (accepted: boolean) => void;
   onSwitchMode: (mode: AuthMode, hint?: string) => void;
   switchHint: string | null;
   onClearSwitchHint: () => void;
 }) {
   const { t, language } = useI18n();
   const router = useRouter();
+  const { isSignedIn, isLoaded: isAuthLoaded } = useAuth({
+    treatPendingAsSignedOut: false,
+  });
 
   const { signIn, fetchStatus: signInFetchStatus } = useSignIn();
   const { signUp, fetchStatus: signUpFetchStatus } = useSignUp();
@@ -164,16 +281,23 @@ function AuthForm({
   const [isResending, setIsResending] = useState(false);
   const verifyingRef = useRef(false);
 
-  const emailSchema = useMemo(() => createEmailSchema(t), [t]);
+  const authFormSchema = useMemo(
+    () => createAuthFormSchema(t, mode),
+    [mode, t],
+  );
   const codeSchema = useMemo(() => createCodeSchema(t), [t]);
 
-  const emailForm = useForm<EmailValues>({
-    resolver: zodResolver(emailSchema),
+  const authForm = useForm<AuthFormValues>({
+    resolver: zodResolver(authFormSchema),
     defaultValues: {
       email,
+      name,
+      acceptedTerms,
     },
     values: {
       email,
+      name,
+      acceptedTerms,
     },
   });
 
@@ -186,6 +310,12 @@ function AuthForm({
   const code = useWatch({ control: codeForm.control, name: "code" });
 
   useEffect(() => {
+    if (isAuthLoaded && isSignedIn) {
+      router.replace("/home");
+    }
+  }, [isAuthLoaded, isSignedIn, router]);
+
+  useEffect(() => {
     if (!switchHint) return;
 
     setFormError(switchHint);
@@ -193,9 +323,7 @@ function AuthForm({
   }, [switchHint, onClearSwitchHint]);
 
   useEffect(() => {
-    if (!verifying || resendSecondsLeft <= 0) {
-      return;
-    }
+    if (!verifying || resendSecondsLeft <= 0) return;
 
     const timer = window.setInterval(() => {
       setResendSecondsLeft((current) => Math.max(0, current - 1));
@@ -205,11 +333,32 @@ function AuthForm({
   }, [verifying, resendSecondsLeft]);
 
   const isBusy =
-    emailForm.formState.isSubmitting ||
+    authForm.formState.isSubmitting ||
     codeForm.formState.isSubmitting ||
     signInFetchStatus === "fetching" ||
     signUpFetchStatus === "fetching" ||
     oauthLoading !== null;
+
+  const redirectToHome = () => {
+    router.replace("/home");
+  };
+
+  const showSignUpError = (message: string) => {
+    toast.error("Error", { description: message });
+    setFormError(message);
+  };
+
+  const redirectToSignInForExistingAccount = async () => {
+    try {
+      await signUp.reset();
+    } catch {
+    }
+
+    setVerifying(false);
+    setResendSecondsLeft(0);
+    codeForm.reset();
+    onSwitchMode("sign-in", t("auth.accountExists"));
+  };
 
   const finalizeSignIn = async () => {
     await signIn.finalize({
@@ -217,18 +366,113 @@ function AuthForm({
     });
   };
 
-  const finalizeSignUp = async () => {
-    await signUp.finalize({
-      navigate: async (args) => navigateAfterAuth(router, args),
-    });
+  const finalizeSignUp = async (
+    options?: { silent?: boolean },
+  ): Promise<boolean> => {
+    try {
+      const { error } = await signUp.finalize({
+        navigate: async (args) => navigateAfterAuth(router, args),
+      });
+
+      if (error) {
+        if (!options?.silent) {
+          showSignUpError(error.longMessage || error.message);
+        }
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      if (isClerkEmptyResponseError(error)) {
+        router.replace("/home");
+        return true;
+      }
+
+      if (!options?.silent) {
+        showSignUpError(
+          error instanceof Error ? error.message : t("auth.genericError"),
+        );
+      }
+      return false;
+    }
+  };
+
+  const ensureSignUpProfileBeforeVerification = async (
+    signUpName: string,
+  ): Promise<boolean> => {
+    if (signUp.missingFields.length === 0) {
+      return true;
+    }
+
+    const updateParams =
+      buildSignUpUpdateParams(signUpName, signUp.missingFields) ??
+      buildSignUpCompletionParams(signUpName);
+
+    try {
+      const { error: updateError } = await signUp.update(updateParams);
+
+      if (updateError) {
+        showSignUpError(updateError.longMessage || updateError.message);
+        return false;
+      }
+    } catch (error) {
+      if (!isClerkEmptyResponseError(error)) {
+        showSignUpError(
+          error instanceof Error ? error.message : t("auth.genericError"),
+        );
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  const sendSignUpVerificationCode = async (
+    targetEmail: string,
+    signUpName: string,
+  ): Promise<boolean> => {
+    if (!(await ensureSignUpProfileBeforeVerification(signUpName))) {
+      return false;
+    }
+
+    const { error: sendError } =
+      await signUp.verifications.sendEmailCode();
+
+    if (sendError) {
+      if (isExistingAccountError(sendError.code, sendError.message)) {
+        await redirectToSignInForExistingAccount();
+        return false;
+      }
+
+      showSignUpError(sendError.longMessage || sendError.message);
+      return false;
+    }
+
+    startVerificationStep();
+    void saveVerificationLocale(targetEmail, language);
+    return true;
+  };
+
+  const finishSignUpAfterVerification = async () => {
+    const ready = isSignUpReadyToFinalize(signUp);
+
+    if (await finalizeSignUp({ silent: !ready })) {
+      return;
+    }
+
+    if (signUp.missingFields.length > 0) {
+      showSignUpError(t("auth.signUpIncomplete"));
+      return;
+    }
+
+    if (!ready) {
+      showSignUpError(t("auth.genericError"));
+    }
   };
 
   const resetVerification = async () => {
-    if (mode === "sign-in") {
-      await signIn.reset();
-    } else {
-      await signUp.reset();
-    }
+    if (mode === "sign-in") await signIn.reset();
+    else await signUp.reset();
 
     setVerifying(false);
     setFormError(null);
@@ -241,16 +485,31 @@ function AuthForm({
     setResendSecondsLeft(RESEND_COOLDOWN_SECONDS);
   };
 
-  const onEmailSubmit = async (values: EmailValues) => {
+  const onAuthSubmit = async (values: AuthFormValues) => {
     setFormError(null);
     onEmailChange(values.email);
 
     if (mode === "sign-in") {
+      if (isSignedIn) {
+        redirectToHome();
+        return;
+      }
+
+      if (signIn.status === "complete") {
+        await finalizeSignIn();
+        return;
+      }
+
       const { error: createError } = await signIn.create({
         identifier: values.email,
       });
 
       if (createError) {
+        if (isAlreadySignedInError(createError.code, createError.message)) {
+          redirectToHome();
+          return;
+        }
+
         if (createError.code === "form_identifier_not_found") {
           onSwitchMode("sign-up", t("auth.accountNotFound"));
           return;
@@ -266,6 +525,11 @@ function AuthForm({
         await signIn.emailCode.sendCode();
 
       if (sendError) {
+        if (isAlreadySignedInError(sendError.code, sendError.message)) {
+          redirectToHome();
+          return;
+        }
+
         setFormError(
           sendError.longMessage || sendError.message,
         );
@@ -277,37 +541,85 @@ function AuthForm({
       return;
     }
 
-    const { error: createError } = await signUp.create({
-      emailAddress: values.email,
-    });
+    const signUpName = values.name.trim();
+    onNameChange(signUpName);
 
-    if (createError) {
-      if (
-        createError.code === "form_identifier_exists" ||
-        createError.code === "identifier_already_signed_in"
-      ) {
-        onSwitchMode("sign-in", t("auth.accountExists"));
+    try {
+      const normalizedEmail = values.email.trim().toLowerCase();
+      const existingEmail = signUp.emailAddress?.trim().toLowerCase() ?? "";
+      const canResumeVerification =
+        signUp.status === "missing_requirements" &&
+        signUp.unverifiedFields.includes("email_address") &&
+        (!existingEmail || existingEmail === normalizedEmail);
+
+      if (canResumeVerification) {
+        await sendSignUpVerificationCode(values.email, signUpName);
         return;
       }
 
-      setFormError(
-        createError.longMessage || createError.message,
-      );
-      return;
+      if (isSignUpReadyToFinalize(signUp)) {
+        await finalizeSignUp();
+        return;
+      }
+
+      if (signUp.id || signUp.status === "missing_requirements") {
+        try {
+          await signUp.reset();
+        } catch {
+        }
+      }
+
+      const { error: createError } = await signUp.create({
+        emailAddress: values.email,
+        ...getSignUpProfileFields(signUpName),
+        legalAccepted: true,
+        locale: language,
+      });
+
+      if (createError) {
+        if (createError.code === "identifier_already_signed_in") {
+          redirectToHome();
+          return;
+        }
+
+        if (isExistingAccountError(createError.code, createError.message)) {
+          await redirectToSignInForExistingAccount();
+          return;
+        }
+
+        showSignUpError(
+          createError.longMessage || createError.message,
+        );
+        return;
+      }
+
+      if (signUp.isTransferable) {
+        await redirectToSignInForExistingAccount();
+        return;
+      }
+
+      await sendSignUpVerificationCode(values.email, signUpName);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      if (isExistingAccountError(null, message)) {
+        await redirectToSignInForExistingAccount();
+        return;
+      }
+
+      if (isClerkEmptyResponseError(error)) {
+        if (signUp.unverifiedFields.includes("email_address")) {
+          await sendSignUpVerificationCode(values.email, signUpName);
+          return;
+        }
+
+        if (isSignUpReadyToFinalize(signUp)) {
+          await finalizeSignUp();
+          return;
+        }
+      }
+
+      showSignUpError(message || t("auth.genericError"));
     }
-
-    const { error: sendError } =
-      await signUp.verifications.sendEmailCode();
-
-    if (sendError) {
-      setFormError(
-        sendError.longMessage || sendError.message,
-      );
-      return;
-    }
-
-    startVerificationStep();
-    void saveVerificationLocale(values.email, language);
   };
 
   const onCodeSubmit = async (values: CodeValues) => {
@@ -315,9 +627,7 @@ function AuthForm({
       values.code.length !== OTP_LENGTH ||
       verifyingRef.current ||
       isBusy
-    ) {
-      return;
-    }
+    ) return;
 
     verifyingRef.current = true;
     setFormError(null);
@@ -330,6 +640,11 @@ function AuthForm({
           });
 
         if (error) {
+          if (isAlreadySignedInError(error.code, error.message)) {
+            redirectToHome();
+            return;
+          }
+
           setFormError(
             error.longMessage || error.message,
           );
@@ -361,31 +676,44 @@ function AuthForm({
         return;
       }
 
-      const { error } =
-        await signUp.verifications.verifyEmailCode({
-          code: values.code,
-        });
+      try {
+        const { error } =
+          await signUp.verifications.verifyEmailCode({
+            code: values.code,
+          });
 
-      if (error) {
-        setFormError(
-          error.longMessage || error.message,
+        if (error) {
+          if (isExistingAccountError(error.code, error.message)) {
+            await redirectToSignInForExistingAccount();
+            return;
+          }
+
+          showSignUpError(
+            error.longMessage || error.message,
+          );
+          codeForm.setValue("code", "");
+          return;
+        }
+
+        if (signUp.isTransferable) {
+          await redirectToSignInForExistingAccount();
+          return;
+        }
+
+        await finishSignUpAfterVerification();
+      } catch (error) {
+        if (isClerkEmptyResponseError(error)) {
+          await finishSignUpAfterVerification();
+          return;
+        }
+
+        showSignUpError(
+          error instanceof Error ? error.message : t("auth.genericError"),
         );
         codeForm.setValue("code", "");
-        return;
       }
 
-      if (signUp.status === "complete") {
-        await finalizeSignUp();
-        return;
-      }
-
-      if (signUp.status === "missing_requirements") {
-        router.push("/sign-in/continue");
-        return;
-      }
-
-      setFormError(t("auth.genericError"));
-      codeForm.setValue("code", "");
+      return;
     } finally {
       verifyingRef.current = false;
     }
@@ -395,25 +723,60 @@ function AuthForm({
     strategy: OAuthStrategy,
   ) => {
     setFormError(null);
+
+    if (mode === "sign-in" && isSignedIn) {
+      redirectToHome();
+      return;
+    }
+
+    if (mode === "sign-in" && signIn.status === "complete") {
+      await finalizeSignIn();
+      return;
+    }
+
+    if (mode === "sign-up" && !acceptedTerms) {
+      authForm.setError("acceptedTerms", {
+        message: t("auth.termsRequired"),
+      });
+      return;
+    }
+
     setOauthLoading(strategy);
+
+    if (typeof window !== "undefined") {
+      window.sessionStorage.setItem("eilo-oauth-mode", mode);
+    }
+
+    const oauthName = authForm.getValues("name").trim() || name.trim();
+    const oauthProfile = oauthName
+      ? getSignUpProfileFields(oauthName)
+      : null;
 
     const { error } =
       mode === "sign-in"
         ? await signIn.sso({
           strategy,
-          redirectUrl: "/",
+          redirectUrl: "/sign-in",
           redirectCallbackUrl: "/sso-callback",
         })
         : await signUp.sso({
           strategy,
-          redirectUrl: "/",
+          redirectUrl: "/sign-up",
           redirectCallbackUrl: "/sso-callback",
+          legalAccepted: true,
+          ...(oauthProfile ?? {}),
         });
 
     if (error) {
-      setFormError(
-        error.longMessage || error.message,
-      );
+      if (typeof window !== "undefined") window.sessionStorage.removeItem("eilo-oauth-mode");
+      const message = error.longMessage || error.message;
+      if (isAlreadySignedInError(error.code, message)) {
+        redirectToHome();
+        setOauthLoading(null);
+        return;
+      }
+      if (mode === "sign-up") showSignUpError(message);
+      else setFormError(message);
       setOauthLoading(null);
     }
   };
@@ -421,10 +784,63 @@ function AuthForm({
   const canResend =
     resendSecondsLeft === 0 && !isResending && !isBusy;
 
+  const oauthDivider = (
+    <div className="relative flex items-center py-2">
+      <div className="flex-grow border-t border-black/10 dark:border-[#262626]" />
+
+      <span className="mx-4 shrink-0 font-mono text-xs uppercase tracking-[0.05em] text-[#6b6570] dark:text-[#888888]">
+        {t("auth.orContinue")}
+      </span>
+
+      <div className="flex-grow border-t border-black/10 dark:border-[#262626]" />
+    </div>
+  );
+
+  const oauthButtons = (
+    <div className="grid grid-cols-2 gap-3">
+      <button
+        type="button"
+        disabled={isBusy}
+        onClick={() => void continueWithOAuth("oauth_google")}
+        className="flex h-10 items-center justify-center rounded-lg border border-black/10 bg-white/60 text-sm text-[#131313] transition-colors duration-300 hover:bg-white disabled:opacity-70 dark:border-[#262626] dark:bg-transparent dark:text-[#e2e2e2] dark:hover:bg-[#1f1f1f]"
+      >
+        {oauthLoading === "oauth_google" ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <>
+            <GoogleIcon className="mr-2 size-4 text-[#131313] dark:text-white" />
+            <span>{t("auth.google")}</span>
+          </>
+        )}
+      </button>
+
+      <button
+        type="button"
+        disabled={isBusy}
+        onClick={() => void continueWithOAuth("oauth_apple")}
+        className="flex h-10 items-center justify-center rounded-lg border border-black/10 bg-white/60 text-sm text-[#131313] transition-colors duration-300 hover:bg-white disabled:opacity-70 dark:border-[#262626] dark:bg-transparent dark:text-[#e2e2e2] dark:hover:bg-[#1f1f1f]"
+      >
+        {oauthLoading === "oauth_apple" ? (
+          <Loader2 className="size-4 animate-spin" />
+        ) : (
+          <>
+            <AppleIcon className="mr-2 size-4 text-[#131313] dark:text-white" />
+            <span>{t("auth.apple")}</span>
+          </>
+        )}
+      </button>
+    </div>
+  );
+
+  const oauthOptionsBelow = (
+    <>
+      {oauthDivider}
+      {oauthButtons}
+    </>
+  );
+
   const resendCode = async () => {
-    if (!canResend) {
-      return;
-    }
+    if (!canResend) return;
 
     setIsResending(true);
     setFormError(null);
@@ -433,13 +849,17 @@ function AuthForm({
       if (mode === "sign-in") {
         const { error } = await signIn.emailCode.sendCode();
         if (error) {
+          if (isAlreadySignedInError(error.code, error.message)) {
+            redirectToHome();
+            return;
+          }
           setFormError(error.longMessage || error.message);
           return;
         }
       } else {
         const { error } = await signUp.verifications.sendEmailCode();
         if (error) {
-          setFormError(error.longMessage || error.message);
+          showSignUpError(error.longMessage || error.message);
           return;
         }
       }
@@ -452,8 +872,8 @@ function AuthForm({
     }
   };
 
-  if (verifying) {
-    return (
+  if (verifying) return (
+    <div className="space-y-6">
       <Form {...codeForm}>
         <form
           className="space-y-6"
@@ -582,19 +1002,58 @@ function AuthForm({
           <div id="clerk-captcha" />
         </form>
       </Form>
-    );
-  }
+
+      {oauthOptionsBelow}
+    </div>
+  );
 
   return (
     <div className="space-y-6">
-      <Form {...emailForm}>
+      <Form {...authForm}>
         <form
           className="space-y-6"
-          onSubmit={emailForm.handleSubmit(onEmailSubmit)}
+          onSubmit={authForm.handleSubmit(onAuthSubmit)}
           noValidate
         >
+          {mode === "sign-up" ? (
+            <FormField
+              control={authForm.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem className="space-y-2">
+                  <FormLabel className="px-1 font-mono text-xs font-medium uppercase tracking-[0.05em] text-[#6b6570] dark:text-[#888888]">
+                    {t("auth.displayName")}
+                  </FormLabel>
+
+                  <div className="auth-input-glow flex h-10 items-center rounded-lg border border-black/10 bg-white/80 px-3 transition-all duration-300 has-[[aria-invalid=true]]:border-destructive dark:border-[#262626] dark:bg-[#1b1b1b]/50">
+                    <User
+                      className="mr-2.5 size-4 shrink-0 text-[#6b6570] dark:text-[#888888]"
+                      strokeWidth={1.5}
+                    />
+
+                    <FormControl>
+                      <Input
+                        type="text"
+                        autoComplete="name"
+                        placeholder={t("auth.displayNamePlaceholder")}
+                        className="h-auto rounded-none border-0 bg-transparent px-0 py-0 text-sm text-[#131313] shadow-none placeholder:text-[#6b6570]/50 focus-visible:border-transparent focus-visible:ring-0 dark:bg-transparent dark:text-white dark:placeholder:text-[#888888]/50"
+                        {...field}
+                        onChange={(event) => {
+                          field.onChange(event);
+                          onNameChange(event.target.value);
+                        }}
+                      />
+                    </FormControl>
+                  </div>
+
+                  <FormMessage className="px-1 text-xs" />
+                </FormItem>
+              )}
+            />
+          ) : null}
+
           <FormField
-            control={emailForm.control}
+            control={authForm.control}
             name="email"
             render={({ field }) => (
               <FormItem className="space-y-2">
@@ -628,11 +1087,68 @@ function AuthForm({
             )}
           />
 
+          {mode === "sign-up" ? (
+            <FormField
+              control={authForm.control}
+              name="acceptedTerms"
+              render={({ field, fieldState }) => (
+                <FormItem className="space-y-2">
+                  <div className="flex items-start gap-3 px-1">
+                    <FormControl>
+                      <input
+                        id="accepted-terms"
+                        type="checkbox"
+                        checked={field.value}
+                        onChange={(event) => {
+                          field.onChange(event.target.checked);
+                          onAcceptedTermsChange(event.target.checked);
+                        }}
+                        onBlur={field.onBlur}
+                        disabled={isBusy}
+                        aria-invalid={!!fieldState.error}
+                        className="mt-0.5 size-4 shrink-0 rounded border border-black/20 accent-[#131313] dark:border-[#444] dark:accent-white"
+                      />
+                    </FormControl>
+
+                    <FormLabel
+                      htmlFor="accepted-terms"
+                      className="cursor-pointer text-sm leading-5 font-normal text-[#6b6570] dark:text-[#888888]"
+                    >
+                      {t("auth.termsAgreementPrefix")}{" "}
+                      <Link
+                        href="/terms"
+                        className="text-[#131313] underline underline-offset-2 hover:text-[#2a2a2c] dark:text-white dark:hover:text-[#e2e2e2]"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t("auth.termsOfService")}
+                      </Link>{" "}
+                      {t("auth.termsAgreementJoin")}{" "}
+                      <Link
+                        href="/privacy"
+                        className="text-[#131313] underline underline-offset-2 hover:text-[#2a2a2c] dark:text-white dark:hover:text-[#e2e2e2]"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {t("footer.privacy")}
+                      </Link>
+                      .
+                    </FormLabel>
+                  </div>
+
+                  <FormMessage className="px-1 text-xs" />
+                </FormItem>
+              )}
+            />
+          ) : null}
+
           {formError ? (
             <p className="px-1 text-xs text-destructive">
               {formError}
             </p>
           ) : null}
+
+          {mode === "sign-up" ? <div id="clerk-captcha" /> : null}
 
           <button
             type="submit"
@@ -647,58 +1163,10 @@ function AuthForm({
               t("auth.createAccountSubmit")
             )}
           </button>
-
-          <div id="clerk-captcha" />
         </form>
       </Form>
 
-      <div className="relative flex items-center py-2">
-        <div className="flex-grow border-t border-black/10 dark:border-[#262626]" />
-
-        <span className="mx-4 shrink-0 font-mono text-xs uppercase tracking-[0.05em] text-[#6b6570] dark:text-[#888888]">
-          {t("auth.orContinue")}
-        </span>
-
-        <div className="flex-grow border-t border-black/10 dark:border-[#262626]" />
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          type="button"
-          disabled={isBusy}
-          onClick={() =>
-            void continueWithOAuth("oauth_google")
-          }
-          className="flex h-10 items-center justify-center rounded-lg border border-black/10 bg-white/60 text-sm text-[#131313] transition-colors duration-300 hover:bg-white disabled:opacity-70 dark:border-[#262626] dark:bg-transparent dark:text-[#e2e2e2] dark:hover:bg-[#1f1f1f]"
-        >
-          {oauthLoading === "oauth_google" ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <>
-              <GoogleIcon className="mr-2 size-4 text-[#131313] dark:text-white" />
-              <span>{t("auth.google")}</span>
-            </>
-          )}
-        </button>
-
-        <button
-          type="button"
-          disabled={isBusy}
-          onClick={() =>
-            void continueWithOAuth("oauth_apple")
-          }
-          className="flex h-10 items-center justify-center rounded-lg border border-black/10 bg-white/60 text-sm text-[#131313] transition-colors duration-300 hover:bg-white disabled:opacity-70 dark:border-[#262626] dark:bg-transparent dark:text-[#e2e2e2] dark:hover:bg-[#1f1f1f]"
-        >
-          {oauthLoading === "oauth_apple" ? (
-            <Loader2 className="size-4 animate-spin" />
-          ) : (
-            <>
-              <AppleIcon className="mr-2 size-4 text-[#131313] dark:text-white" />
-              <span>{t("auth.apple")}</span>
-            </>
-          )}
-        </button>
-      </div>
+      {oauthOptionsBelow}
     </div>
   );
 }
@@ -709,16 +1177,24 @@ export function AuthPage({
   initialMode?: AuthMode;
 }) {
   const { t, language } = useI18n();
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const { isSignedIn, isLoaded } = useAuth({ treatPendingAsSignedOut: false });
+
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      router.replace("/home");
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   const [mode, setMode] = useState<AuthMode>(() => {
-    if (searchParams.get("create-account") === "true") {
-      return "sign-up";
-    }
+    if (searchParams.get("create-account") === "true") return "sign-up";
     return initialMode;
   });
 
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [switchHint, setSwitchHint] = useState<string | null>(null);
 
   const handleSwitchMode = useCallback(
@@ -733,9 +1209,17 @@ export function AuthPage({
     setSwitchHint(null);
   }, []);
 
+  if (isLoaded && isSignedIn) {
+    return (
+      <div className="flex min-h-svh items-center justify-center bg-black text-[#888888]">
+        <Loader2 className="size-5 animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <div className="auth-premium-gradient relative flex min-h-svh flex-col items-center overflow-x-hidden bg-[#f5f5f7] text-[#131313] dark:bg-black dark:text-[#e2e2e2]">
-      <Header />
+      <Header logoClassName="h-5 w-auto max-w-[3.75rem] object-contain sm:max-w-[4.25rem]" />
 
       <main className="mt-24 flex w-full flex-grow items-center justify-center px-4 py-12 md:px-10">
         <div className="flex w-full max-w-[440px] flex-col space-y-6">
@@ -785,7 +1269,11 @@ export function AuthPage({
                 key={`${language}-${mode}`}
                 mode={mode}
                 email={email}
+                name={name}
+                acceptedTerms={acceptedTerms}
                 onEmailChange={setEmail}
+                onNameChange={setName}
+                onAcceptedTermsChange={setAcceptedTerms}
                 onSwitchMode={handleSwitchMode}
                 switchHint={switchHint}
                 onClearSwitchHint={clearSwitchHint}

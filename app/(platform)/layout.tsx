@@ -1,12 +1,19 @@
+import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { PlatformShell } from "@/components/platform/platform-shell";
 import { googleSans } from "@/lib/fonts/google-sans";
 import { cn } from "@/lib/utils";
 
-export default function PlatformLayout({
+export default async function PlatformLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { userId } = await auth({ treatPendingAsSignedOut: false });
+
+  if (!userId) redirect("/sign-in");
+
+
   return (
     <div
       className={cn(

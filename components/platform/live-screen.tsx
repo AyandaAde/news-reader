@@ -1,6 +1,16 @@
 "use client";
 
 import Image from "next/image";
+import {
+  Bell,
+  Globe,
+  Headphones,
+  LockOpen,
+  Play,
+  Podcast,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
 import { usePlatformPlayback } from "@/components/platform/platform-playback-provider";
 import { cn } from "@/lib/utils";
 
@@ -15,7 +25,7 @@ const liveStations = [
     id: "tech-today",
     title: "Tech Today",
     description: "Silicon Valley updates & hardware reviews",
-    icon: "podcasts",
+    icon: Podcast,
     iconGradient: "from-blue-900/40 to-indigo-900/40",
     status: "live" as const,
     meta: "Current: AI Ethics",
@@ -26,7 +36,7 @@ const liveStations = [
     id: "world-report",
     title: "World Report",
     description: "Breaking global news and field reporting",
-    icon: "public",
+    icon: Globe,
     iconGradient: "from-orange-900/40 to-red-900/40",
     status: "live" as const,
     meta: "Host: Sarah Chen",
@@ -37,7 +47,7 @@ const liveStations = [
     id: "market-watch",
     title: "Market Watch",
     description: "Live analysis of global financial markets",
-    icon: "trending_up",
+    icon: TrendingUp,
     iconGradient: "from-emerald-900/40 to-teal-900/40",
     status: "upcoming" as const,
     meta: "Market: Nasdaq Open",
@@ -53,7 +63,8 @@ const featuredStations = [
     description: "Continuous high-fidelity jazz curation",
     badge: "Curated Noir",
     image: HERO_IMAGE,
-    actionIcon: "play_arrow",
+    actionIcon: Play,
+    iconFilled: true,
     grayscale: false,
   },
   {
@@ -62,44 +73,47 @@ const featuredStations = [
     description: "Pure audio storytelling with no distractions",
     badge: "Exclusive",
     image: ACOUSTIC_IMAGE,
-    actionIcon: "lock_open",
+    actionIcon: LockOpen,
+    iconFilled: false,
     grayscale: true,
   },
 ] as const;
 
-function MaterialIcon({
-  name,
-  filled,
-  className,
+function LiveBadge({
+  pulse = true,
+  compact = false,
 }: {
-  name: string;
-  filled?: boolean;
-  className?: string;
+  pulse?: boolean;
+  compact?: boolean;
 }) {
   return (
     <span
-      className={cn("material-symbols-outlined", className)}
-      style={
-        filled
-          ? { fontVariationSettings: "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24" }
-          : undefined
-      }
-    >
-      {name}
-    </span>
-  );
-}
-
-function LiveBadge({ pulse = true }: { pulse?: boolean }) {
-  return (
-    <span
       className={cn(
-        "rounded-full border border-[#ffb4ab]/30 bg-[#ffb4ab]/10 px-4 py-1.5 font-mono text-[10px] tracking-[0.2em] text-[#ffb4ab]",
+        "rounded-full border border-[#ffb4ab]/30 bg-[#ffb4ab]/10 font-mono text-[10px] tracking-[0.2em] text-[#ffb4ab]",
+        compact ? "px-3 py-1" : "px-4 py-1.5",
         pulse && "platform-live-pulse",
       )}
     >
       LIVE
     </span>
+  );
+}
+
+function StationIcon({
+  icon: Icon,
+  className,
+  filled = false,
+}: {
+  icon: LucideIcon;
+  className?: string;
+  filled?: boolean;
+}) {
+  return (
+    <Icon
+      className={cn(filled && "fill-current", className)}
+      strokeWidth={1.5}
+      aria-hidden
+    />
   );
 }
 
@@ -136,7 +150,7 @@ export function PlatformLiveScreen() {
         </p>
       </div>
 
-      <section className="group relative mb-16 aspect-[16/9] cursor-pointer overflow-hidden rounded-2xl md:mb-24 md:aspect-[21/9]">
+      <section className="group relative mb-16 aspect-[4/5] cursor-pointer overflow-hidden rounded-2xl sm:aspect-[16/9] md:mb-24 md:aspect-[21/9]">
         <button
           type="button"
           className="absolute inset-0 z-20"
@@ -159,37 +173,25 @@ export function PlatformLiveScreen() {
         <div className="absolute inset-0 bg-gradient-to-t from-[#050505] via-[#050505]/40 to-transparent" />
         <div className="absolute inset-0 backdrop-blur-[2px]" />
 
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center p-6 text-center md:p-8">
-          <div className="platform-glass-panel mb-8 inline-flex items-center gap-3 rounded-full border-white/20 px-5 py-2">
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-end p-5 pb-8 text-center sm:justify-center sm:p-6 md:p-8">
+          <div className="platform-glass-panel mb-4 inline-flex items-center gap-2 rounded-full border-white/20 px-4 py-1.5 sm:mb-8 sm:gap-3 sm:px-5 sm:py-2">
             <span className="platform-live-pulse size-2 rounded-full bg-[#ffb4ab] shadow-[0_0_8px_rgba(255,180,171,0.8)]" />
-            <span className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-white">
+            <span className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-white sm:text-[11px]">
               Live Broadcast
             </span>
           </div>
-          <h2 className="mb-4 text-5xl font-medium text-white transition-all duration-700 ease-out group-hover:tracking-wider md:text-7xl">
+          <h2 className="mb-2 text-4xl font-medium text-white transition-all duration-700 ease-out group-hover:tracking-wider sm:mb-4 sm:text-5xl md:text-7xl">
             Tech Today
           </h2>
-          <p className="mb-10 max-w-xl text-xl font-light text-[#c8c6c5] md:text-2xl">
+          <p className="mb-6 max-w-xl text-base font-light text-[#c8c6c5] sm:mb-10 sm:text-xl md:text-2xl">
             Live tech news & discussion with leading industry experts
           </p>
-          <div className="platform-glass-panel flex items-center gap-6 rounded-full px-6 py-3">
-            <div className="flex -space-x-3">
-              {["S", "M", "J"].map((initial, index) => (
-                <div
-                  key={initial}
-                  className={cn(
-                    "flex size-8 items-center justify-center rounded-full border-2 border-[#181818] text-[10px] font-medium text-white shadow-lg",
-                    index === 0 && "bg-gradient-to-br from-blue-500 to-indigo-600",
-                    index === 1 && "bg-gradient-to-br from-red-400 to-pink-600",
-                    index === 2 && "bg-gradient-to-br from-green-400 to-emerald-600",
-                  )}
-                >
-                  {initial}
-                </div>
-              ))}
+          <div className="platform-glass-panel flex max-w-full items-center gap-3 rounded-full px-4 py-2 sm:gap-6 sm:px-6 sm:py-3">
+            <div className="flex size-8 items-center justify-center rounded-full bg-white/10 transition-colors duration-300 group-hover:bg-white sm:size-9">
+              <Headphones className="size-4 text-white transition-colors duration-300 group-hover:text-black sm:size-[18px]" strokeWidth={1.5} aria-hidden />
             </div>
-            <div className="h-4 w-px bg-white/20" />
-            <span className="font-mono text-sm tracking-wider text-white">
+            <div className="hidden h-4 w-px bg-white/20 sm:block" />
+            <span className="font-mono text-xs tracking-wider text-white sm:text-sm">
               1,247{" "}
               <span className="text-[#c8c6c5]/70">LISTENING</span>
             </span>
@@ -206,30 +208,35 @@ export function PlatformLiveScreen() {
           Active Stations
         </h3>
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4">
           {liveStations.map((station) => (
             <div
               key={station.id}
-              className="platform-glass-panel flex flex-col gap-4 rounded-2xl p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6"
+              className="platform-glass-panel flex items-center gap-3 rounded-2xl p-3.5 sm:justify-between sm:gap-4 sm:p-6"
             >
-              <div className="flex min-w-0 flex-1 items-center gap-4 sm:gap-8">
+              <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-8">
                 <div
                   className={cn(
-                    "flex size-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br text-white shadow-2xl sm:size-16",
+                    "flex size-12 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-gradient-to-br text-white shadow-2xl sm:size-14 md:size-16",
                     station.iconGradient,
                   )}
                 >
-                  <MaterialIcon name={station.icon} className="text-3xl font-light" />
+                  <StationIcon
+                    icon={station.icon}
+                    className="size-6 sm:size-7"
+                  />
                 </div>
-                <div className="min-w-0">
-                  <h4 className="mb-1 truncate text-xl text-white/90 sm:text-2xl">
+                <div className="min-w-0 flex-1">
+                  <h4 className="mb-0.5 text-lg text-white/90 sm:mb-1 sm:text-xl md:text-2xl">
                     {station.title}
                   </h4>
-                  <p className="truncate text-[#c8c6c5]/70">{station.description}</p>
+                  <p className="line-clamp-2 text-sm leading-snug text-[#c8c6c5]/70 sm:truncate sm:text-base">
+                    {station.description}
+                  </p>
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center justify-between gap-4 sm:justify-end sm:gap-8">
+              <div className="flex shrink-0 flex-col items-center gap-2 sm:flex-row sm:items-center sm:gap-8">
                 <div className="hidden flex-col items-end md:flex">
                   <span className="font-mono text-sm tracking-wide text-white">
                     {station.meta}
@@ -240,9 +247,9 @@ export function PlatformLiveScreen() {
                 </div>
 
                 {station.status === "live" ? (
-                  <LiveBadge />
+                  <LiveBadge compact />
                 ) : (
-                  <span className="rounded-full border border-white/10 px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.2em] text-[#c8c6c5]">
+                  <span className="whitespace-nowrap rounded-full border border-white/10 px-3 py-1 font-mono text-[9px] uppercase tracking-[0.16em] text-[#c8c6c5] sm:px-4 sm:py-1.5 sm:text-[10px] sm:tracking-[0.2em]">
                     Starts in 5m
                   </span>
                 )}
@@ -258,18 +265,18 @@ export function PlatformLiveScreen() {
                         station.image,
                       )
                     }
-                    className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 transition-all duration-300 hover:border-white/30 hover:bg-white hover:text-black active:scale-95 sm:size-14"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/10 text-white transition-all duration-300 hover:bg-white hover:text-black active:scale-95 sm:size-12 md:size-14"
                     aria-label={`Play ${station.title}`}
                   >
-                    <MaterialIcon name="play_arrow" filled className="text-2xl" />
+                    <Play className="size-5 fill-current sm:size-6" strokeWidth={1.5} aria-hidden />
                   </button>
                 ) : (
                   <button
                     type="button"
-                    className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 text-[#c8c6c5] transition-all duration-300 hover:bg-white/10 hover:text-white active:scale-95 sm:size-14"
+                    className="flex size-11 shrink-0 items-center justify-center rounded-full border border-white/10 text-[#c8c6c5] transition-all duration-300 hover:bg-white hover:text-black active:scale-95 sm:size-12 md:size-14"
                     aria-label={`Notify me for ${station.title}`}
                   >
-                    <MaterialIcon name="notifications" className="text-2xl" />
+                    <Bell className="size-5 sm:size-6" strokeWidth={1.5} aria-hidden />
                   </button>
                 )}
               </div>
@@ -322,10 +329,14 @@ export function PlatformLiveScreen() {
                       station.image,
                     )
                   }
-                  className="platform-glass-panel flex size-12 shrink-0 items-center justify-center rounded-full text-white transition-all duration-300 group-hover:bg-white group-hover:text-black"
+                  className="flex size-12 shrink-0 items-center justify-center rounded-full border border-white/10 bg-transparent text-white transition-all duration-300 group-hover:bg-white group-hover:text-black"
                   aria-label={`Play ${station.title}`}
                 >
-                  <MaterialIcon name={station.actionIcon} />
+                  <StationIcon
+                    icon={station.actionIcon}
+                    filled={station.iconFilled}
+                    className="size-5"
+                  />
                 </button>
               </div>
             </div>

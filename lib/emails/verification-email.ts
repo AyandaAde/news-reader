@@ -112,9 +112,6 @@ export function renderVerificationEmail({
             <tr>
               <td style="background-color:${COLORS.surfaceSecondary}; border-top:1px solid ${COLORS.borderSubtle}; padding:32px; text-align:center;">
                 ${renderEmailBrandLogo({ variant: "footer" })}
-                <p style="margin:0 0 16px 0; font-size:20px; line-height:28px; font-weight:600; color:${COLORS.onBackground}; opacity:0.5;">
-                  Eilo
-                </p>
                 <p style="margin:0 0 24px 0; font-size:14px; line-height:20px;">
                   <span style="color:${COLORS.onSurfaceVariant}; font-weight:500;">${copy.privacyPolicy}</span>
                   <span style="color:${COLORS.outline}; padding:0 12px;">&middot;</span>

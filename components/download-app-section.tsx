@@ -122,8 +122,8 @@ export function DownloadAppSection() {
             <Image
               src={downloadAppImagePath}
               alt={t("download.appPreview")}
-              width={1428}
-              height={1101}
+              width={1024}
+              height={768}
               sizes="(max-width: 768px) 300px, 420px"
               className="h-auto w-full max-w-[320px] object-contain sm:max-w-[360px] md:max-w-[420px]"
             />

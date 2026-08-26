@@ -19,8 +19,14 @@ import { cn } from "@/lib/utils";
 
 const profileTabs = ["My Briefings", "Podcasts", "Saved", "Recent", "Settings"] as const;
 
-const defaultAvatar =
-  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=400";
+function getInitials(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length >= 2) {
+    return `${parts[0][0] ?? ""}${parts[1][0] ?? ""}`.toUpperCase();
+  }
+
+  return name.slice(0, 2).toUpperCase();
+}
 
 function MaterialIcon({
   name,
@@ -115,7 +121,7 @@ export function PlatformProfileScreen() {
     user?.primaryEmailAddress?.emailAddress ||
     localProfile?.email ||
     "you@eilo.app";
-  const avatarUrl = user?.imageUrl || defaultAvatar;
+  const avatarUrl = user?.imageUrl;
   const maxListeningHours = useMemo(
     () => Math.max(...listeningByDay.map((entry) => entry.hours)),
     [],
@@ -126,13 +132,19 @@ export function PlatformProfileScreen() {
       <section className="mb-10 flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-col items-center gap-5 sm:flex-row sm:items-center">
           <div className="relative size-28 shrink-0 overflow-hidden rounded-full border-2 border-[#262626] sm:size-32">
-            <Image
-              src={avatarUrl}
-              alt={displayName}
-              fill
-              className="object-cover"
-              sizes="128px"
-            />
+            {avatarUrl ? (
+              <Image
+                src={avatarUrl}
+                alt={displayName}
+                fill
+                className="object-cover"
+                sizes="128px"
+              />
+            ) : (
+              <div className="flex size-full items-center justify-center bg-[#1f1f1f] text-2xl font-semibold text-white">
+                {getInitials(displayName)}
+              </div>
+            )}
           </div>
 
           <div className="text-center sm:text-left">

@@ -3,19 +3,15 @@ import type { useRouter } from "next/navigation";
 type AppRouter = ReturnType<typeof useRouter>;
 
 type NavigateArgs = {
-  session?: { currentTask?: unknown } | null;
+  session?: { currentTask?: { key?: string } | null } | null;
   decorateUrl: (url: string) => string;
 };
 
 export async function navigateAfterAuth(
   router: AppRouter,
-  { session, decorateUrl }: NavigateArgs,
-  fallbackPath = "/sign-in/continue",
+  { decorateUrl }: NavigateArgs,
+  fallbackPath = "/home",
 ) {
-  if (session?.currentTask) {
-    return;
-  }
-
   const url = decorateUrl(fallbackPath);
   if (url.startsWith("http")) {
     window.location.href = url;

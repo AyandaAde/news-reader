@@ -13,6 +13,7 @@ import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-van
 import { cn } from "@/lib/utils";
 import { TOPIC_OPTIONS } from "@/lib/onboarding";
 import { topBriefingsItems } from "@/lib/platform-briefings";
+import { useAuth } from "@clerk/nextjs";
 
 const forYouItems = [
   {
@@ -195,7 +196,9 @@ export function PlatformHomeScreen() {
     useState<(typeof discoverFilters)[number]>("All");
   const { play } = usePlatformPlayback();
   const topBriefingsScroll = useHorizontalScroll();
+  const forYouScroll = useHorizontalScroll();
   const trendingScroll = useHorizontalScroll();
+  const { userId } = useAuth();
 
   const topBriefingsCards = useMemo(
     () => toTopBriefingsCards(topBriefingsItems),
@@ -217,12 +220,14 @@ export function PlatformHomeScreen() {
     );
   }, []);
 
+  console.log("UserId", userId);
+
   return (
     <>
       <section className="mb-8 md:mb-10">
         <PlaceholdersAndVanishInput
           placeholders={[...homeSearchPlaceholders]}
-          onChange={() => {}}
+          onChange={() => { }}
           onSubmit={(event) => {
             event.preventDefault();
             router.push("/discover");
@@ -313,6 +318,8 @@ export function PlatformHomeScreen() {
           title="Your Briefings"
           onPrevious={topBriefingsScroll.scrollPrevious}
           onNext={topBriefingsScroll.scrollNext}
+          canScrollPrevious={topBriefingsScroll.canScrollPrevious}
+          canScrollNext={topBriefingsScroll.canScrollNext}
         />
         <ExpandableCards
           cards={topBriefingsCards}
@@ -322,10 +329,18 @@ export function PlatformHomeScreen() {
       </section>
 
       <section className="mb-8 md:mb-10">
-        <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
-          For You
-        </h2>
-        <ExpandableCards cards={forYouCards} layout="grid" />
+        <PlatformScrollSectionHeader
+          title="For You"
+          onPrevious={forYouScroll.scrollPrevious}
+          onNext={forYouScroll.scrollNext}
+          canScrollPrevious={forYouScroll.canScrollPrevious}
+          canScrollNext={forYouScroll.canScrollNext}
+        />
+        <ExpandableCards
+          cards={forYouCards}
+          layout="scroll"
+          scrollRef={forYouScroll.ref}
+        />
       </section>
 
       <section className="mb-8 md:mb-10">
@@ -333,6 +348,8 @@ export function PlatformHomeScreen() {
           title="Trending"
           onPrevious={trendingScroll.scrollPrevious}
           onNext={trendingScroll.scrollNext}
+          canScrollPrevious={trendingScroll.canScrollPrevious}
+          canScrollNext={trendingScroll.canScrollNext}
         />
         <ExpandableCards
           cards={trendingCards}
@@ -366,9 +383,9 @@ export function PlatformHomeScreen() {
 
       <section className="mb-12 md:mb-16">
         <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
-          {discoverFilter === "All" ? "Made For You" : discoverFilter}
+          {discoverFilter}
         </h2>
-        <ExpandableCards cards={discoverCards} layout="grid" />
+        <ExpandableCards cards={discoverCards} layout="grid" size="medium" />
       </section>
     </>
   );

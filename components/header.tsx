@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Show, UserButton } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import { EiloLogo } from "@/components/eilo-logo";
 import {
   Menu,
@@ -15,9 +15,19 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { useI18n } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 
-export const Header = ({ className }: { className?: string }) => {
+export const Header = ({
+  className,
+  logoVariant = "wordmark",
+  logoClassName,
+}: {
+  className?: string;
+  logoVariant?: "wordmark";
+  logoClassName?: string;
+}) => {
   const { t } = useI18n();
   const [active, setActive] = useState<string | null>(null);
+  const { isSignedIn, isLoaded } = useAuth({ treatPendingAsSignedOut: false });
+  const showSignedInNav = isLoaded && isSignedIn;
 
   return (
     <div
@@ -32,7 +42,11 @@ export const Header = ({ className }: { className?: string }) => {
           className="relative z-50 flex shrink-0 items-center"
           aria-label="Eilo home"
         >
-          <EiloLogo priority />
+          <EiloLogo
+            priority
+            variant={logoVariant}
+            className={logoClassName}
+          />
         </Link>
 
         <div className="hidden flex-1 justify-center lg:flex">
@@ -96,35 +110,37 @@ export const Header = ({ className }: { className?: string }) => {
               item={t("nav.getStarted")}
             >
               <div className="flex flex-col space-y-4 text-sm">
-                <HoveredLink href="/#download">{t("nav.download")}</HoveredLink>
-                <HoveredLink href="/sign-up">{t("cta.button")}</HoveredLink>
-                <HoveredLink href="/sign-in">{t("nav.signIn")}</HoveredLink>
+                {showSignedInNav ? (
+                  <>
+                    <HoveredLink href="/home">{t("nav.platform")}</HoveredLink>
+                    <HoveredLink href="/#download">{t("nav.download")}</HoveredLink>
+                  </>
+                ) : (
+                  <>
+                    <HoveredLink href="/#download">{t("nav.download")}</HoveredLink>
+                    <HoveredLink href="/sign-up">{t("cta.button")}</HoveredLink>
+                    <HoveredLink href="/sign-in">{t("nav.signIn")}</HoveredLink>
+                  </>
+                )}
               </div>
             </MenuItem>
 
-            <ThemeToggle className="my-0 border-white/20 bg-white/10 text-neutral-300 hover:bg-white/15 hover:text-white dark:border-white/20 dark:bg-white/10 dark:text-neutral-300 dark:hover:bg-white/15 dark:hover:text-white" />
+            <div className="flex items-center border-l border-white/15 pl-6">
+              <ThemeToggle variant="onDark" className="my-0" />
+            </div>
           </Menu>
         </div>
 
         <div className="relative z-50 flex shrink-0 items-center gap-3 sm:gap-4">
           <ThemeToggle className="my-0 lg:hidden" />
-          <Show when="signed-out">
+          {!showSignedInNav ? (
             <Link
               href="/sign-in"
               className="hidden text-sm font-medium text-[#131313] transition-colors hover:text-[#131313]/80 lg:inline-block dark:text-white dark:hover:text-white/80"
             >
               {t("nav.signIn")}
             </Link>
-          </Show>
-          <Show when="signed-in">
-            <UserButton
-              appearance={{
-                elements: {
-                  avatarBox: "size-8",
-                },
-              }}
-            />
-          </Show>
+          ) : null}
           <MobileMenu />
         </div>
       </div>

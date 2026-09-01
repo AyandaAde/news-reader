@@ -136,9 +136,7 @@ export async function POST(req: NextRequest) {
   const svixTimestamp = headerPayload.get("svix-timestamp");
   const svixSignature = headerPayload.get("svix-signature");
 
-  if (!svixId || !svixTimestamp || !svixSignature) {
-    return new NextResponse("Missing Svix headers", { status: 400 });
-  }
+  if (!svixId || !svixTimestamp || !svixSignature) return new NextResponse("Missing Svix headers", { status: 400 });
 
   const body = await req.text();
   const webhook = new Webhook(signingSecret);
@@ -159,9 +157,7 @@ export async function POST(req: NextRequest) {
   const eventName = String(event.type);
 
   try {
-    if (eventName === "email.created" || eventName === "emails.created") {
-      return handleEmailCreated(event.data as unknown as ClerkEmailData);
-    }
+    if (eventName === "email.created" || eventName === "emails.created") return handleEmailCreated(event.data as unknown as ClerkEmailData);
 
     return new NextResponse("Webhook successfully processed", { status: 200 });
   } catch (error) {

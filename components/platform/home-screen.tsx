@@ -1,5 +1,6 @@
 "use client";
 
+import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
@@ -10,10 +11,11 @@ import { PlatformScrollSectionHeader } from "@/components/platform/platform-scro
 import { useHorizontalScroll } from "@/components/platform/use-horizontal-scroll";
 import { usePlatformPlayback } from "@/components/platform/platform-playback-provider";
 import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
+import { useHomeLocationLabel, useHomeUser } from "@/hooks/use-backend-user";
 import { cn } from "@/lib/utils";
+import { formatTimeGreeting } from "@/lib/time-greeting";
 import { TOPIC_OPTIONS } from "@/lib/onboarding";
 import { topBriefingsItems } from "@/lib/platform-briefings";
-import { useAuth } from "@clerk/nextjs";
 
 const forYouItems = [
   {
@@ -192,13 +194,19 @@ function toDiscoverCards(
 
 export function PlatformHomeScreen() {
   const router = useRouter();
+  const { user: clerkUser } = useUser();
   const [discoverFilter, setDiscoverFilter] =
     useState<(typeof discoverFilters)[number]>("All");
   const { play } = usePlatformPlayback();
   const topBriefingsScroll = useHorizontalScroll();
   const forYouScroll = useHorizontalScroll();
   const trendingScroll = useHorizontalScroll();
-  const { userId } = useAuth();
+  const { user: backendUser, isLoading: isBackendUserLoading, isLocating } =
+    useHomeUser();
+  const { label: homeLocationLabel } = useHomeLocationLabel(
+    backendUser,
+    isBackendUserLoading || isLocating,
+  );
 
   const topBriefingsCards = useMemo(
     () => toTopBriefingsCards(topBriefingsItems),
@@ -209,6 +217,13 @@ export function PlatformHomeScreen() {
   const discoverCards = useMemo(() => toDiscoverCards(madeForYouItems), []);
 
   const [briefDate, setBriefDate] = useState("");
+  const [greetingText, setGreetingText] = useState("");
+
+  const displayName =
+    backendUser?.displayName ||
+    clerkUser?.firstName ||
+    clerkUser?.fullName ||
+    null;
 
   useEffect(() => {
     setBriefDate(
@@ -218,13 +233,12 @@ export function PlatformHomeScreen() {
         day: "numeric",
       }),
     );
-  }, []);
-
-  console.log("UserId", userId);
+    setGreetingText(formatTimeGreeting(displayName));
+  }, [displayName]);
 
   return (
     <>
-      <section className="mb-8 md:mb-10">
+      <section className="mb-6 md:mb-8">
         <PlaceholdersAndVanishInput
           placeholders={[...homeSearchPlaceholders]}
           onChange={() => { }}
@@ -241,6 +255,12 @@ export function PlatformHomeScreen() {
             "[&_button:disabled]:bg-[#2a2a2a] [&_button:disabled_svg]:text-[#666]",
           )}
         />
+        <h1
+          className="mt-4 text-2xl font-semibold leading-8 text-white md:mt-5 md:text-3xl md:leading-9"
+          suppressHydrationWarning
+        >
+          {greetingText || "\u00A0"}
+        </h1>
       </section>
 
       <section className="mb-8 md:mb-10">
@@ -299,8 +319,11 @@ export function PlatformHomeScreen() {
                       Partly Cloudy
                     </span>
                   </div>
-                  <span className="font-mono text-[12px] tracking-[0.05em] text-white/60">
-                    Pittsburgh, Pennsylvania
+                  <span
+                    className="font-mono text-[12px] tracking-[0.05em] text-white/60"
+                    suppressHydrationWarning
+                  >
+                    {homeLocationLabel ?? "\u00A0"}
                   </span>
                 </div>
                 <MaterialIcon
@@ -381,7 +404,7 @@ export function PlatformHomeScreen() {
         </div>
       </section>
 
-      <section className="mb-12 md:mb-16">
+      <section className="mb-0">
         <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
           {discoverFilter}
         </h2>

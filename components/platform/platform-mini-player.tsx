@@ -44,7 +44,7 @@ export function PlatformMiniPlayer() {
   const duration = current.duration ?? "3:28";
 
   return (
-    <div className="pointer-events-none fixed bottom-20 left-0 right-0 z-40 px-4 md:px-10">
+    <div className="pointer-events-none fixed bottom-4 left-0 right-0 z-40 px-4 md:px-10 md:pl-[calc(60px+1rem)]">
       <div className="pointer-events-auto mx-auto max-w-[1200px]">
       <div className="platform-player-bar flex flex-col gap-2 rounded-2xl p-2.5">
         <div className="flex items-center gap-2.5">

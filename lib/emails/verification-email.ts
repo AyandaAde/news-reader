@@ -1,5 +1,9 @@
 import type { Language } from "@/lib/i18n";
-import { renderEmailBrandLogo } from "@/lib/emails/email-brand";
+import {
+  EMAIL_COLORS,
+  renderEmailBrandLogo,
+  renderEmailDocumentHead,
+} from "@/lib/emails/email-brand";
 import {
   getVerificationEmailCopy,
   interpolateCopy,
@@ -14,18 +18,7 @@ type VerificationEmailParams = {
   locale?: Language;
 };
 
-const COLORS = {
-  background: "#0d0d0d",
-  surface: "#141414",
-  surfaceSecondary: "#1a1a1a",
-  borderSubtle: "#262626",
-  accent: "#fafafa",
-  accentSoft: "#1f1f1f",
-  onBackground: "#fafafa",
-  onSurface: "#fafafa",
-  onSurfaceVariant: "#888888",
-  outline: "#666666",
-};
+const COLORS = EMAIL_COLORS;
 
 function formatOtp(code: string) {
   const digits = code.replace(/\s+/g, "");
@@ -65,19 +58,15 @@ export function renderVerificationEmail({
   return `<!DOCTYPE html>
 <html lang="${copy.htmlLang}" dir="${copy.dir}">
   <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="dark" />
-    <meta name="supported-color-schemes" content="dark" />
-    <title>${copy.subject}</title>
+    ${renderEmailDocumentHead(copy.subject)}
   </head>
-  <body style="margin:0; padding:0; background-color:${COLORS.background}; -webkit-font-smoothing:antialiased; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.background};">
+  <body class="email-bg" bgcolor="${COLORS.background}" style="margin:0; padding:0; background-color:${COLORS.background}; -webkit-font-smoothing:antialiased; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table role="presentation" class="email-bg" width="100%" cellpadding="0" cellspacing="0" bgcolor="${COLORS.background}" style="background-color:${COLORS.background};">
       <tr>
         <td align="center" style="padding:32px 16px;">
-          <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px; width:100%; background-color:${COLORS.surface}; border:1px solid ${COLORS.borderSubtle}; overflow:hidden;">
+          <table role="presentation" class="email-surface" width="600" cellpadding="0" cellspacing="0" bgcolor="${COLORS.surface}" style="max-width:600px; width:100%; background-color:${COLORS.surface}; border:1px solid ${COLORS.borderSubtle}; overflow:hidden;">
             <tr>
-              <td align="center" style="background-color:${COLORS.surface}; padding:40px 32px 24px 32px;">
+              <td class="email-surface" align="center" bgcolor="${COLORS.surface}" style="background-color:${COLORS.surface}; padding:40px 32px 24px 32px;">
                 ${renderEmailBrandLogo({ variant: "header" })}
               </td>
             </tr>
@@ -91,14 +80,14 @@ export function renderVerificationEmail({
                 </p>
                 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 40px 0;">
                   <tr>
-                    <td align="center" style="background-color:${COLORS.surfaceSecondary}; border:1px solid ${COLORS.borderSubtle}; padding:32px 24px;">
+                    <td align="center" class="email-surface-secondary" bgcolor="${COLORS.surfaceSecondary}" style="background-color:${COLORS.surfaceSecondary}; border:1px solid ${COLORS.borderSubtle}; padding:32px 24px;">
                       <span style="font-size:48px; line-height:56px; font-weight:600; letter-spacing:0.15em; color:${COLORS.accent}; white-space:nowrap; direction:ltr; unicode-bidi:isolate;">
                         ${code}
                       </span>
                     </td>
                   </tr>
                 </table>
-                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${COLORS.accentSoft}; border:1px solid ${COLORS.borderSubtle};">
+                <table role="presentation" width="100%" cellpadding="0" cellspacing="0" class="email-surface-secondary" bgcolor="${COLORS.accentSoft}" style="background-color:${COLORS.accentSoft}; border:1px solid ${COLORS.borderSubtle};">
                   <tr>
                     <td style="padding:16px;">
                       <p style="margin:0; text-align:${textAlign}; font-size:14px; line-height:20px; color:${COLORS.onSurfaceVariant};">
@@ -110,7 +99,7 @@ export function renderVerificationEmail({
               </td>
             </tr>
             <tr>
-              <td style="background-color:${COLORS.surfaceSecondary}; border-top:1px solid ${COLORS.borderSubtle}; padding:32px; text-align:center;">
+              <td class="email-surface-secondary" bgcolor="${COLORS.surfaceSecondary}" style="background-color:${COLORS.surfaceSecondary}; border-top:1px solid ${COLORS.borderSubtle}; padding:32px; text-align:center;">
                 ${renderEmailBrandLogo({ variant: "footer" })}
                 <p style="margin:0 0 24px 0; font-size:14px; line-height:20px;">
                   <span style="color:${COLORS.onSurfaceVariant}; font-weight:500;">${copy.privacyPolicy}</span>

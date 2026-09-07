@@ -48,6 +48,47 @@ type EmailBrandLogoOptions = {
   variant?: "header" | "footer";
 };
 
+export const EMAIL_COLORS = {
+  background: "#0d0d0d",
+  surface: "#141414",
+  surfaceSecondary: "#1a1a1a",
+  borderSubtle: "#262626",
+  accent: "#fafafa",
+  accentSoft: "#1f1f1f",
+  onBackground: "#fafafa",
+  onSurface: "#fafafa",
+  onSurfaceVariant: "#888888",
+  outline: "#666666",
+} as const;
+
+export function renderEmailDocumentHead(title: string) {
+  const { background, surface, surfaceSecondary } = EMAIL_COLORS;
+
+  return `<meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light only" />
+    <meta name="supported-color-schemes" content="light only" />
+    <style type="text/css">
+      :root {
+        color-scheme: light only;
+        supported-color-schemes: light only;
+      }
+      @media (prefers-color-scheme: dark) {
+        body,
+        .email-bg {
+          background-color: ${background} !important;
+        }
+        .email-surface {
+          background-color: ${surface} !important;
+        }
+        .email-surface-secondary {
+          background-color: ${surfaceSecondary} !important;
+        }
+      }
+    </style>
+    <title>${title}</title>`;
+}
+
 export function renderEmailBrandLogo({
   variant = "header",
 }: EmailBrandLogoOptions = {}) {

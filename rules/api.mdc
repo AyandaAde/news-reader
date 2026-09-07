@@ -1,0 +1,43 @@
+---
+alwaysApply: true
+---
+---
+description: API request conventions
+globs:
+  - "**/*.ts"
+  - "**/*.tsx"
+  - "**/*.js"
+  - "**/*.jsx"
+alwaysApply: true
+---
+
+# API Requests
+
+Always use TanStack React Query for client-side API requests and server-state management.
+Always use axios as the HTTP client with TanStack React Query.
+Do not use native fetch() unless explicitly requested.
+Use the project's existing Axios configuration when available.
+Reuse existing Axios instances/interceptors rather than creating new ones.
+Use useQuery for fetching server data.
+Use useMutation for creating, updating, or deleting server data.
+Use query keys consistently and invalidate/refetch relevant queries after mutations.
+Prefer centralized query functions/API services rather than making Axios requests directly inside components.
+Do not manually implement loading, error, or caching state when TanStack React Query can handle it.
+For server-side requests, use Axios with explicit timeout handling.
+Keep API URLs in environment variables.
+Include authentication headers when required by the backend.
+Handle Axios errors appropriately and expose useful error states through React Query.
+Configure shared React Query defaults through the application's QueryClient rather than duplicating configuration across individual queries.
+
+UI Components
+Prefer shadcn/ui components whenever an appropriate component exists.
+Reuse existing shadcn/ui components from the project before creating new UI components.
+Do not recreate a component from scratch if an equivalent shadcn/ui component is already available.
+Before creating a new component, check whether shadcn/ui provides a suitable base component.
+Customize shadcn/ui components using the project's existing styling and Tailwind classes rather than replacing them with custom implementations.
+Maintain consistent shadcn/ui patterns across the application.
+Prefer composable shadcn/ui primitives when building more complex interfaces.
+If a required component does not exist in shadcn/ui, create a custom component only when necessary.
+Keep custom components visually and behaviorally consistent with the existing shadcn/ui design system.
+Do not introduce another UI component library when shadcn/ui can satisfy the requirement.
+Reuse existing components, variants, and utilities before adding new ones.

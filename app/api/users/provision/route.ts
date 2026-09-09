@@ -10,9 +10,7 @@ import { NextRequest, NextResponse } from "next/server";
 export async function POST(req: NextRequest) {
   const userId = await getAuthenticatedUserId();
 
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const client = await clerkClient();
@@ -21,9 +19,7 @@ export async function POST(req: NextRequest) {
       user.primaryEmailAddress?.emailAddress ??
       user.emailAddresses[0]?.emailAddress;
 
-    if (!email) {
-      return NextResponse.json({ error: "User email is required" }, { status: 400 });
-    }
+    if (!email) return NextResponse.json({ error: "User email is required" }, { status: 400 });
 
     let location: IpLocation | null = readLoginLocation(
       user.unsafeMetadata as Record<string, unknown>,
@@ -45,12 +41,10 @@ export async function POST(req: NextRequest) {
       location,
     });
 
-    if (!result) {
-      return NextResponse.json(
-        { error: "Failed to provision backend user" },
-        { status: 502 },
-      );
-    }
+    if (!result) return NextResponse.json(
+      { error: "Failed to provision backend user" },
+      { status: 502 },
+    );
 
     await client.users.updateUserMetadata(userId, {
       unsafeMetadata: {
@@ -59,11 +53,11 @@ export async function POST(req: NextRequest) {
         newsReaderUserId: result.userId,
         ...(location
           ? {
-              loginLocation: {
-                ...location,
-                updatedAt: new Date().toISOString(),
-              },
-            }
+            loginLocation: {
+              ...location,
+              updatedAt: new Date().toISOString(),
+            },
+          }
           : {}),
       },
     });

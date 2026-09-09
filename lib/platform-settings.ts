@@ -392,6 +392,7 @@ export function savePlatformSettings(settings: PlatformSettings) {
   }
 
   window.localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  window.dispatchEvent(new CustomEvent("eilo-platform-settings-changed"));
 }
 
 export type SettingsSectionId =

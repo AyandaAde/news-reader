@@ -1,6 +1,29 @@
 import type { NewsReaderUser } from "@/lib/news-reader-api";
 import { loadPlatformSettings } from "@/lib/platform-settings";
 
+export function userHasStoredLocation(
+  user: NewsReaderUser | null | undefined,
+) {
+  if (!user) {
+    return false;
+  }
+
+  const hasLabel = Boolean(
+    user.locationLabel?.trim() ||
+      user.locationCity?.trim() ||
+      user.locationRegion?.trim() ||
+      user.locationCountry?.trim(),
+  );
+
+  const hasCoords =
+    user.locationLatitude != null &&
+    user.locationLongitude != null &&
+    Number.isFinite(user.locationLatitude) &&
+    Number.isFinite(user.locationLongitude);
+
+  return hasLabel || hasCoords;
+}
+
 export function formatNewsReaderUserLocation(user: NewsReaderUser | null | undefined) {
   if (!user) {
     return null;

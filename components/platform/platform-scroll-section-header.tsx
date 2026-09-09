@@ -1,14 +1,5 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-function MaterialIcon({
-  name,
-  className,
-}: {
-  name: string;
-  className?: string;
-}) {
-  return <span className={cn("material-symbols-outlined", className)}>{name}</span>;
-}
 
 export function PlatformScrollNavButtons({
   title,
@@ -37,7 +28,7 @@ export function PlatformScrollNavButtons({
             : "cursor-default opacity-40",
         )}
       >
-        <MaterialIcon name="chevron_left" className="text-[20px]" />
+        <ChevronLeft className="size-5" aria-hidden />
       </button>
       <button
         type="button"
@@ -51,7 +42,7 @@ export function PlatformScrollNavButtons({
             : "cursor-default opacity-40",
         )}
       >
-        <MaterialIcon name="chevron_right" className="text-[20px]" />
+        <ChevronRight className="size-5" aria-hidden />
       </button>
     </div>
   );

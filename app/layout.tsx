@@ -3,7 +3,6 @@ import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { I18nProvider } from "@/components/i18n-provider";
-import { AuthenticatedAppShell } from "@/components/platform/authenticated-app-shell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -57,7 +56,7 @@ export default function RootLayout({
             disableTransitionOnChange
           >
             <I18nProvider>
-              <AuthenticatedAppShell>{children}</AuthenticatedAppShell>
+              {children}
               <Toaster richColors closeButton position="bottom-right" />
             </I18nProvider>
           </ThemeProvider>

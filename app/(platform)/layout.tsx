@@ -1,5 +1,10 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import { UserProvisionSync } from "@/components/auth/user-provision-sync";
+import { LoginLocationSync } from "@/components/auth/login-location-sync";
+import { PlatformShell } from "@/components/platform/platform-shell";
+import { googleSans } from "@/lib/fonts/google-sans";
+import { cn } from "@/lib/utils";
 
 export default async function PlatformLayout({
   children,
@@ -10,5 +15,17 @@ export default async function PlatformLayout({
 
   if (!userId) redirect("/sign-in");
 
-  return children;
+  return (
+    <div
+      className={cn(
+        "platform-shell min-h-svh overflow-x-hidden bg-black text-[#e2e2e2] antialiased",
+        googleSans.variable,
+        googleSans.className,
+      )}
+    >
+      <UserProvisionSync />
+      <LoginLocationSync />
+      <PlatformShell>{children}</PlatformShell>
+    </div>
+  );
 }

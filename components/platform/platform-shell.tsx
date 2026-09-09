@@ -1,6 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useState } from "react";
+import { PlatformHeader } from "@/components/platform/platform-header";
 import { PlatformMiniPlayer } from "@/components/platform/platform-mini-player";
 import {
   PlatformPlaybackProvider,
@@ -12,12 +14,20 @@ import { cn } from "@/lib/utils";
 function PlatformShellContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { current } = usePlatformPlayback();
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const hasMiniPlayer = Boolean(current) && !pathname.startsWith("/briefings/");
 
   return (
     <div className="flex h-svh w-full flex-row overflow-hidden">
-      <PlatformSidebar />
+      <PlatformSidebar
+        mobileOpen={mobileSidebarOpen}
+        onMobileOpenChange={setMobileSidebarOpen}
+      />
       <div className="relative flex h-svh min-w-0 flex-1 flex-col overflow-hidden">
+        <PlatformHeader
+          mobileMenuOpen={mobileSidebarOpen}
+          onMobileMenuOpen={() => setMobileSidebarOpen(true)}
+        />
         <main
           className={cn(
             "hide-scrollbar relative z-10 mx-auto min-h-0 w-full max-w-[1200px] flex-1 overflow-y-auto overscroll-y-contain px-4 pt-4 md:px-10 md:pt-6 [-webkit-overflow-scrolling:touch]",

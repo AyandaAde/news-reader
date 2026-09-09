@@ -36,13 +36,16 @@ export function requestBrowserLocation(): Promise<UserCoordinates | null> {
   });
 }
 
-export async function syncHomeLocation(coordinates?: UserCoordinates | null) {
+export async function syncHomeLocation(
+  coordinates?: UserCoordinates | null,
+  cityId?: string,
+) {
   const response = await fetch("/api/user/location", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(coordinates ?? {}),
+    body: JSON.stringify(cityId ? { cityId } : (coordinates ?? {})),
     cache: "no-store",
   });
 
@@ -60,4 +63,8 @@ export async function syncHomeLocation(coordinates?: UserCoordinates | null) {
 export async function resolveHomeLocation() {
   const coordinates = await requestBrowserLocation();
   return syncHomeLocation(coordinates);
+}
+
+export async function syncHomeLocationByCity(cityId: string) {
+  return syncHomeLocation(null, cityId);
 }

@@ -3,7 +3,12 @@
 import { useAuth } from "@clerk/nextjs";
 import { useCallback, useEffect, useState } from "react";
 import { applyLoginLocationToLocalStorage } from "@/lib/auth/login-location";
-import { resolveHomeLocation } from "@/lib/auth/sync-home-location";
+import {
+  resolveHomeLocation,
+  syncHomeLocation,
+  syncHomeLocationByCity,
+  type UserCoordinates,
+} from "@/lib/auth/sync-home-location";
 import { saveStoredBackendUser } from "@/lib/backend-user-storage";
 import {
   formatNewsReaderUserLocation,
@@ -212,7 +217,111 @@ export function useHomeUser() {
     };
   }, [isLoaded, isSignedIn, userId]);
 
-  return { user, isLoading, isLocating, error };
+  const syncLocation = useCallback(
+    async (coordinates?: UserCoordinates | null) => {
+      if (!userId) {
+        return null;
+      }
+
+      setIsLocating(true);
+      setError(null);
+
+      try {
+        const payload = coordinates
+          ? await syncHomeLocation(coordinates)
+          : await resolveHomeLocation();
+
+        if (payload?.user) {
+          applyBackendUser(payload.user, userId, setUser);
+          return payload.user;
+        }
+
+        return null;
+      } catch (syncError) {
+        console.error("Failed to sync location:", syncError);
+        setError(
+          syncError instanceof Error
+            ? syncError.message
+            : "Failed to sync location",
+        );
+        return null;
+      } finally {
+        setIsLocating(false);
+      }
+    },
+    [userId],
+  );
+
+  const refetchUser = useCallback(async () => {
+    if (!userId) {
+      return null;
+    }
+
+    try {
+      const response = await fetch("/api/user/get", {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const payload = (await response.json()) as GetUserResponse;
+      if (payload.user) {
+        applyBackendUser(payload.user, userId, setUser);
+        return payload.user;
+      }
+
+      return null;
+    } catch (fetchError) {
+      console.error("Failed to refetch backend user:", fetchError);
+      return null;
+    }
+  }, [userId]);
+
+  const saveCityLocation = useCallback(
+    async (cityId: string) => {
+      if (!userId) {
+        return null;
+      }
+
+      setIsLocating(true);
+      setError(null);
+
+      try {
+        const payload = await syncHomeLocationByCity(cityId);
+
+        if (payload?.user) {
+          applyBackendUser(payload.user, userId, setUser);
+          return payload.user;
+        }
+
+        return null;
+      } catch (saveError) {
+        console.error("Failed to save city location:", saveError);
+        setError(
+          saveError instanceof Error
+            ? saveError.message
+            : "Failed to save location",
+        );
+        return null;
+      } finally {
+        setIsLocating(false);
+      }
+    },
+    [userId],
+  );
+
+  return {
+    user,
+    isLoading,
+    isLocating,
+    error,
+    syncLocation,
+    saveCityLocation,
+    refetchUser,
+  };
 }
 
 export function useHomeLocationLabel(

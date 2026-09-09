@@ -4,9 +4,20 @@ import { useClerk, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import {
+  Compass,
+  Home,
+  LogOut,
+  Moon,
+  Radio,
+  Sun,
+  User,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
-import { motion } from "motion/react";
+import { AnimatePresence, motion } from "motion/react";
 import { EiloLogo } from "@/components/eilo-logo";
 import {
   DesktopSidebar,
@@ -16,11 +27,16 @@ import {
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/home", label: "Home", icon: "home" },
-  { href: "/discover", label: "Discover", icon: "explore" },
-  { href: "/live", label: "Live", icon: "sensors" },
-  { href: "/profile", label: "Profile", icon: "person" },
+  { href: "/home", label: "Home", icon: Home },
+  { href: "/discover", label: "Discover", icon: Compass },
+  { href: "/live", label: "Live", icon: Radio },
+  { href: "/profile", label: "Profile", icon: User },
 ] as const;
+
+export type PlatformSidebarProps = {
+  mobileOpen?: boolean;
+  onMobileOpenChange?: (open: boolean) => void;
+};
 
 function getInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
@@ -31,32 +47,24 @@ function getInitials(name: string) {
   return name.slice(0, 2).toUpperCase();
 }
 
-function MaterialNavIcon({
-  name,
+function SidebarNavIcon({
+  icon: Icon,
   active,
 }: {
-  name: string;
+  icon: LucideIcon;
   active: boolean;
 }) {
   return (
-    <span
+    <Icon
       className={cn(
-        "material-symbols-outlined shrink-0 text-[22px]",
+        "size-[18px] shrink-0",
         active
           ? "text-neutral-900 dark:text-white"
           : "text-neutral-500 dark:text-[#c4c7c8]",
       )}
-      style={
-        active
-          ? {
-              fontVariationSettings:
-                "'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24",
-            }
-          : undefined
-      }
-    >
-      {name}
-    </span>
+      strokeWidth={active ? 2.5 : 2}
+      aria-hidden
+    />
   );
 }
 
@@ -65,11 +73,13 @@ function PlatformSidebarLink({
   label,
   icon,
   active,
+  onNavigate,
 }: {
   href: string;
   label: string;
-  icon: string;
+  icon: LucideIcon;
   active: boolean;
+  onNavigate?: () => void;
 }) {
   const { open, animate } = useSidebar();
   const collapsed = animate && !open;
@@ -77,6 +87,7 @@ function PlatformSidebarLink({
   return (
     <Link
       href={href}
+      onClick={() => onNavigate?.()}
       className={cn(
         "group/sidebar flex items-center transition-colors",
         collapsed
@@ -87,7 +98,7 @@ function PlatformSidebarLink({
           : "text-neutral-600 hover:bg-black/5 hover:text-neutral-900 dark:text-[#c4c7c8] dark:hover:bg-white/5 dark:hover:text-white",
       )}
     >
-      <MaterialNavIcon name={icon} active={active} />
+      <SidebarNavIcon icon={icon} active={active} />
       <motion.span
         animate={{
           display: animate ? (open ? "inline-block" : "none") : "inline-block",
@@ -101,7 +112,7 @@ function PlatformSidebarLink({
   );
 }
 
-function SidebarLogo() {
+function SidebarLogo({ onNavigate }: { onNavigate?: () => void }) {
   const { open, animate } = useSidebar();
   const collapsed = animate && !open;
 
@@ -109,6 +120,7 @@ function SidebarLogo() {
     <Link
       href="/home"
       aria-label="Eilo home"
+      onClick={() => onNavigate?.()}
       className={cn(
         "relative z-20 flex items-center py-1",
         collapsed ? "mx-auto justify-center overflow-visible px-0" : "overflow-hidden px-1",
@@ -132,7 +144,7 @@ function SidebarLogo() {
   );
 }
 
-function SidebarAccountProfile() {
+function SidebarAccountProfile({ onNavigate }: { onNavigate?: () => void }) {
   const { open, animate } = useSidebar();
   const { user } = useUser();
   const collapsed = animate && !open;
@@ -150,6 +162,7 @@ function SidebarAccountProfile() {
   return (
     <Link
       href="/profile"
+      onClick={() => onNavigate?.()}
       className={cn(
         "flex min-w-0 items-center transition-colors",
         collapsed
@@ -206,7 +219,7 @@ function SidebarThemeToggle() {
 
   const isDark = !mounted || resolvedTheme === "dark";
   const label = isDark ? "Light mode" : "Dark mode";
-  const icon = isDark ? "light_mode" : "dark_mode";
+  const ThemeIcon = isDark ? Sun : Moon;
 
   return (
     <button
@@ -221,7 +234,7 @@ function SidebarThemeToggle() {
         "text-neutral-600 hover:bg-black/5 hover:text-neutral-900 dark:text-[#c4c7c8] dark:hover:bg-white/5 dark:hover:text-white",
       )}
     >
-      <span className="material-symbols-outlined shrink-0 text-[22px]">{icon}</span>
+      <ThemeIcon className="size-[18px] shrink-0" strokeWidth={2} aria-hidden />
       <motion.span
         animate={{
           display: animate ? (open ? "inline-block" : "none") : "inline-block",
@@ -252,7 +265,7 @@ function SidebarLogoutButton() {
         "text-neutral-600 hover:bg-red-500/10 hover:text-red-600 dark:text-[#c4c7c8] dark:hover:bg-red-500/10 dark:hover:text-[#ff6b6b]",
       )}
     >
-      <span className="material-symbols-outlined shrink-0 text-[22px]">logout</span>
+      <LogOut className="size-[18px] shrink-0" strokeWidth={2} aria-hidden />
       <motion.span
         animate={{
           display: animate ? (open ? "inline-block" : "none") : "inline-block",
@@ -266,57 +279,140 @@ function SidebarLogoutButton() {
   );
 }
 
-export function PlatformSidebar() {
+function PlatformSidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
+  const pathname = usePathname();
+  const { open, animate } = useSidebar();
+  const collapsed = animate && !open;
+
+  return (
+    <>
+      <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
+        <SidebarLogo onNavigate={onNavigate} />
+        <nav
+          className={cn(
+            "mt-8 flex flex-col gap-1",
+            collapsed && "items-center",
+          )}
+        >
+          {navItems.map(({ href, label, icon }) => {
+            const active =
+              pathname === href || pathname.startsWith(`${href}/`);
+
+            return (
+              <PlatformSidebarLink
+                key={href}
+                href={href}
+                label={label}
+                icon={icon}
+                active={active}
+                onNavigate={onNavigate}
+              />
+            );
+          })}
+        </nav>
+      </div>
+
+      <div
+        className={cn(
+          "flex flex-col gap-1",
+          collapsed && "items-center",
+        )}
+      >
+        <SidebarThemeToggle />
+        <SidebarAccountProfile onNavigate={onNavigate} />
+        <SidebarLogoutButton />
+      </div>
+    </>
+  );
+}
+
+export function PlatformSidebar({
+  mobileOpen = false,
+  onMobileOpenChange,
+}: PlatformSidebarProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const collapsed = !open;
 
+  useEffect(() => {
+    onMobileOpenChange?.(false);
+  }, [pathname, onMobileOpenChange]);
+
+  useEffect(() => {
+    if (!mobileOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mobileOpen]);
+
+  function closeMobileMenu() {
+    onMobileOpenChange?.(false);
+  }
+
   return (
-    <div className="sticky top-0 flex h-svh shrink-0 flex-col">
-      <Sidebar open={open} setOpen={setOpen}>
-        <DesktopSidebar
-          className={cn(
-            "flex h-full min-h-svh flex-col justify-between gap-8 border-r border-neutral-200 bg-neutral-100 py-4 dark:border-[#262626] dark:bg-[#131313]",
-            collapsed ? "px-2.5" : "px-4",
-          )}
-        >
-        <div className="flex flex-1 flex-col overflow-x-hidden overflow-y-auto">
-          <SidebarLogo />
-          <nav
+    <>
+      <div className="sticky top-0 hidden h-svh shrink-0 flex-col md:flex">
+        <Sidebar open={open} setOpen={setOpen}>
+          <DesktopSidebar
             className={cn(
-              "mt-8 flex flex-col gap-1",
-              collapsed && "items-center",
+              "flex h-full min-h-svh flex-col justify-between gap-8 border-r border-neutral-200 bg-neutral-100 py-4 dark:border-[#262626] dark:bg-[#131313]",
+              collapsed ? "px-2.5" : "px-4",
             )}
           >
-            {navItems.map(({ href, label, icon }) => {
-              const active =
-                pathname === href || pathname.startsWith(`${href}/`);
+            <PlatformSidebarPanel />
+          </DesktopSidebar>
+        </Sidebar>
+      </div>
 
-              return (
-                <PlatformSidebarLink
-                  key={href}
-                  href={href}
-                  label={label}
-                  icon={icon}
-                  active={active}
-                />
-              );
-            })}
-          </nav>
-        </div>
+      <AnimatePresence>
+        {mobileOpen ? (
+          <>
+            <motion.button
+              type="button"
+              aria-label="Close menu"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 z-[70] bg-black/60 md:hidden"
+              onClick={closeMobileMenu}
+            />
+            <motion.aside
+              initial={{ x: "-100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100%" }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="fixed inset-y-0 left-0 z-[80] flex w-[min(300px,85vw)] flex-col border-r border-[#262626] bg-[#131313] px-4 py-4 pb-[env(safe-area-inset-bottom)] md:hidden"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <span className="font-mono text-[11px] tracking-[0.08em] text-[#888888] uppercase">
+                  Menu
+                </span>
+                <button
+                  type="button"
+                  onClick={closeMobileMenu}
+                  aria-label="Close menu"
+                  className="flex size-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10"
+                >
+                  <X className="size-5" strokeWidth={2} aria-hidden />
+                </button>
+              </div>
 
-        <div
-          className={cn(
-            "flex flex-col gap-1",
-            collapsed && "items-center",
-          )}
-        >
-          <SidebarThemeToggle />
-          <SidebarAccountProfile />
-          <SidebarLogoutButton />
-        </div>
-        </DesktopSidebar>
-      </Sidebar>
-    </div>
+              <Sidebar open setOpen={() => {}} animate={false}>
+                <div className="flex min-h-0 flex-1 flex-col justify-between gap-8 overflow-y-auto">
+                  <PlatformSidebarPanel onNavigate={closeMobileMenu} />
+                </div>
+              </Sidebar>
+            </motion.aside>
+          </>
+        ) : null}
+      </AnimatePresence>
+    </>
   );
 }

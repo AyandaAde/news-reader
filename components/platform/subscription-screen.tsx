@@ -18,7 +18,7 @@ export function PlatformSubscriptionScreen() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex size-10 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 active:scale-95"
+          className="flex size-10 items-center justify-center rounded-full text-neutral-900 transition-colors hover:bg-neutral-100 active:scale-95 dark:text-white dark:hover:bg-white/10"
           aria-label="Go back"
         >
           <MaterialIcon name="arrow_back" className="text-[22px]" />
@@ -26,12 +26,12 @@ export function PlatformSubscriptionScreen() {
 
         <Link
           href="/home"
-          className="absolute left-1/2 -translate-x-1/2 text-[22px] font-bold tracking-[0.18em] text-white"
+          className="absolute left-1/2 -translate-x-1/2 text-[22px] font-bold tracking-[0.18em] text-neutral-900 dark:text-white"
         >
           EILO
         </Link>
 
-        <div className="flex size-10 items-center justify-center overflow-hidden rounded-full border border-[#262626] bg-[#2a2a2a]">
+        <div className="flex size-10 items-center justify-center overflow-hidden rounded-full border border-neutral-200 bg-neutral-100 dark:border-[#262626] dark:bg-[#2a2a2a]">
           <UserButton appearance={{ elements: { avatarBox: "size-10" } }} />
         </div>
       </header>

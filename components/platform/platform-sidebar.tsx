@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import {
   Compass,
   Home,
+  Languages,
   LogOut,
   Moon,
   Radio,
@@ -19,18 +20,26 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { EiloLogo } from "@/components/eilo-logo";
+import { useI18n } from "@/components/i18n-provider";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from "@/components/ui/select";
 import {
   DesktopSidebar,
   Sidebar,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { isLanguage, languages } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/discover", label: "Discover", icon: Compass },
-  { href: "/live", label: "Live", icon: Radio },
-  { href: "/profile", label: "Profile", icon: User },
+  { href: "/home", labelKey: "platform.sidebar.home", icon: Home },
+  { href: "/discover", labelKey: "platform.sidebar.discover", icon: Compass },
+  { href: "/live", labelKey: "platform.sidebar.live", icon: Radio },
+  { href: "/profile", labelKey: "platform.sidebar.profile", icon: User },
 ] as const;
 
 export type PlatformSidebarProps = {
@@ -147,13 +156,14 @@ function SidebarLogo({ onNavigate }: { onNavigate?: () => void }) {
 function SidebarAccountProfile({ onNavigate }: { onNavigate?: () => void }) {
   const { open, animate } = useSidebar();
   const { user } = useUser();
+  const { t } = useI18n();
   const collapsed = animate && !open;
 
   const displayName =
     user?.fullName?.trim() ||
     user?.firstName?.trim() ||
     user?.username?.trim() ||
-    "Your profile";
+    t("platform.sidebar.yourProfile");
   const email =
     user?.primaryEmailAddress?.emailAddress ??
     user?.emailAddresses[0]?.emailAddress;
@@ -207,9 +217,79 @@ function SidebarAccountProfile({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+function SidebarLanguageSelect() {
+  const { open, animate } = useSidebar();
+  const { language, setLanguage, t } = useI18n();
+  const collapsed = animate && !open;
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const selectedLabel =
+    languages.find((option) => option.value === language)?.label ?? "English";
+
+  function handleChange(next: string | null) {
+    if (typeof next === "string" && isLanguage(next)) {
+      setLanguage(next);
+    }
+  }
+
+  return (
+    <div
+      className={cn(
+        "flex items-center",
+        collapsed ? "mx-auto justify-center" : "w-full",
+      )}
+    >
+      <Select
+        value={mounted ? language : "en"}
+        onValueChange={handleChange}
+      >
+        <SelectTrigger
+          aria-label={t("platform.sidebar.language")}
+          className={cn(
+            "h-auto border-transparent bg-transparent shadow-none focus-visible:border-transparent focus-visible:ring-0",
+            "text-neutral-600 hover:bg-black/5 hover:text-neutral-900 dark:text-[#c4c7c8] dark:hover:bg-white/5 dark:hover:text-white",
+            collapsed
+              ? "size-10 justify-center rounded-full p-0 [&>svg:last-child]:hidden"
+              : "w-full justify-start gap-3 rounded-lg px-2 py-2.5 [&>svg:last-child]:ml-auto [&>svg:last-child]:size-3.5 [&>svg:last-child]:text-neutral-400 dark:[&>svg:last-child]:text-[#888888]",
+          )}
+        >
+          <Languages className="size-[18px] shrink-0" strokeWidth={2} aria-hidden />
+          {!collapsed ? (
+            <span className="min-w-0 flex-1 truncate text-left font-mono text-[12px] font-medium tracking-[0.05em]">
+              {selectedLabel}
+            </span>
+          ) : null}
+        </SelectTrigger>
+        <SelectContent
+          align="start"
+          side="right"
+          sideOffset={8}
+          alignItemWithTrigger={false}
+          className="hide-scrollbar max-h-64 min-w-[11rem] overflow-y-auto rounded-xl border border-neutral-200 bg-white p-1 text-neutral-900 shadow-xl dark:border-[#262626] dark:bg-[#1f1f1f] dark:text-white"
+        >
+          {languages.map((option) => (
+            <SelectItem
+              key={option.value}
+              value={option.value}
+              className="rounded-lg px-3 py-2 text-sm text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900 dark:text-white dark:focus:bg-white/10 dark:focus:text-white"
+            >
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  );
+}
+
 function SidebarThemeToggle() {
   const { resolvedTheme, setTheme } = useTheme();
   const { open, animate } = useSidebar();
+  const { t } = useI18n();
   const collapsed = animate && !open;
   const [mounted, setMounted] = useState(false);
 
@@ -218,7 +298,9 @@ function SidebarThemeToggle() {
   }, []);
 
   const isDark = !mounted || resolvedTheme === "dark";
-  const label = isDark ? "Light mode" : "Dark mode";
+  const label = isDark
+    ? t("platform.sidebar.lightMode")
+    : t("platform.sidebar.darkMode");
   const ThemeIcon = isDark ? Sun : Moon;
 
   return (
@@ -251,6 +333,7 @@ function SidebarThemeToggle() {
 function SidebarLogoutButton() {
   const { signOut } = useClerk();
   const { open, animate } = useSidebar();
+  const { t } = useI18n();
   const collapsed = animate && !open;
 
   return (
@@ -273,7 +356,7 @@ function SidebarLogoutButton() {
         }}
         className="font-mono text-[12px] font-medium tracking-[0.05em] whitespace-pre"
       >
-        Log out
+        {t("platform.sidebar.logOut")}
       </motion.span>
     </button>
   );
@@ -282,6 +365,7 @@ function SidebarLogoutButton() {
 function PlatformSidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const { open, animate } = useSidebar();
+  const { t } = useI18n();
   const collapsed = animate && !open;
 
   return (
@@ -294,7 +378,7 @@ function PlatformSidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
             collapsed && "items-center",
           )}
         >
-          {navItems.map(({ href, label, icon }) => {
+          {navItems.map(({ href, labelKey, icon }) => {
             const active =
               pathname === href || pathname.startsWith(`${href}/`);
 
@@ -302,13 +386,14 @@ function PlatformSidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
               <PlatformSidebarLink
                 key={href}
                 href={href}
-                label={label}
+                label={t(labelKey)}
                 icon={icon}
                 active={active}
                 onNavigate={onNavigate}
               />
             );
           })}
+          <SidebarLanguageSelect />
         </nav>
       </div>
 
@@ -331,6 +416,7 @@ export function PlatformSidebar({
   onMobileOpenChange,
 }: PlatformSidebarProps) {
   const pathname = usePathname();
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const collapsed = !open;
 
@@ -357,7 +443,7 @@ export function PlatformSidebar({
 
   return (
     <>
-      <div className="sticky top-0 hidden h-svh shrink-0 flex-col md:flex">
+      <div className="sticky top-0 z-20 hidden h-svh shrink-0 flex-col md:flex">
         <Sidebar open={open} setOpen={setOpen}>
           <DesktopSidebar
             className={cn(
@@ -375,7 +461,7 @@ export function PlatformSidebar({
           <>
             <motion.button
               type="button"
-              aria-label="Close menu"
+              aria-label={t("platform.sidebar.closeMenu")}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -392,12 +478,12 @@ export function PlatformSidebar({
             >
               <div className="mb-4 flex items-center justify-between">
                 <span className="font-mono text-[11px] tracking-[0.08em] text-[#888888] uppercase">
-                  Menu
+                  {t("platform.sidebar.menu")}
                 </span>
                 <button
                   type="button"
                   onClick={closeMobileMenu}
-                  aria-label="Close menu"
+                  aria-label={t("platform.sidebar.closeMenu")}
                   className="flex size-9 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10"
                 >
                   <X className="size-5" strokeWidth={2} aria-hidden />

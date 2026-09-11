@@ -7,6 +7,7 @@ import {
   ExpandableCards,
   type ExpandableCardItem,
 } from "@/components/platform/expandable-cards";
+import { useI18n } from "@/components/i18n-provider";
 import {
   PlatformScrollNavButtons,
   PlatformScrollSectionHeader,
@@ -15,15 +16,10 @@ import { usePlatformPlayback } from "@/components/platform/platform-playback-pro
 import { useHorizontalScroll } from "@/components/platform/use-horizontal-scroll";
 import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
 import { TOPIC_OPTIONS } from "@/lib/onboarding";
+import { TOPIC_LABEL_KEYS } from "@/lib/platform-topic-labels";
 import { cn } from "@/lib/utils";
 
-const discoverFilters = ["All", "My Casts", ...TOPIC_OPTIONS] as const;
-
-const discoverSearchPlaceholders = [
-  "Search podcasts and briefings...",
-  "Try 'Nomad Notes' or 'Agent Era'",
-  "Find topics, casts, and stories",
-] as const;
+const discoverTopicFilters = [...TOPIC_OPTIONS] as const;
 
 const liveNowItems = [
   {
@@ -153,13 +149,14 @@ function MaterialIcon({
 
 function toPodcastCards(
   items: typeof podcastRecommendations,
+  playLabel: string,
 ): ExpandableCardItem[] {
   return items.map((item) => ({
     id: item.id,
     title: item.title,
     description: item.subtitle,
     src: item.image,
-    ctaText: "Play",
+    ctaText: playLabel,
     content: (
       <p>
         {item.title} — {item.subtitle}. A recommended podcast picked for your
@@ -171,6 +168,7 @@ function toPodcastCards(
 
 function toNoteworthyCards(
   items: typeof noteworthyItems,
+  playLabel: string,
 ): ExpandableCardItem[] {
   return items.map((item) => ({
     id: item.id,
@@ -178,7 +176,7 @@ function toNoteworthyCards(
     description: `${item.duration} • ${item.tag} • ${item.date}`,
     badge: item.tag,
     src: item.image,
-    ctaText: "Play",
+    ctaText: playLabel,
     content: (
       <p>
         {item.title} — {item.description}
@@ -189,47 +187,81 @@ function toNoteworthyCards(
 
 export function PlatformDiscoverScreen() {
   const { play } = usePlatformPlayback();
-  const [discoverFilter, setDiscoverFilter] =
-    useState<(typeof discoverFilters)[number]>("All");
+  const { t } = useI18n();
+  const [discoverFilter, setDiscoverFilter] = useState("all");
   const liveScroll = useHorizontalScroll(240);
   const trendingScroll = useHorizontalScroll(520);
   const podcastScroll = useHorizontalScroll(280);
 
+  const playLabel = t("platform.home.play");
+  const liveLabel = t("platform.discover.live");
+  const liveBroadcastLabel = t("platform.discover.liveBroadcast");
+  const trendingNowLabel = t("platform.discover.trendingNow");
+
+  const discoverFilters = useMemo(
+    () =>
+      [
+        { id: "all", label: t("platform.home.filterAll") },
+        { id: "my-casts", label: t("platform.home.filterMyCasts") },
+        ...discoverTopicFilters.map((topic) => ({
+          id: topic,
+          label: t(TOPIC_LABEL_KEYS[topic]),
+        })),
+      ] as const,
+    [t],
+  );
+
+  const searchPlaceholders = useMemo(
+    () => [
+      t("platform.discover.searchPlaceholder1"),
+      t("platform.discover.searchPlaceholder2"),
+      t("platform.discover.searchPlaceholder3"),
+    ],
+    [t],
+  );
+
   const podcastCards = useMemo(
-    () => toPodcastCards(podcastRecommendations),
-    [],
+    () => toPodcastCards(podcastRecommendations, playLabel),
+    [playLabel],
   );
   const noteworthyCards = useMemo(
-    () => toNoteworthyCards(noteworthyItems),
-    [],
+    () => toNoteworthyCards(noteworthyItems, playLabel),
+    [playLabel],
   );
+
+  const activeFilterLabel =
+    discoverFilters.find((filter) => filter.id === discoverFilter)?.label ??
+    discoverFilter;
 
   return (
     <>
       <section className="mb-10">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
           <div className="min-w-0 flex-1">
-            <h1 className="mb-2 text-4xl font-bold leading-tight tracking-tight text-white md:text-5xl md:leading-[56px]">
-              Discover
+            <h1 className="mb-2 text-4xl font-bold leading-tight tracking-tight text-neutral-900 md:text-5xl md:leading-[56px] dark:text-white">
+              {t("platform.discover.title")}
             </h1>
-            <p className="max-w-2xl text-lg leading-7 text-[#888888]">
-              Curated soundscapes and deep-dive narratives engineered for focused
-              listening.
+            <p className="max-w-2xl text-lg leading-7 text-neutral-500 dark:text-[#888888]">
+              {t("platform.discover.subtitle")}
             </p>
           </div>
 
           <div className="w-full lg:w-[min(100%,22rem)] lg:shrink-0 lg:pt-2">
             <PlaceholdersAndVanishInput
-              placeholders={[...discoverSearchPlaceholders]}
+              placeholders={searchPlaceholders}
               onChange={() => {}}
               onSubmit={() => {}}
               className={cn(
-                "mx-0 h-11 max-w-none !bg-[#1f1f1f] border border-[#262626] shadow-none",
-                "has-[input:focus-visible]:border-white/30",
-                "[&_input]:text-white [&_input]:placeholder:text-transparent",
-                "[&_p]:text-[#888888]",
-                "[&_button:not(:disabled)]:bg-white [&_button:not(:disabled)_svg]:text-black",
-                "[&_button:disabled]:bg-[#2a2a2a] [&_button:disabled_svg]:text-[#666]",
+                "mx-0 h-11 max-w-none border shadow-none",
+                "border-neutral-200 !bg-white",
+                "dark:border-[#262626] dark:!bg-[#1f1f1f]",
+                "has-[input:focus-visible]:border-neutral-400 dark:has-[input:focus-visible]:border-white/30",
+                "[&_input]:text-neutral-900 dark:[&_input]:text-white [&_input]:placeholder:text-transparent",
+                "[&_p]:text-neutral-500 dark:[&_p]:text-[#888888]",
+                "[&_button:not(:disabled)]:bg-neutral-900 [&_button:not(:disabled)_svg]:text-white",
+                "dark:[&_button:not(:disabled)]:bg-white dark:[&_button:not(:disabled)_svg]:text-black",
+                "[&_button:disabled]:bg-neutral-200 [&_button:disabled_svg]:text-neutral-400",
+                "dark:[&_button:disabled]:bg-[#2a2a2a] dark:[&_button:disabled_svg]:text-[#666]",
               )}
             />
           </div>
@@ -240,17 +272,17 @@ export function PlatformDiscoverScreen() {
         <div className="flex gap-3">
           {discoverFilters.map((filter) => (
             <button
-              key={filter}
+              key={filter.id}
               type="button"
-              onClick={() => setDiscoverFilter(filter)}
+              onClick={() => setDiscoverFilter(filter.id)}
               className={cn(
                 "shrink-0 rounded-full px-6 py-2.5 text-[12px] font-medium tracking-[0.05em] transition-all active:scale-95",
-                discoverFilter === filter
-                  ? "bg-white font-bold text-black"
-                  : "border border-[#262626] bg-[#1f1f1f] text-[#e2e2e2] hover:border-white/30",
+                discoverFilter === filter.id
+                  ? "bg-neutral-900 font-bold text-white dark:bg-white dark:text-black"
+                  : "border border-neutral-200 bg-white text-neutral-700 hover:border-neutral-400 dark:border-[#262626] dark:bg-[#1f1f1f] dark:text-[#e2e2e2] dark:hover:border-white/30",
               )}
             >
-              {filter}
+              {filter.label}
             </button>
           ))}
         </div>
@@ -258,9 +290,11 @@ export function PlatformDiscoverScreen() {
 
       <section className="mb-10">
         <div className="mb-3 flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-semibold leading-8 text-white">Live</h2>
+          <h2 className="text-2xl font-semibold leading-8 text-neutral-900 dark:text-white">
+            {liveLabel}
+          </h2>
           <PlatformScrollNavButtons
-            title="Live"
+            title={liveLabel}
             onPrevious={liveScroll.scrollPrevious}
             onNext={liveScroll.scrollNext}
             canScrollPrevious={liveScroll.canScrollPrevious}
@@ -275,7 +309,7 @@ export function PlatformDiscoverScreen() {
             <li key={station.id} className="shrink-0">
               <Link
                 href="/live"
-                className="group relative block w-56 overflow-hidden rounded-lg border border-[#262626] bg-[#1f1f1f] transition-colors hover:border-white/20"
+                className="group relative block w-56 overflow-hidden rounded-lg border border-neutral-200 bg-white transition-colors hover:border-neutral-400 dark:border-[#262626] dark:bg-[#1f1f1f] dark:hover:border-white/20"
               >
               <div className="relative aspect-[16/10] overflow-hidden">
                 <Image
@@ -289,7 +323,7 @@ export function PlatformDiscoverScreen() {
                 <div className="absolute left-2 top-2">
                   <span className="flex items-center gap-1 rounded bg-[#ffb4ab] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#690005]">
                     <span className="size-1 animate-pulse rounded-full bg-white" />
-                    Live
+                    {liveLabel}
                   </span>
                 </div>
                 <button
@@ -300,24 +334,30 @@ export function PlatformDiscoverScreen() {
                     play({
                       id: station.id,
                       title: station.title,
-                      subtitle: "Live Broadcast",
+                      subtitle: liveBroadcastLabel,
                       image: station.image,
                       elapsed: "0:00",
-                      duration: "Live",
+                      duration: liveLabel,
                     });
                   }}
                   className="absolute bottom-2 right-2 flex size-8 items-center justify-center rounded-full bg-white text-black opacity-100 shadow-lg transition-opacity md:opacity-0 md:group-hover:opacity-100"
-                  aria-label={`Play ${station.title}`}
+                  aria-label={t("platform.discover.playStation", {
+                    title: station.title,
+                  })}
                 >
                   <MaterialIcon name="play_arrow" filled className="text-[18px]" />
                 </button>
               </div>
               <div className="p-3">
-                <h4 className="mb-0.5 text-sm font-bold text-white">{station.title}</h4>
-                <div className="flex items-center gap-1.5 text-[#888888]">
+                <h4 className="mb-0.5 text-sm font-bold text-neutral-900 dark:text-white">
+                  {station.title}
+                </h4>
+                <div className="flex items-center gap-1.5 text-neutral-500 dark:text-[#888888]">
                   <MaterialIcon name="headphones" className="text-[12px]" />
                   <span className="text-[11px] font-medium tracking-[0.05em]">
-                    {station.listeners} listening
+                    {t("platform.discover.listening", {
+                      count: station.listeners,
+                    })}
                   </span>
                 </div>
               </div>
@@ -329,9 +369,11 @@ export function PlatformDiscoverScreen() {
 
       <section className="mb-10">
         <div className="mb-3 flex items-center justify-between gap-4">
-          <h2 className="text-2xl font-semibold leading-8 text-white">Trending Now</h2>
+          <h2 className="text-2xl font-semibold leading-8 text-neutral-900 dark:text-white">
+            {trendingNowLabel}
+          </h2>
           <PlatformScrollNavButtons
-            title="Trending Now"
+            title={trendingNowLabel}
             onPrevious={trendingScroll.scrollPrevious}
             onNext={trendingScroll.scrollNext}
             canScrollPrevious={trendingScroll.canScrollPrevious}
@@ -345,7 +387,7 @@ export function PlatformDiscoverScreen() {
         >
           {trendingNowItems.map((item) => (
             <li key={item.id} className="shrink-0">
-              <article className="platform-trending-card group relative h-[280px] w-[480px] max-w-[85vw] overflow-hidden rounded-xl border border-[#262626]">
+              <article className="platform-trending-card group relative h-[280px] w-[480px] max-w-[85vw] overflow-hidden rounded-xl border border-neutral-200 dark:border-[#262626]">
               <Image
                 src={item.image}
                 alt={item.title}
@@ -388,7 +430,7 @@ export function PlatformDiscoverScreen() {
                     filled
                     className="text-[16px]"
                   />
-                  Listen
+                  {t("platform.discover.listen")}
                 </button>
               </div>
               </article>
@@ -399,7 +441,7 @@ export function PlatformDiscoverScreen() {
 
       <section className="mb-10">
         <PlatformScrollSectionHeader
-          title="Curated for you"
+          title={t("platform.discover.curatedForYou")}
           onPrevious={podcastScroll.scrollPrevious}
           onNext={podcastScroll.scrollNext}
           canScrollPrevious={podcastScroll.canScrollPrevious}
@@ -413,9 +455,9 @@ export function PlatformDiscoverScreen() {
       </section>
 
       <section className="mb-16">
-        <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
-          New &amp; Noteworthy
-          {discoverFilter !== "All" ? ` · ${discoverFilter}` : ""}
+        <h2 className="mb-3 text-2xl font-semibold leading-8 text-neutral-900 dark:text-white">
+          {t("platform.discover.newAndNoteworthy")}
+          {discoverFilter !== "all" ? ` · ${activeFilterLabel}` : ""}
         </h2>
         <ExpandableCards cards={noteworthyCards} />
       </section>

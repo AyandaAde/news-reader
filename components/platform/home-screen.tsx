@@ -14,6 +14,7 @@ import { PlatformScrollSectionHeader } from "@/components/platform/platform-scro
 import { useHorizontalScroll } from "@/components/platform/use-horizontal-scroll";
 import { usePlatformPlayback } from "@/components/platform/platform-playback-provider";
 import { PlaceholdersAndVanishInput } from "@/components/ui/placeholders-and-vanish-input";
+import { useI18n } from "@/components/i18n-provider";
 import { useHomeLocationLabel, useHomeUser } from "@/hooks/use-backend-user";
 import { useHomePodcasts } from "@/hooks/use-home-podcasts";
 import { useHomeWeather } from "@/hooks/use-home-weather";
@@ -23,10 +24,11 @@ import {
   userHasStoredLocation,
 } from "@/lib/location-label";
 import { buildDisplayName } from "@/lib/auth/clerk-user";
-import { formatTimeGreeting } from "@/lib/time-greeting";
+import { getFirstName, getTimeOfDayGreeting } from "@/lib/time-greeting";
 import { getWeatherTemperatureValue } from "@/lib/weather-temperature";
 import { getWeatherIcon } from "@/lib/weather-icon";
 import { TOPIC_OPTIONS } from "@/lib/onboarding";
+import { TOPIC_LABEL_KEYS } from "@/lib/platform-topic-labels";
 import { topBriefingsItems } from "@/lib/platform-briefings";
 import {
   PODCAST_PLACEHOLDER_IMAGE,
@@ -80,28 +82,23 @@ const madeForYouItems = [
   },
 ] as const;
 
-const discoverFilters = ["All", "My Casts", ...TOPIC_OPTIONS] as const;
-
-const homeSearchPlaceholders = [
-  "Search briefings, stories, and topics...",
-  "Try 'Morning Markets' or 'Tech & AI Digest'",
-  "Find podcasts and news briefings",
-] as const;
+const discoverTopicFilters = [...TOPIC_OPTIONS] as const;
 
 const trendingPlaceholderImage =
   "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80&w=400";
 
 function toTopBriefingsCards(
   items: typeof topBriefingsItems,
+  labels: { play: string; viewBriefing: string },
 ): ExpandableCardItem[] {
   return items.map((item) => ({
     id: item.id,
     title: item.title,
     description: item.description,
     src: item.image,
-    ctaText: "Play",
+    ctaText: labels.play,
     viewHref: `/briefings/${item.id}`,
-    viewLabel: "View Briefing",
+    viewLabel: labels.viewBriefing,
     accent: true,
     content: (
       <p>
@@ -114,14 +111,15 @@ function toTopBriefingsCards(
 
 function toTrendingCards(
   items: typeof trendingItems,
+  labels: { play: string; trending: string },
 ): ExpandableCardItem[] {
   return items.map((item) => ({
     id: item.title,
     title: item.title,
     description: item.meta,
-    badge: "Trending",
+    badge: labels.trending,
     src: item.image ?? trendingPlaceholderImage,
-    ctaText: "Play",
+    ctaText: labels.play,
     content: (
       <p>
         {item.title} — {item.meta}. This story is trending across the platform
@@ -134,6 +132,7 @@ function toTrendingCards(
 
 function toDiscoverCards(
   items: typeof madeForYouItems,
+  labels: { play: string },
 ): ExpandableCardItem[] {
   return items.map((item) => ({
     id: item.title,
@@ -141,7 +140,7 @@ function toDiscoverCards(
     description: item.meta,
     badge: `${item.tag} • ${item.episode}`,
     src: item.image,
-    ctaText: "Play",
+    ctaText: labels.play,
     content: (
       <p>
         {item.title} — {item.meta}. This episode is part of your personalized
@@ -154,9 +153,9 @@ function toDiscoverCards(
 
 export function PlatformHomeScreen() {
   const router = useRouter();
+  const { t, language } = useI18n();
   const { user: clerkUser } = useUser();
-  const [discoverFilter, setDiscoverFilter] =
-    useState<(typeof discoverFilters)[number]>("All");
+  const [discoverFilter, setDiscoverFilter] = useState<string>("all");
   const { play } = usePlatformPlayback();
   const topBriefingsScroll = useHorizontalScroll();
   const forYouScroll = useHorizontalScroll();
@@ -202,14 +201,23 @@ export function PlatformHomeScreen() {
   const dailyBriefStoryCount = backendUser?.latestBriefStoryCount ?? 0;
   const dailyBriefSubtitle =
     dailyBriefStoryCount === 1
-      ? "1 story curated for you"
+      ? t("platform.home.storyCuratedOne")
       : dailyBriefStoryCount > 1
-        ? `${dailyBriefStoryCount} stories curated for you`
-        : "Your daily brief is ready";
+        ? t("platform.home.storyCuratedMany", { count: dailyBriefStoryCount })
+        : t("platform.home.dailyBriefReady");
+
+  const cardLabels = useMemo(
+    () => ({
+      play: t("platform.home.play"),
+      viewBriefing: t("platform.home.viewBriefing"),
+      trending: t("platform.home.trending"),
+    }),
+    [t],
+  );
 
   const topBriefingsCards = useMemo(
-    () => toTopBriefingsCards(topBriefingsItems),
-    [],
+    () => toTopBriefingsCards(topBriefingsItems, cardLabels),
+    [cardLabels],
   );
   const forYouCards = useMemo(
     () => podcastsToForYouCards(homePodcasts),
@@ -217,8 +225,36 @@ export function PlatformHomeScreen() {
   );
   const dailyBriefImage =
     homePodcasts[0]?.artworkUrl?.trim() || PODCAST_PLACEHOLDER_IMAGE;
-  const trendingCards = useMemo(() => toTrendingCards(trendingItems), []);
-  const discoverCards = useMemo(() => toDiscoverCards(madeForYouItems), []);
+  const trendingCards = useMemo(
+    () => toTrendingCards(trendingItems, cardLabels),
+    [cardLabels],
+  );
+  const discoverCards = useMemo(
+    () => toDiscoverCards(madeForYouItems, cardLabels),
+    [cardLabels],
+  );
+
+  const homeSearchPlaceholders = useMemo(
+    () => [
+      t("platform.home.searchPlaceholder1"),
+      t("platform.home.searchPlaceholder2"),
+      t("platform.home.searchPlaceholder3"),
+    ],
+    [t],
+  );
+
+  const discoverFilters = useMemo(
+    () =>
+      [
+        { id: "all", label: t("platform.home.filterAll") },
+        { id: "my-casts", label: t("platform.home.filterMyCasts") },
+        ...discoverTopicFilters.map((topic) => ({
+          id: topic,
+          label: t(TOPIC_LABEL_KEYS[topic]),
+        })),
+      ] as const,
+    [t],
+  );
 
   const [briefDate, setBriefDate] = useState("");
 
@@ -246,20 +282,28 @@ export function PlatformHomeScreen() {
     return null;
   }, [backendUser?.displayName, backendUser?.email, clerkUser]);
 
-  const greetingText = useMemo(
-    () => formatTimeGreeting(displayName),
-    [displayName],
-  );
+  const greetingText = useMemo(() => {
+    const timeOfDay = getTimeOfDayGreeting();
+    const greetingKey =
+      timeOfDay === "Good Morning"
+        ? "platform.home.goodMorning"
+        : timeOfDay === "Good Afternoon"
+          ? "platform.home.goodAfternoon"
+          : "platform.home.goodEvening";
+    const greeting = t(greetingKey);
+    const firstName = displayName ? getFirstName(displayName) : "";
+    return firstName ? `${greeting}, ${firstName}` : greeting;
+  }, [displayName, t]);
 
   useEffect(() => {
     setBriefDate(
-      new Date().toLocaleDateString("en-US", {
+      new Date().toLocaleDateString(language, {
         weekday: "long",
         month: "short",
         day: "numeric",
       }),
     );
-  }, []);
+  }, [language]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -336,24 +380,8 @@ export function PlatformHomeScreen() {
   return (
     <>
       <section className="mb-6 md:mb-8">
-        <PlaceholdersAndVanishInput
-          placeholders={[...homeSearchPlaceholders]}
-          onChange={() => { }}
-          onSubmit={(event) => {
-            event.preventDefault();
-            router.push("/discover");
-          }}
-          className={cn(
-            "mx-0 h-11 max-w-none overflow-hidden !bg-[#1f1f1f] border border-[#262626] shadow-none",
-            "has-[input:focus-visible]:border-white/30",
-            "[&_input]:text-white [&_input]:placeholder:text-transparent",
-            "[&_p]:text-[#888888]",
-            "[&_button:not(:disabled)]:bg-white [&_button:not(:disabled)_svg]:text-black",
-            "[&_button:disabled]:bg-[#2a2a2a] [&_button:disabled_svg]:text-[#666]",
-          )}
-        />
         <h1
-          className="mt-4 text-2xl font-semibold leading-8 text-white md:mt-5 md:text-3xl md:leading-9"
+          className="text-2xl font-semibold leading-8 text-neutral-900 md:text-3xl md:leading-9 dark:text-white"
           suppressHydrationWarning
         >
           {greetingText || "\u00A0"}
@@ -381,8 +409,8 @@ export function PlatformHomeScreen() {
       />
 
       <section className="mb-8 md:mb-10">
-        <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
-          Your Daily Brief
+        <h2 className="mb-3 text-2xl font-semibold leading-8 text-neutral-900 dark:text-white">
+          {t("platform.home.yourDailyBrief")}
         </h2>
 
         <div className="w-full overflow-hidden rounded-xl border border-white/10 bg-gradient-to-br from-[#1a2b4a] to-[#0a1428] p-5 shadow-2xl md:p-6">
@@ -399,7 +427,7 @@ export function PlatformHomeScreen() {
                   ? "\u00A0"
                   : hasBriefs
                     ? dailyBriefSubtitle
-                    : "Create a brief to start your daily listening routine"}
+                    : t("platform.home.createBriefEmpty")}
               </p>
               <div className="flex flex-wrap gap-3">
                 {isHomeReady && hasBriefs ? (
@@ -418,7 +446,7 @@ export function PlatformHomeScreen() {
                     className="flex items-center gap-2 rounded-full bg-white px-6 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-black transition-colors hover:bg-white/90"
                   >
                     <Play className="size-5 fill-current" aria-hidden />
-                    Play
+                    {t("platform.home.play")}
                   </button>
                 ) : null}
                 <button
@@ -427,7 +455,7 @@ export function PlatformHomeScreen() {
                   className="flex items-center gap-2 rounded-full border border-white/30 px-6 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white/10"
                 >
                   <Plus className="size-5" aria-hidden />
-                  New Brief
+                  {t("platform.home.newBrief")}
                 </button>
               </div>
             </div>
@@ -435,12 +463,12 @@ export function PlatformHomeScreen() {
             <div className="flex shrink-0 flex-col items-start md:items-end md:text-right">
               {!isHomeReady ? (
                 <p className="font-mono text-[12px] tracking-[0.05em] text-white/60">
-                  Loading...
+                  {t("platform.home.loading")}
                 </p>
               ) : showLocationPrompt ? (
                 <div className="flex max-w-xs flex-col items-start gap-3 md:items-end">
                   <p className="text-sm leading-6 text-white/80">
-                    Add your location to see the weather in your city
+                    {t("platform.home.addLocationPrompt")}
                   </p>
                   <button
                     type="button"
@@ -449,7 +477,7 @@ export function PlatformHomeScreen() {
                     className="flex items-center gap-2 rounded-full border border-white/30 px-5 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <MapPin className="size-4 shrink-0" aria-hidden />
-                    Add location
+                    {t("platform.home.addLocation")}
                   </button>
                 </div>
               ) : (
@@ -466,7 +494,7 @@ export function PlatformHomeScreen() {
                           <span
                             className="inline-flex items-center gap-0.5 font-mono text-base leading-none tracking-[0.05em] md:text-lg"
                             role="group"
-                            aria-label="Temperature unit"
+                            aria-label={t("platform.home.temperatureUnit")}
                           >
                             <button
                               type="button"
@@ -500,8 +528,8 @@ export function PlatformHomeScreen() {
                       </div>
                       <span className="font-mono text-[12px] tracking-[0.05em] text-white/80">
                         {showWeatherLoading
-                          ? "Loading weather..."
-                          : (weatherCondition ?? "Weather unavailable")}
+                          ? t("platform.home.loadingWeather")
+                          : (weatherCondition ?? t("platform.home.weatherUnavailable"))}
                       </span>
                     </div>
                     <span
@@ -519,10 +547,32 @@ export function PlatformHomeScreen() {
         </div>
       </section>
 
+      <section className="mb-6 md:mb-8">
+        <PlaceholdersAndVanishInput
+          placeholders={[...homeSearchPlaceholders]}
+          onChange={() => { }}
+          onSubmit={(event) => {
+            event.preventDefault();
+            router.push("/discover");
+          }}
+          className={cn(
+            "mx-0 h-11 max-w-none overflow-hidden border shadow-none",
+            "border-neutral-200 !bg-white dark:border-[#262626] dark:!bg-[#1f1f1f]",
+            "has-[input:focus-visible]:border-neutral-400 dark:has-[input:focus-visible]:border-white/30",
+            "[&_input]:text-neutral-900 dark:[&_input]:text-white [&_input]:placeholder:text-transparent",
+            "[&_p]:text-neutral-500 dark:[&_p]:text-[#888888]",
+            "[&_button:not(:disabled)]:bg-neutral-900 [&_button:not(:disabled)_svg]:text-white",
+            "dark:[&_button:not(:disabled)]:bg-white dark:[&_button:not(:disabled)_svg]:text-black",
+            "[&_button:disabled]:bg-neutral-200 [&_button:disabled_svg]:text-neutral-400",
+            "dark:[&_button:disabled]:bg-[#2a2a2a] dark:[&_button:disabled_svg]:text-[#666]",
+          )}
+        />
+      </section>
+
       {isHomeReady && hasBriefs ? (
         <section className="mb-8 md:mb-10">
           <PlatformScrollSectionHeader
-            title="Your Briefings"
+            title={t("platform.home.yourBriefings")}
             onPrevious={topBriefingsScroll.scrollPrevious}
             onNext={topBriefingsScroll.scrollNext}
             canScrollPrevious={topBriefingsScroll.canScrollPrevious}
@@ -539,15 +589,15 @@ export function PlatformHomeScreen() {
       {isHomeReady ? (
         <section className="mb-8 md:mb-10">
           <PlatformScrollSectionHeader
-            title="For You"
+            title={t("platform.home.forYou")}
             onPrevious={forYouScroll.scrollPrevious}
             onNext={forYouScroll.scrollNext}
             canScrollPrevious={forYouScroll.canScrollPrevious}
             canScrollNext={forYouScroll.canScrollNext}
           />
           {isPodcastsLoading ? (
-            <p className="font-mono text-[12px] tracking-[0.05em] text-[#888888]">
-              Loading your podcasts...
+            <p className="font-mono text-[12px] tracking-[0.05em] text-neutral-500 dark:text-[#888888]">
+              {t("platform.home.loadingPodcasts")}
             </p>
           ) : forYouCards.length > 0 ? (
             <ExpandableCards
@@ -556,8 +606,8 @@ export function PlatformHomeScreen() {
               scrollRef={forYouScroll.ref}
             />
           ) : (
-            <p className="text-sm leading-6 text-[#888888]">
-              Your podcasts will appear here once you create a brief.
+            <p className="text-sm leading-6 text-neutral-500 dark:text-[#888888]">
+              {t("platform.home.podcastsEmpty")}
             </p>
           )}
         </section>
@@ -565,7 +615,7 @@ export function PlatformHomeScreen() {
 
       <section className="mb-8 md:mb-10">
         <PlatformScrollSectionHeader
-          title="Trending"
+          title={t("platform.home.trending")}
           onPrevious={trendingScroll.scrollPrevious}
           onNext={trendingScroll.scrollNext}
           canScrollPrevious={trendingScroll.canScrollPrevious}
@@ -579,31 +629,32 @@ export function PlatformHomeScreen() {
       </section>
 
       <section className="mb-8 md:mb-10">
-        <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
-          Discover
+        <h2 className="mb-3 text-2xl font-semibold leading-8 text-neutral-900 dark:text-white">
+          {t("platform.home.discover")}
         </h2>
         <div className="hide-scrollbar -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
           {discoverFilters.map((filter) => (
             <button
-              key={filter}
+              key={filter.id}
               type="button"
-              onClick={() => setDiscoverFilter(filter)}
+              onClick={() => setDiscoverFilter(filter.id)}
               className={cn(
                 "shrink-0 rounded-full px-6 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] transition-colors",
-                discoverFilter === filter
-                  ? "bg-white text-black"
-                  : "border border-[#262626] bg-[#1f1f1f] text-[#c4c7c8] hover:bg-white/10",
+                discoverFilter === filter.id
+                  ? "bg-neutral-900 text-white dark:bg-white dark:text-black"
+                  : "border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-100 dark:border-[#262626] dark:bg-[#1f1f1f] dark:text-[#c4c7c8] dark:hover:bg-white/10",
               )}
             >
-              {filter}
+              {filter.label}
             </button>
           ))}
         </div>
       </section>
 
       <section className="mb-0">
-        <h2 className="mb-3 text-2xl font-semibold leading-8 text-white">
-          {discoverFilter}
+        <h2 className="mb-3 text-2xl font-semibold leading-8 text-neutral-900 dark:text-white">
+          {discoverFilters.find((filter) => filter.id === discoverFilter)?.label ??
+            discoverFilter}
         </h2>
         <ExpandableCards cards={discoverCards} layout="grid" size="medium" />
       </section>

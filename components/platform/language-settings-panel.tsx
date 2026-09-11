@@ -41,13 +41,13 @@ type LanguageSettingsPanelProps = {
 const settingsSelectWrapperClassName = "my-3 block w-full";
 
 const settingsSelectTriggerClassName =
-  "h-20 w-full justify-between rounded-[10px] border border-[#2a2a2a] bg-[#1a1a1a] px-4 py-5 text-[15px] text-white shadow-none focus-visible:border-white/20 focus-visible:ring-0 data-placeholder:text-[#666666] [&>svg]:text-[#888888]";
+  "h-20 w-full justify-between rounded-[10px] border border-neutral-200 bg-white px-4 py-5 text-[15px] text-neutral-900 shadow-none focus-visible:border-neutral-400 focus-visible:ring-0 data-placeholder:text-neutral-400 dark:border-[#2a2a2a] dark:bg-[#1a1a1a] dark:text-white dark:focus-visible:border-white/20 dark:data-placeholder:text-[#666666] [&>svg]:text-neutral-500 dark:[&>svg]:text-[#888888]";
 
 const settingsSelectContentClassName =
-  "hide-scrollbar max-h-64 overflow-x-hidden overflow-y-auto overscroll-contain rounded-[10px] border border-[#262626] bg-[#141414] p-0 text-white shadow-none ring-0 [-webkit-overflow-scrolling:touch] [&_[data-slot=select-scroll-up-button]]:hidden [&_[data-slot=select-scroll-down-button]]:hidden";
+  "hide-scrollbar max-h-64 overflow-x-hidden overflow-y-auto overscroll-contain rounded-[10px] border border-neutral-200 bg-white p-0 text-neutral-900 shadow-none ring-0 dark:border-[#262626] dark:bg-[#141414] dark:text-white [-webkit-overflow-scrolling:touch] [&_[data-slot=select-scroll-up-button]]:hidden [&_[data-slot=select-scroll-down-button]]:hidden";
 
 const settingsSelectItemClassName =
-  "min-h-20 rounded-none px-4 py-4 text-[15px] text-white focus:bg-white/10 focus:text-white";
+  "min-h-20 rounded-none px-4 py-4 text-[15px] text-neutral-900 focus:bg-neutral-100 focus:text-neutral-900 dark:text-white dark:focus:bg-white/10 dark:focus:text-white";
 
 const settingsSelectContentProps = {
   alignItemWithTrigger: false,
@@ -67,7 +67,9 @@ function RadioIndicator({ selected }: { selected: boolean }) {
     <span
       className={cn(
         "mt-0.5 size-5 shrink-0 rounded-full border-2",
-        selected ? "border-white" : "border-[#666666]",
+        selected
+          ? "border-neutral-900 dark:border-white"
+          : "border-neutral-300 dark:border-[#666666]",
       )}
     />
   );
@@ -96,24 +98,24 @@ export function LanguageSettingsPanel({
 
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm leading-6 text-[#888888]">
+      <p className="text-sm leading-6 text-neutral-500 dark:text-[#888888]">
         Choose the language for menus, briefings, and notifications across the app.
       </p>
 
-      <div className="overflow-hidden rounded-[14px] bg-[#141414] px-4 pt-4 pb-0">
-        <p className="mb-3 text-[13px] font-semibold tracking-[0.5px] text-[#888888] uppercase">
+      <div className="overflow-hidden rounded-[14px] bg-neutral-50 px-4 pt-4 pb-0 dark:bg-[#141414]">
+        <p className="mb-3 text-[13px] font-semibold tracking-[0.5px] text-neutral-500 uppercase dark:text-[#888888]">
           App Language
         </p>
         <label className="relative block">
           <MaterialIcon
             name="search"
-            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[18px] text-[#666666]"
+            className="pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-[18px] text-neutral-400 dark:text-[#666666]"
           />
           <input
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
             placeholder="Search languages"
-            className="w-full rounded-[10px] border border-[#2a2a2a] bg-[#1a1a1a] py-3 pr-4 pl-10 text-sm text-white outline-none placeholder:text-[#666666] focus:border-white/20"
+            className="w-full rounded-[10px] border border-neutral-200 bg-white py-3 pr-4 pl-10 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400 dark:border-[#2a2a2a] dark:bg-[#1a1a1a] dark:text-white dark:placeholder:text-[#666666] dark:focus:border-white/20"
           />
         </label>
         <div className={settingsSelectWrapperClassName}>
@@ -147,28 +149,36 @@ export function LanguageSettingsPanel({
           </Select>
         </div>
         {filteredLanguages.length === 0 ? (
-          <p className="mt-2 mb-3 text-sm text-[#888888]">No languages match your search.</p>
+          <p className="mt-2 mb-3 text-sm text-neutral-500 dark:text-[#888888]">
+            No languages match your search.
+          </p>
         ) : null}
       </div>
 
       <div>
-        <h4 className="text-[15px] font-semibold text-white">Podcast and Briefing localisation</h4>
-        <p className="mt-1 text-sm text-[#888888]">
+        <h4 className="text-[15px] font-semibold text-neutral-900 dark:text-white">
+          Podcast and Briefing localisation
+        </h4>
+        <p className="mt-1 text-sm text-neutral-500 dark:text-[#888888]">
           Prioritize audio content in this language.
         </p>
-        <div className="mt-3 rounded-[14px] border border-[#262626] p-1">
+        <div className="mt-3 rounded-[14px] border border-neutral-200 p-1 dark:border-[#262626]">
           <button
             type="button"
             onClick={() => onChange({ podcastLocalizationMode: "match-app" })}
             className={cn(
               "flex w-full items-start gap-3 rounded-[10px] px-3 py-3 text-left transition-colors",
-              matchAppSelected ? "bg-[#2c2c2e]" : "bg-transparent hover:bg-white/[0.03]",
+              matchAppSelected
+                ? "bg-neutral-100 dark:bg-[#2c2c2e]"
+                : "bg-transparent hover:bg-neutral-50 dark:hover:bg-white/[0.03]",
             )}
           >
             <RadioIndicator selected={matchAppSelected} />
             <div>
-              <p className="text-[15px] font-semibold text-white">Match App Language</p>
-              <p className="mt-1 text-sm text-[#888888]">
+              <p className="text-[15px] font-semibold text-neutral-900 dark:text-white">
+                Match App Language
+              </p>
+              <p className="mt-1 text-sm text-neutral-500 dark:text-[#888888]">
                 Currently {getLanguageRegionalLabel(draft.language)}
               </p>
             </div>
@@ -177,7 +187,9 @@ export function LanguageSettingsPanel({
           <div
             className={cn(
               "rounded-[10px] px-3 transition-colors",
-              customSelected ? "bg-[#2c2c2e] pt-3 pb-0" : "bg-transparent py-3",
+              customSelected
+                ? "bg-neutral-100 pt-3 pb-0 dark:bg-[#2c2c2e]"
+                : "bg-transparent py-3",
             )}
           >
             <div className="flex items-start gap-3">
@@ -195,9 +207,13 @@ export function LanguageSettingsPanel({
                   onClick={() => onChange({ podcastLocalizationMode: "custom" })}
                   className="w-full text-left"
                 >
-                  <p className="text-[15px] font-medium text-white">Custom Selection</p>
+                  <p className="text-[15px] font-medium text-neutral-900 dark:text-white">
+                    Custom Selection
+                  </p>
                   {!customSelected ? (
-                    <p className="mt-1 text-sm text-[#888888]">Select specific locale</p>
+                    <p className="mt-1 text-sm text-neutral-500 dark:text-[#888888]">
+                      Select specific locale
+                    </p>
                   ) : null}
                 </button>
                 {customSelected ? (
@@ -241,7 +257,7 @@ export function LanguageSettingsPanel({
       <button
         type="button"
         onClick={onSave}
-        className="w-full rounded-[14px] bg-white px-4 py-3.5 text-[15px] font-semibold text-black transition-opacity hover:opacity-90"
+        className="w-full rounded-[14px] bg-neutral-900 px-4 py-3.5 text-[15px] font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-black"
       >
         Save
       </button>

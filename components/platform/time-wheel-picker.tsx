@@ -161,9 +161,9 @@ function WheelColumn<T extends string | number>({
               onClick={() => snapToIndex(index, true)}
               className={cn(
                 "flex h-11 w-full snap-center items-center justify-center transition-[color,transform,opacity] duration-200",
-                isActive && "scale-105 text-white",
-                isNear && "text-white/55",
-                !isActive && !isNear && "text-white/30",
+                isActive && "scale-105 text-neutral-900 dark:text-white",
+                isNear && "text-neutral-500 dark:text-white/55",
+                !isActive && !isNear && "text-neutral-400 dark:text-white/30",
               )}
             >
               <span className="text-[17px] font-semibold tabular-nums">
@@ -208,14 +208,14 @@ export function TimeWheelPicker({ hours, minutes, onChange, className }: TimeWhe
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-[14px] border border-[#2a2a2a] bg-[#1a1a1a] px-2 py-1",
+        "relative overflow-hidden rounded-[14px] border border-neutral-200 bg-neutral-50 px-2 py-1 dark:border-[#2a2a2a] dark:bg-[#1a1a1a]",
         className,
       )}
       style={{ height: VIEWPORT_HEIGHT }}
     >
-      <div className="pointer-events-none absolute top-1/2 right-3 left-3 z-[1] h-11 -translate-y-1/2 rounded-[10px] border-y border-white/[0.08] bg-white/[0.07]" />
-      <div className="pointer-events-none absolute top-0 right-0 left-0 z-[2] h-16 bg-gradient-to-b from-[#1a1a1a] via-[#1a1a1a]/75 to-transparent" />
-      <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-[2] h-16 bg-gradient-to-t from-[#1a1a1a] via-[#1a1a1a]/75 to-transparent" />
+      <div className="pointer-events-none absolute top-1/2 right-3 left-3 z-[1] h-11 -translate-y-1/2 rounded-[10px] border-y border-neutral-300 bg-neutral-200/70 dark:border-white/[0.08] dark:bg-white/[0.07]" />
+      <div className="pointer-events-none absolute top-0 right-0 left-0 z-[2] h-16 bg-gradient-to-b from-neutral-50 via-neutral-50/75 to-transparent dark:from-[#1a1a1a] dark:via-[#1a1a1a]/75 dark:to-transparent" />
+      <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-[2] h-16 bg-gradient-to-t from-neutral-50 via-neutral-50/75 to-transparent dark:from-[#1a1a1a] dark:via-[#1a1a1a]/75 dark:to-transparent" />
 
       <div className="relative z-0 flex h-full items-stretch">
         <WheelColumn
@@ -224,7 +224,7 @@ export function TimeWheelPicker({ hours, minutes, onChange, className }: TimeWhe
           formatOption={(option) => String(option).padStart(2, "0")}
           onChange={(nextHour) => emit(nextHour, period, minute)}
         />
-        <div className="flex w-4 shrink-0 items-center justify-center self-center text-[18px] font-semibold text-[#888888]">
+        <div className="flex w-4 shrink-0 items-center justify-center self-center text-[18px] font-semibold text-neutral-500 dark:text-[#888888]">
           :
         </div>
         <WheelColumn

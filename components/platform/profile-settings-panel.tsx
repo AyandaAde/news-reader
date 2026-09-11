@@ -22,6 +22,7 @@ import {
   type WeatherSettingsDraft,
 } from "@/components/platform/weather-settings-panel";
 import { PlatformSignOutButton } from "@/components/platform/platform-sign-out-button";
+import { useI18n } from "@/components/i18n-provider";
 import { profileShows } from "@/lib/platform-profile";
 import {
   DEFAULT_PLATFORM_SETTINGS,
@@ -35,6 +36,43 @@ import {
   type SettingsSectionId,
 } from "@/lib/platform-settings";
 import { cn } from "@/lib/utils";
+
+const SETTINGS_SECTION_I18N: Record<
+  SettingsSectionId,
+  { title: string; subtitle?: string }
+> = {
+  "briefing-routine": {
+    title: "platform.profile.sectionBriefingRoutine",
+    subtitle: "platform.profile.sectionBriefingRoutineSub",
+  },
+  "voice-style": {
+    title: "platform.profile.sectionVoiceStyle",
+    subtitle: "platform.profile.sectionVoiceStyleSub",
+  },
+  language: {
+    title: "platform.profile.sectionLanguage",
+  },
+  weather: {
+    title: "platform.profile.sectionWeather",
+    subtitle: "platform.profile.sectionWeatherSub",
+  },
+  notifications: {
+    title: "platform.profile.sectionNotifications",
+    subtitle: "platform.profile.sectionNotificationsSub",
+  },
+  subscription: {
+    title: "platform.profile.sectionSubscription",
+    subtitle: "platform.profile.sectionSubscriptionSub",
+  },
+  connections: {
+    title: "platform.profile.sectionConnections",
+    subtitle: "platform.profile.sectionConnectionsSub",
+  },
+  "manage-account": {
+    title: "platform.profile.sectionManageAccount",
+    subtitle: "platform.profile.sectionManageAccountSub",
+  },
+};
 
 function MaterialIcon({
   name,
@@ -66,16 +104,20 @@ function SubScreenHeader({
   title: string;
   onBack: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <div className="mb-4 flex items-center justify-between">
       <button
         type="button"
         onClick={onBack}
-        className="text-sm text-white transition-colors hover:text-white/80"
+        className="text-sm text-neutral-900 transition-colors hover:text-neutral-600 dark:text-white dark:hover:text-white/80"
       >
-        ‹ Back
+        {t("platform.profile.back")}
       </button>
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+        {title}
+      </h3>
       <div className="w-10" />
     </div>
   );
@@ -96,6 +138,7 @@ export function ProfileSettingsPanel({
   emailAddress,
   onEditProfile,
 }: ProfileSettingsPanelProps) {
+  const { t } = useI18n();
   const [activeSection, setActiveSection] = useState<SettingsSectionId | null>(null);
   const [settings, setSettings] = useState<PlatformSettings>(DEFAULT_PLATFORM_SETTINGS);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
@@ -295,14 +338,19 @@ export function ProfileSettingsPanel({
 
   if (activeSection) {
     const section = SETTINGS_SECTIONS.find((item) => item.id === activeSection);
+    const sectionCopy = activeSection
+      ? SETTINGS_SECTION_I18N[activeSection]
+      : null;
 
     return (
       <section>
         <SubScreenHeader
           title={
             activeSection === "voice-style"
-              ? "Voice Engine & Speakers"
-              : (section?.title ?? "Settings")
+              ? t("platform.profile.voiceEngineSpeakers")
+              : sectionCopy
+                ? t(sectionCopy.title)
+                : (section?.title ?? t("platform.profile.settings"))
           }
           onBack={() => setActiveSection(null)}
         />
@@ -315,9 +363,8 @@ export function ProfileSettingsPanel({
 
         {activeSection === "briefing-routine" ? (
           <div className="space-y-5">
-            <p className="text-sm text-[#888888]">
-              Choose what plays when you generate a daily brief, and in what order. Drag
-              to reorder.
+            <p className="text-sm text-neutral-500 dark:text-[#888888]">
+              {t("platform.profile.routineIntro")}
             </p>
 
             <BriefingRoutineList
@@ -327,26 +374,38 @@ export function ProfileSettingsPanel({
             />
 
             <div>
-              <p className="mb-2 text-[13px] text-[#888888]">Add to routine</p>
+              <p className="mb-2 text-[13px] text-neutral-500 dark:text-[#888888]">
+                {t("platform.profile.addToRoutine")}
+              </p>
               <div className="flex flex-wrap gap-2">
                 {!settings.briefingRoutine.some((slot) => slot.type === "email") ? (
                   <button
                     type="button"
-                    onClick={() => addRoutineSlot({ type: "email", label: "Email Brief" })}
-                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-sm text-[#c4c7c8] transition-colors hover:bg-white/10 hover:text-white"
+                    onClick={() =>
+                      addRoutineSlot({
+                        type: "email",
+                        label: t("platform.profile.emailBrief"),
+                      })
+                    }
+                    className="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:border-white/10 dark:bg-white/5 dark:text-[#c4c7c8] dark:hover:bg-white/10 dark:hover:text-white"
                   >
                     <MaterialIcon name="mail" className="text-[16px]" />
-                    Email Brief
+                    {t("platform.profile.emailBrief")}
                   </button>
                 ) : null}
                 {!settings.briefingRoutine.some((slot) => slot.type === "news") ? (
                   <button
                     type="button"
-                    onClick={() => addRoutineSlot({ type: "news", label: "World News" })}
-                    className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-sm text-[#c4c7c8] transition-colors hover:bg-white/10 hover:text-white"
+                    onClick={() =>
+                      addRoutineSlot({
+                        type: "news",
+                        label: t("platform.profile.worldNews"),
+                      })
+                    }
+                    className="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:border-white/10 dark:bg-white/5 dark:text-[#c4c7c8] dark:hover:bg-white/10 dark:hover:text-white"
                   >
                     <MaterialIcon name="public" className="text-[16px]" />
-                    World News
+                    {t("platform.profile.worldNews")}
                   </button>
                 ) : null}
                 {profileShows.map((podcast) =>
@@ -361,7 +420,7 @@ export function ProfileSettingsPanel({
                           podcastId: podcast.id,
                         })
                       }
-                      className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-sm text-[#c4c7c8] transition-colors hover:bg-white/10 hover:text-white"
+                      className="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:border-white/10 dark:bg-white/5 dark:text-[#c4c7c8] dark:hover:bg-white/10 dark:hover:text-white"
                     >
                       <MaterialIcon name="headphones" className="text-[16px]" />
                       {podcast.title}
@@ -426,16 +485,19 @@ export function ProfileSettingsPanel({
 
         {activeSection === "connections" ? (
           <div className="space-y-4">
-            <p className="text-sm text-[#888888]">
-              Connect your Gmail accounts to personalize your Daily Brief with emails and
-              newsletters.
+            <p className="text-sm text-neutral-500 dark:text-[#888888]">
+              {t("platform.profile.connectionsIntro")}
             </p>
-            <div className="rounded-2xl border border-[#262626] bg-[#141414] p-4">
+            <div className="rounded-2xl border border-neutral-200 bg-neutral-50 p-4 dark:border-[#262626] dark:bg-[#141414]">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="font-medium text-white">{emailAddress}</p>
+                  <p className="font-medium text-neutral-900 dark:text-white">
+                    {emailAddress}
+                  </p>
                   <p className="mt-1 text-sm text-[#34c759]">
-                    {settings.gmailConnected ? "Gmail connected" : "Gmail not connected"}
+                    {settings.gmailConnected
+                      ? t("platform.profile.gmailConnected")
+                      : t("platform.profile.gmailNotConnected")}
                   </p>
                 </div>
                 <button
@@ -447,7 +509,9 @@ export function ProfileSettingsPanel({
                   }
                   className={cn(
                     "relative h-7 w-12 shrink-0 rounded-full transition-colors",
-                    settings.gmailConnected ? "bg-[#34c759]" : "bg-[#2a2a2a]",
+                    settings.gmailConnected
+                      ? "bg-[#34c759]"
+                      : "bg-neutral-300 dark:bg-[#2a2a2a]",
                   )}
                 >
                   <span
@@ -463,21 +527,23 @@ export function ProfileSettingsPanel({
               type="button"
               onClick={() => {
                 updateSettings({ gmailConnected: true });
-                showSaved("Gmail connected.");
+                showSaved(t("platform.profile.gmailConnected"));
               }}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-[#333333] px-4 py-4 text-sm text-[#c4c7c8] transition-colors hover:border-white/30 hover:text-white"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed border-neutral-300 px-4 py-4 text-sm text-neutral-600 transition-colors hover:border-neutral-500 hover:text-neutral-900 dark:border-[#333333] dark:text-[#c4c7c8] dark:hover:border-white/30 dark:hover:text-white"
             >
               <MaterialIcon name="add" className="text-[18px]" />
-              Add Gmail Account
+              {t("platform.profile.addGmailAccount")}
             </button>
             <div className="space-y-2 opacity-50">
               {["Google Calendar", "Outlook Mail"].map((name) => (
                 <div
                   key={name}
-                  className="rounded-2xl border border-[#262626] bg-[#141414] px-4 py-4"
+                  className="rounded-2xl border border-neutral-200 bg-neutral-50 px-4 py-4 dark:border-[#262626] dark:bg-[#141414]"
                 >
-                  <p className="font-medium text-white">{name}</p>
-                  <p className="mt-1 text-sm text-[#888888]">Coming soon</p>
+                  <p className="font-medium text-neutral-900 dark:text-white">{name}</p>
+                  <p className="mt-1 text-sm text-neutral-500 dark:text-[#888888]">
+                    {t("platform.profile.comingSoon")}
+                  </p>
                 </div>
               ))}
             </div>
@@ -488,37 +554,50 @@ export function ProfileSettingsPanel({
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#262626] bg-[#0d0d0d]">
-      <div className="border-b border-[#262626] px-5 py-4">
-        <h3 className="text-lg font-semibold text-white">Settings</h3>
+    <section className="overflow-hidden rounded-2xl border border-neutral-200 bg-white dark:border-[#262626] dark:bg-[#0d0d0d]">
+      <div className="border-b border-neutral-200 px-5 py-4 dark:border-[#262626]">
+        <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+          {t("platform.profile.settings")}
+        </h3>
       </div>
-      <div className="divide-y divide-[#262626]">
+      <div className="divide-y divide-neutral-200 dark:divide-[#262626]">
         {SETTINGS_SECTIONS.map((section) => {
+          const sectionCopy = SETTINGS_SECTION_I18N[section.id];
           const rowClassName =
-            "flex w-full items-center gap-3.5 px-5 py-4 text-left transition-colors hover:bg-white/[0.03]";
+            "flex w-full items-center gap-3.5 px-5 py-4 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-white/[0.03]";
 
           const rowContent = (
             <>
-              <div className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-[#1f1f1f]">
-                <MaterialIcon name={section.icon} className="text-[20px] text-white" />
+              <div className="flex size-10 shrink-0 items-center justify-center rounded-[10px] bg-neutral-100 dark:bg-[#1f1f1f]">
+                <MaterialIcon
+                  name={section.icon}
+                  className="text-[20px] text-neutral-900 dark:text-white"
+                />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-[15px] font-medium text-white">{section.title}</p>
-                {section.subtitle ? (
-                  <p className="mt-0.5 text-xs text-[#888888]">{section.subtitle}</p>
+                <p className="text-[15px] font-medium text-neutral-900 dark:text-white">
+                  {t(sectionCopy.title)}
+                </p>
+                {sectionCopy.subtitle ? (
+                  <p className="mt-0.5 text-xs text-neutral-500 dark:text-[#888888]">
+                    {t(sectionCopy.subtitle)}
+                  </p>
                 ) : null}
               </div>
               {section.id === "language" ? (
-                <span className="shrink-0 text-sm text-[#888888]">
+                <span className="shrink-0 text-sm text-neutral-500 dark:text-[#888888]">
                   {getLanguageLabel(settings.language)}
                 </span>
               ) : null}
               {section.id === "subscription" ? (
-                <span className="shrink-0 text-sm text-[#888888]">
+                <span className="shrink-0 text-sm text-neutral-500 dark:text-[#888888]">
                   {getSubscriptionLabel(settings.subscriptionPlan)}
                 </span>
               ) : null}
-              <MaterialIcon name="chevron_right" className="text-[18px] text-[#888888]" />
+              <MaterialIcon
+                name="chevron_right"
+                className="text-[18px] text-neutral-500 dark:text-[#888888]"
+              />
             </>
           );
 
@@ -534,7 +613,7 @@ export function ProfileSettingsPanel({
           );
         })}
       </div>
-      <div className="h-px bg-[#262626]" />
+      <div className="h-px bg-neutral-200 dark:bg-[#262626]" />
       <PlatformSignOutButton variant="row" />
     </section>
   );

@@ -48,30 +48,39 @@ export function SubscriptionSettingsPanel({
 
   return (
     <div className="flex flex-col gap-5">
-      <p className="text-sm leading-6 text-[#888888]">
+      <p className="text-sm leading-6 text-neutral-500 dark:text-[#888888]">
         View your current plan, renewal date, and billing options.
       </p>
 
-      <div className="overflow-hidden rounded-[14px] border border-[#262626] bg-[#141414]">
-        <div className="border-b border-[#262626] px-4 py-4">
+      <div className="overflow-hidden rounded-[14px] border border-neutral-200 bg-white dark:border-[#262626] dark:bg-[#141414]">
+        <div className="border-b border-neutral-200 px-4 py-4 dark:border-[#262626]">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[#EBB800]/30 bg-[#EBB800]/10 px-3 py-1">
+              <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-[#8a6a00]/40 bg-[#8a6a00]/10 px-3 py-1 dark:border-[#EBB800]/30 dark:bg-[#EBB800]/10">
                 {isPremium ? (
-                  <MaterialIcon name="star" filled className="text-[14px] text-[#EBB800]" />
+                  <MaterialIcon
+                    name="star"
+                    filled
+                    className="text-[14px] text-[#8a6a00] dark:text-[#EBB800]"
+                  />
                 ) : null}
                 <span
                   className={cn(
                     "font-mono text-[10px] font-medium tracking-[0.12em]",
-                    isPremium ? "text-[#EBB800]" : "text-[#888888]",
+                    isPremium
+                      ? "text-[#8a6a00] dark:text-[#EBB800]"
+                      : "text-neutral-500 dark:text-[#888888]",
                   )}
                 >
-                  {planDetails.title.toUpperCase()}
-                  {isPremium ? " MEMBER" : " PLAN"}
+                  {isPremium ? "PRO MEMBER" : `${planDetails.title.toUpperCase()} PLAN`}
                 </span>
               </div>
-              <p className="text-[22px] font-semibold text-white">{planDetails.title}</p>
-              <p className="mt-1 text-sm text-[#888888]">{planDetails.priceLabel}</p>
+              <p className="text-[22px] font-semibold text-neutral-900 dark:text-white">
+                {planDetails.title}
+              </p>
+              <p className="mt-1 text-sm text-neutral-500 dark:text-[#888888]">
+                {planDetails.priceLabel}
+              </p>
             </div>
             {isPremium ? (
               <span className="rounded-full bg-[#34c759]/10 px-3 py-1 text-xs font-medium text-[#34c759]">
@@ -80,9 +89,9 @@ export function SubscriptionSettingsPanel({
             ) : null}
           </div>
           {isPremium ? (
-            <p className="mt-4 text-sm text-[#888888]">
+            <p className="mt-4 text-sm text-neutral-500 dark:text-[#888888]">
               Renews on{" "}
-              <span className="font-medium text-white">
+              <span className="font-medium text-neutral-900 dark:text-white">
                 {formatSubscriptionRenewalDate(renewsAt)}
               </span>
             </p>
@@ -90,12 +99,15 @@ export function SubscriptionSettingsPanel({
         </div>
 
         <div className="px-4 py-4">
-          <p className="mb-3 text-[13px] font-semibold tracking-[0.5px] text-[#888888] uppercase">
+          <p className="mb-3 text-[13px] font-semibold tracking-[0.5px] text-neutral-500 uppercase dark:text-[#888888]">
             Included
           </p>
           <ul className="space-y-3">
             {planDetails.features.map((feature) => (
-              <li key={feature} className="flex items-start gap-2.5 text-sm text-white">
+              <li
+                key={feature}
+                className="flex items-start gap-2.5 text-sm text-neutral-900 dark:text-white"
+              >
                 <MaterialIcon name="check_circle" className="mt-0.5 text-[18px] text-[#34c759]" />
                 <span>{feature}</span>
               </li>
@@ -108,7 +120,7 @@ export function SubscriptionSettingsPanel({
         <button
           type="button"
           onClick={onManageBilling}
-          className="w-full rounded-[10px] border border-[#2a2a2a] bg-[#1a1a1a] px-4 py-3 text-sm font-semibold text-white transition-colors hover:border-white/20 hover:bg-[#222222]"
+          className="w-full rounded-[10px] border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm font-semibold text-neutral-900 transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-[#2a2a2a] dark:bg-[#1a1a1a] dark:text-white dark:hover:border-white/20 dark:hover:bg-[#222222]"
         >
           Manage Subscription
         </button>
@@ -116,7 +128,7 @@ export function SubscriptionSettingsPanel({
         <button
           type="button"
           onClick={onUpgrade}
-          className="w-full rounded-[10px] bg-white px-4 py-3 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+          className="w-full rounded-[10px] bg-neutral-900 px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-black"
         >
           View Premium Plans
         </button>

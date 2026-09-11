@@ -25,8 +25,8 @@ function DeviceIcon({ name }: { name: string }) {
   const icon = name.toLowerCase().includes("iphone") ? "smartphone" : "laptop_mac";
 
   return (
-    <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#262626]">
-      <MaterialIcon name={icon} className="text-[22px] text-white" />
+    <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-neutral-100 dark:bg-[#262626]">
+      <MaterialIcon name={icon} className="text-[22px] text-neutral-900 dark:text-white" />
     </div>
   );
 }
@@ -39,12 +39,14 @@ function DeviceCard({
   onLogout?: () => void;
 }) {
   return (
-    <div className="rounded-[1.1rem] border border-[#262626] bg-[#141414] p-4">
+    <div className="rounded-[1.1rem] border border-neutral-200 bg-white p-4 dark:border-[#262626] dark:bg-[#141414]">
       <div className="flex items-start gap-3.5">
         <DeviceIcon name={device.name} />
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-semibold text-white">{device.name}</p>
-          <p className="mt-1 text-sm text-[#888888]">
+          <p className="text-[15px] font-semibold text-neutral-900 dark:text-white">
+            {device.name}
+          </p>
+          <p className="mt-1 text-sm text-neutral-500 dark:text-[#888888]">
             {device.location}
             {device.browser ? ` • ${device.browser}` : ""}
           </p>
@@ -54,14 +56,16 @@ function DeviceCard({
               Active now • This device
             </p>
           ) : (
-            <p className="mt-2 text-sm text-[#888888]">{device.lastActiveLabel}</p>
+            <p className="mt-2 text-sm text-neutral-500 dark:text-[#888888]">
+              {device.lastActiveLabel}
+            </p>
           )}
         </div>
         {!device.isCurrent && onLogout ? (
           <button
             type="button"
             onClick={onLogout}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#333333] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:border-white/30 hover:bg-white/5"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-900 transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-[#333333] dark:text-white dark:hover:border-white/30 dark:hover:bg-white/5"
           >
             <MaterialIcon name="logout" className="text-[14px]" />
             Log out
@@ -115,8 +119,10 @@ export function ManageAccountPanel() {
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6">
       <section>
-        <h2 className="text-lg font-semibold text-white">Devices & Sessions</h2>
-        <p className="mt-0.5 text-sm leading-5 text-[#888888]">
+        <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+          Devices & Sessions
+        </h2>
+        <p className="mt-0.5 text-sm leading-5 text-neutral-500 dark:text-[#888888]">
           Manage the devices actively logged into your account.
         </p>
         <div className="mt-2 space-y-2">
@@ -133,24 +139,31 @@ export function ManageAccountPanel() {
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold text-white">Security & Passkeys</h2>
-        <p className="mt-0.5 text-sm leading-5 text-[#888888]">
+        <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
+          Security & Passkeys
+        </h2>
+        <p className="mt-0.5 text-sm leading-5 text-neutral-500 dark:text-[#888888]">
           Secure your account with biometric or hardware keys.
         </p>
 
-        <div className="mt-2 rounded-[1.35rem] border border-[#262626] bg-[#141414] px-4 py-5 text-center">
-          <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-full bg-[#1f1f1f]">
-            <MaterialIcon name="passkey" className="text-[28px] text-[#888888]" />
+        <div className="mt-2 rounded-[1.35rem] border border-neutral-200 bg-white px-4 py-5 text-center dark:border-[#262626] dark:bg-[#141414]">
+          <div className="mx-auto mb-3 flex size-14 items-center justify-center rounded-full bg-neutral-100 dark:bg-[#1f1f1f]">
+            <MaterialIcon
+              name="passkey"
+              className="text-[28px] text-neutral-500 dark:text-[#888888]"
+            />
           </div>
-          <p className="text-base font-semibold text-white">No passkeys added yet</p>
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-[#888888]">
+          <p className="text-base font-semibold text-neutral-900 dark:text-white">
+            No passkeys added yet
+          </p>
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-neutral-500 dark:text-[#888888]">
             Sign in faster and more securely using Face ID, Touch ID, or a hardware
             security key.
           </p>
           <button
             type="button"
             onClick={handleAddPasskey}
-            className="mt-4 inline-flex items-center gap-2 rounded-full bg-white px-5 py-2.5 text-sm font-semibold text-black transition-opacity hover:opacity-90"
+            className="mt-4 inline-flex items-center gap-2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-black"
           >
             <MaterialIcon name="add" className="text-[18px]" />
             Add Passkey
@@ -162,7 +175,7 @@ export function ManageAccountPanel() {
         <button
           type="button"
           onClick={handleSignOutOthers}
-          className="flex w-full items-center justify-center gap-2 rounded-full border border-[#333333] px-4 py-3.5 text-sm font-medium text-white transition-colors hover:border-white/30 hover:bg-white/5"
+          className="flex w-full items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-3.5 text-sm font-medium text-neutral-900 transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-[#333333] dark:text-white dark:hover:border-white/30 dark:hover:bg-white/5"
         >
           <MaterialIcon name="phonelink_off" className="text-[18px]" />
           Sign out of all other devices

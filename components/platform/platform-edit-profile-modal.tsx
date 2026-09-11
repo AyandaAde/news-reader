@@ -5,6 +5,7 @@ import { useUser } from "@clerk/nextjs";
 import { useEffect, useId, useState } from "react";
 import { splitDisplayName } from "@/lib/onboarding";
 import { saveStoredPlatformProfile } from "@/lib/platform-profile-storage";
+import { useI18n } from "@/components/i18n-provider";
 import { cn } from "@/lib/utils";
 
 type PlatformEditProfileModalProps = {
@@ -30,6 +31,7 @@ export function PlatformEditProfileModal({
   initialEmail,
   onSaved,
 }: PlatformEditProfileModalProps) {
+  const { t } = useI18n();
   const nameId = useId();
   const emailId = useId();
   const { user } = useUser();
@@ -131,21 +133,21 @@ export function PlatformEditProfileModal({
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-[100] bg-black/70 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
 
-        <Dialog.Content className="fixed left-1/2 top-1/2 z-[101] w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-[#262626] bg-[#131313] shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
-          <div className="flex items-center justify-between gap-3 border-b border-[#262626] px-5 py-4">
+        <Dialog.Content className="fixed top-1/2 left-1/2 z-[101] w-[min(calc(100vw-2rem),28rem)] -translate-x-1/2 -translate-y-1/2 overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 dark:border-[#262626] dark:bg-[#131313]">
+          <div className="flex items-center justify-between gap-3 border-b border-neutral-200 px-5 py-4 dark:border-[#262626]">
             <div>
-              <Dialog.Title className="text-lg font-semibold text-white">
-                Edit Profile
+              <Dialog.Title className="text-lg font-semibold text-neutral-900 dark:text-white">
+                {t("platform.profile.editProfileTitle")}
               </Dialog.Title>
-              <Dialog.Description className="mt-1 text-sm text-[#888888]">
-                Update your name and email address.
+              <Dialog.Description className="mt-1 text-sm text-neutral-500 dark:text-[#888888]">
+                {t("platform.profile.editProfileDescription")}
               </Dialog.Description>
             </div>
             <Dialog.Close asChild>
               <button
                 type="button"
-                aria-label="Close edit profile"
-                className="flex size-8 shrink-0 items-center justify-center rounded-full text-[#888888] transition-colors hover:bg-white/10 hover:text-white"
+                aria-label={t("platform.profile.closeEditProfile")}
+                className="flex size-8 shrink-0 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:text-[#888888] dark:hover:bg-white/10 dark:hover:text-white"
               >
                 <MaterialIcon name="close" className="text-[20px]" />
               </button>
@@ -154,36 +156,42 @@ export function PlatformEditProfileModal({
 
           <form onSubmit={handleSave} className="space-y-4 px-5 py-5">
             <div className="space-y-2">
-              <label htmlFor={nameId} className="font-mono text-[11px] tracking-[0.08em] text-[#888888]">
-                Name
+              <label
+                htmlFor={nameId}
+                className="font-mono text-[11px] tracking-[0.08em] text-neutral-500 dark:text-[#888888]"
+              >
+                {t("platform.profile.name")}
               </label>
               <input
                 id={nameId}
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Your name"
+                placeholder={t("platform.profile.namePlaceholder")}
                 autoComplete="name"
-                className="w-full rounded-xl border border-[#262626] bg-[#0d0d0d] px-4 py-3 text-sm text-white outline-none placeholder:text-[#666666] focus:border-white/20"
+                className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400 dark:border-[#262626] dark:bg-[#0d0d0d] dark:text-white dark:placeholder:text-[#666666] dark:focus:border-white/20"
               />
             </div>
 
             <div className="space-y-2">
-              <label htmlFor={emailId} className="font-mono text-[11px] tracking-[0.08em] text-[#888888]">
-                Email address
+              <label
+                htmlFor={emailId}
+                className="font-mono text-[11px] tracking-[0.08em] text-neutral-500 dark:text-[#888888]"
+              >
+                {t("platform.profile.email")}
               </label>
               <input
                 id={emailId}
                 type="email"
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
-                placeholder="you@eilo.app"
+                placeholder={t("platform.profile.emailPlaceholder")}
                 autoComplete="email"
-                className="w-full rounded-xl border border-[#262626] bg-[#0d0d0d] px-4 py-3 text-sm text-white outline-none placeholder:text-[#666666] focus:border-white/20"
+                className="w-full rounded-xl border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400 dark:border-[#262626] dark:bg-[#0d0d0d] dark:text-white dark:placeholder:text-[#666666] dark:focus:border-white/20"
               />
             </div>
 
             {error ? (
-              <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+              <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-600 dark:text-red-300">
                 {error}
               </p>
             ) : null}
@@ -198,9 +206,9 @@ export function PlatformEditProfileModal({
               <Dialog.Close asChild>
                 <button
                   type="button"
-                  className="rounded-full border border-[#262626] px-5 py-2.5 text-sm font-medium text-white transition-colors hover:border-white/30 hover:bg-white/10"
+                  className="rounded-full border border-neutral-200 px-5 py-2.5 text-sm font-medium text-neutral-900 transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-[#262626] dark:text-white dark:hover:border-white/30 dark:hover:bg-white/10"
                 >
-                  Cancel
+                  {t("platform.profile.cancel")}
                 </button>
               </Dialog.Close>
               <button
@@ -214,9 +222,13 @@ export function PlatformEditProfileModal({
                       }
                     : undefined
                 }
-                className="rounded-full bg-white px-5 py-2.5 text-sm font-medium text-black transition-colors hover:bg-white/90 disabled:cursor-not-allowed disabled:opacity-40"
+                className="rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-white dark:text-black dark:hover:bg-white/90"
               >
-                {saving ? "Saving..." : successMessage ? "Done" : "Save Changes"}
+                {saving
+                  ? t("platform.profile.saving")
+                  : successMessage
+                    ? t("platform.profile.done")
+                    : t("platform.profile.saveChanges")}
               </button>
             </div>
           </form>

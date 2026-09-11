@@ -23,7 +23,12 @@ function PlatformShellContent({ children }: { children: React.ReactNode }) {
         mobileOpen={mobileSidebarOpen}
         onMobileOpenChange={setMobileSidebarOpen}
       />
-      <div className="relative flex h-svh min-w-0 flex-1 flex-col overflow-hidden">
+      <div
+        className={cn(
+          "relative flex h-svh min-w-0 flex-1 flex-col overflow-hidden",
+          pathname === "/live" && "platform-ambient-bg",
+        )}
+      >
         <PlatformHeader
           mobileMenuOpen={mobileSidebarOpen}
           onMobileMenuOpen={() => setMobileSidebarOpen(true)}

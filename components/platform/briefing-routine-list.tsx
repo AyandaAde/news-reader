@@ -67,12 +67,12 @@ export function BriefingRoutineList({
         <div
           key={slot.id}
           data-slot-id={slot.id}
-          className="flex cursor-grab items-center gap-3 rounded-xl bg-[#141414] px-4 py-3 active:cursor-grabbing"
+          className="flex cursor-grab items-center gap-3 rounded-xl bg-neutral-100 px-4 py-3 active:cursor-grabbing dark:bg-[#141414]"
         >
           <button
             type="button"
             tabIndex={-1}
-            className="routine-drag-handle flex touch-none items-center text-[#555555]"
+            className="routine-drag-handle flex touch-none items-center text-neutral-400 dark:text-[#555555]"
             aria-label="Drag to reorder"
           >
             <MaterialIcon name="drag_indicator" className="text-[18px]" />
@@ -92,12 +92,14 @@ export function BriefingRoutineList({
               slot.type === "podcast" && "text-purple-400",
             )}
           />
-          <p className="flex-1 text-sm font-medium text-white">{slot.label}</p>
+          <p className="flex-1 text-sm font-medium text-neutral-900 dark:text-white">
+            {slot.label}
+          </p>
           <button
             type="button"
             aria-label="Remove"
             onClick={() => onRemove(slot.id)}
-            className="flex size-8 items-center justify-center rounded-full text-[#888888] transition-colors hover:bg-white/10 hover:text-red-400"
+            className="flex size-8 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-neutral-200 hover:text-red-500 dark:text-[#888888] dark:hover:bg-white/10 dark:hover:text-red-400"
           >
             <MaterialIcon name="close" className="text-[18px]" />
           </button>

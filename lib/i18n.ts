@@ -1,5 +1,6 @@
 import type { Resource } from "i18next";
 import { downloadNavLabels, downloadTranslations } from "./download-i18n";
+import { platformTranslations } from "./platform-i18n";
 
 export const defaultLanguage = "en";
 
@@ -112,6 +113,7 @@ const en = {
     button: "Get Started",
   },
   download: downloadTranslations.en,
+  platform: platformTranslations.en,
   footer: {
     description:
       "Your personal audio companion a calmer way to keep up with what matters.",
@@ -262,6 +264,7 @@ const es = {
     button: "Empezar",
   },
   download: downloadTranslations.es,
+  platform: platformTranslations.es,
   footer: {
     description:
       "Tu compañero de audio personal una forma más calmada de seguir lo que importa.",
@@ -391,6 +394,7 @@ const zh = {
     button: "开始使用",
   },
   download: downloadTranslations.zh,
+  platform: platformTranslations.zh,
   footer: {
     description: "你的个人音频伴侣 更平静地跟上真正重要的事。",
     product: "产品",
@@ -528,6 +532,7 @@ const hi = {
     button: "शुरू करें",
   },
   download: downloadTranslations.hi,
+  platform: platformTranslations.hi,
   footer: {
     description:
       "आपका व्यक्तिगत ऑडियो साथी जो महत्वपूर्ण है उसे शांति से फॉलो करने का तरीका।",
@@ -667,6 +672,7 @@ const pt = {
     button: "Começar",
   },
   download: downloadTranslations.pt,
+  platform: platformTranslations.pt,
   footer: {
     description:
       "Seu companheiro de áudio pessoal uma forma mais calma de acompanhar o que importa.",
@@ -807,6 +813,7 @@ const fr = {
     button: "Commencer",
   },
   download: downloadTranslations.fr,
+  platform: platformTranslations.fr,
   footer: {
     description:
       "Votre compagnon audio personnel une façon plus calme de suivre ce qui compte.",
@@ -946,6 +953,7 @@ const ar = {
     button: "ابدأ",
   },
   download: downloadTranslations.ar,
+  platform: platformTranslations.ar,
   footer: {
     description:
       "رفيقك الصوتي الشخصي طريقة أكثر هدوءًا لمتابعة ما يهم.",
@@ -1086,6 +1094,7 @@ const ja = {
     button: "はじめる",
   },
   download: downloadTranslations.ja,
+  platform: platformTranslations.ja,
   footer: {
     description:
       "あなたのパーソナルオーディオコンパニオン 大切なことを、より穏やかに追い続ける方法。",
@@ -1225,6 +1234,7 @@ const de = {
     button: "Loslegen",
   },
   download: downloadTranslations.de,
+  platform: platformTranslations.de,
   footer: {
     description:
       "Dein persönlicher Audio-Begleiter ein ruhigerer Weg, dem zu folgen, was zählt.",
@@ -1364,6 +1374,7 @@ const id = {
     button: "Mulai",
   },
   download: downloadTranslations.id,
+  platform: platformTranslations.id,
   footer: {
     description:
       "Pendamping audio pribadimu cara lebih tenang untuk mengikuti yang penting.",
@@ -1504,6 +1515,7 @@ const ms = {
     button: "Mulakan",
   },
   download: downloadTranslations.ms,
+  platform: platformTranslations.ms,
   footer: {
     description:
       "Rakan audio peribadi anda cara yang lebih tenang untuk mengikuti perkara penting.",

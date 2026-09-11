@@ -269,10 +269,10 @@ export function ExpandableCards({
               layoutId={`card-${card.id}-${id}`}
               onClick={() => setActive(card)}
               className={cn(
-                "group cursor-pointer overflow-hidden rounded-lg bg-[#0D0D0D] transition-colors active:scale-[0.98]",
+                "group cursor-pointer overflow-hidden rounded-lg bg-white transition-colors active:scale-[0.98] dark:bg-[#0D0D0D]",
                 card.accent
                   ? "border-0"
-                  : "border border-[#262626] hover:border-[#3a3a3a]",
+                  : "border border-neutral-200 hover:border-neutral-300 dark:border-[#262626] dark:hover:border-[#3a3a3a]",
                 layout === "scroll" && "w-[148px] shrink-0 sm:w-[168px] md:w-[196px]",
                 isCardActive(card.id) && "opacity-0",
               )}
@@ -295,7 +295,7 @@ export function ExpandableCards({
                   <motion.span
                     layoutId={`badge-${card.id}-${id}`}
                     className={cn(
-                      "absolute left-2 top-2 rounded-full border border-[#262626] bg-[#1F1F1F]/90 font-mono uppercase tracking-widest text-[#c4c7c8] backdrop-blur-sm",
+                      "absolute left-2 top-2 rounded-full border border-neutral-200 bg-white/90 font-mono uppercase tracking-widest text-neutral-600 backdrop-blur-sm dark:border-[#262626] dark:bg-[#1F1F1F]/90 dark:text-[#c4c7c8]",
                       badgeClassName,
                     )}
                   >
@@ -308,7 +308,7 @@ export function ExpandableCards({
                 <motion.h3
                   layoutId={`title-${card.id}-${id}`}
                   className={cn(
-                    "truncate font-mono font-medium leading-tight tracking-[0.05em] text-white",
+                    "truncate font-mono font-medium leading-tight tracking-[0.05em] text-neutral-900 dark:text-white",
                     titleClassName,
                   )}
                 >
@@ -317,7 +317,7 @@ export function ExpandableCards({
                 <motion.p
                   layoutId={`description-${card.id}-${id}`}
                   className={cn(
-                    "mt-0.5 truncate font-mono tracking-[0.05em] text-[#888888]",
+                    "mt-0.5 truncate font-mono tracking-[0.05em] text-neutral-500 dark:text-[#888888]",
                     descriptionClassName,
                   )}
                 >
@@ -341,7 +341,7 @@ export function ExpandableCards({
               layoutId={`card-${card.id}-${id}`}
               onClick={() => setActive(card)}
               className={cn(
-                "flex cursor-pointer flex-row items-center justify-between rounded-xl border border-transparent p-3 transition-colors hover:border-[#262626] hover:bg-white/5 active:scale-[0.98]",
+                "flex cursor-pointer flex-row items-center justify-between rounded-xl border border-transparent p-3 transition-colors hover:border-neutral-200 hover:bg-neutral-100 active:scale-[0.98] dark:hover:border-[#262626] dark:hover:bg-white/5",
                 isCardActive(card.id) && "opacity-0",
               )}
             >
@@ -359,20 +359,20 @@ export function ExpandableCards({
                   {card.badge ? (
                     <motion.span
                       layoutId={`badge-${card.id}-${id}`}
-                      className="mb-1 inline-block max-w-full truncate rounded-full border border-[#262626] bg-[#1F1F1F] px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-[#c4c7c8]"
+                      className="mb-1 inline-block max-w-full truncate rounded-full border border-neutral-200 bg-neutral-100 px-2 py-0.5 font-mono text-[10px] uppercase tracking-widest text-neutral-600 dark:border-[#262626] dark:bg-[#1F1F1F] dark:text-[#c4c7c8]"
                     >
                       {card.badge}
                     </motion.span>
                   ) : null}
                   <motion.h3
                     layoutId={`title-${card.id}-${id}`}
-                    className="truncate font-medium text-white"
+                    className="truncate font-medium text-neutral-900 dark:text-white"
                   >
                     {card.title}
                   </motion.h3>
                   <motion.p
                     layoutId={`description-${card.id}-${id}`}
-                    className="mt-1 truncate font-mono text-[12px] tracking-[0.05em] text-[#888888]"
+                    className="mt-1 truncate font-mono text-[12px] tracking-[0.05em] text-neutral-500 dark:text-[#888888]"
                   >
                     {card.description}
                   </motion.p>
@@ -384,7 +384,7 @@ export function ExpandableCards({
                   <Link
                     href={card.viewHref}
                     onClick={(event) => event.stopPropagation()}
-                    className="rounded-full border border-[#262626] bg-[#1f1f1f] px-3 py-2 font-mono text-[11px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white/10 sm:px-4 sm:text-[12px]"
+                    className="rounded-full border border-neutral-200 bg-white px-3 py-2 font-mono text-[11px] font-medium tracking-[0.05em] text-neutral-900 transition-colors hover:bg-neutral-100 dark:border-[#262626] dark:bg-[#1f1f1f] dark:text-white dark:hover:bg-white/10 sm:px-4 sm:text-[12px]"
                   >
                     {card.viewLabel ?? "View Briefing"}
                   </Link>
@@ -393,7 +393,7 @@ export function ExpandableCards({
                   layoutId={`button-${card.id}-${id}`}
                   type="button"
                   onClick={(event) => handlePlay(card, event)}
-                  className="rounded-full border border-[#262626] bg-[#1f1f1f] px-3 py-2 font-mono text-[11px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white hover:text-black sm:px-4 sm:text-[12px]"
+                  className="rounded-full border border-neutral-200 bg-white px-3 py-2 font-mono text-[11px] font-medium tracking-[0.05em] text-neutral-900 transition-colors hover:bg-neutral-900 hover:text-white dark:border-[#262626] dark:bg-[#1f1f1f] dark:text-white dark:hover:bg-white dark:hover:text-black sm:px-4 sm:text-[12px]"
                 >
                   {card.ctaText ?? "Play"}
                 </motion.button>

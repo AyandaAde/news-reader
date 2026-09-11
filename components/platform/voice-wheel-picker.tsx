@@ -282,9 +282,9 @@ export function VoiceWheelPicker({
                 onClick={() => snapTo(index, true)}
                 className={cn(
                   "flex h-14 w-full cursor-pointer flex-col items-center justify-center transition-[color,transform,opacity] duration-250",
-                  isActive && "scale-[1.12] text-[#fafafa]",
-                  isNear && "scale-[1.04] text-[#fafafa]/55",
-                  !isActive && !isNear && "text-[#fafafa]/30",
+                  isActive && "scale-[1.12] text-neutral-900 dark:text-[#fafafa]",
+                  isNear && "scale-[1.04] text-neutral-500 dark:text-[#fafafa]/55",
+                  !isActive && !isNear && "text-neutral-400 dark:text-[#fafafa]/30",
                 )}
               >
                 <span className="text-[15px] font-semibold leading-tight">{voice.name}</span>
@@ -301,9 +301,9 @@ export function VoiceWheelPicker({
           })}
         </div>
 
-        <div className="pointer-events-none absolute top-28 right-2 left-2 h-14 rounded-lg border-y border-white/[0.08] bg-white/[0.07]" />
-        <div className="pointer-events-none absolute top-0 right-0 left-0 z-[2] h-20 bg-gradient-to-b from-[#141414] via-[#141414]/70 to-transparent" />
-        <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-[2] h-20 bg-gradient-to-t from-[#141414] via-[#141414]/70 to-transparent" />
+        <div className="pointer-events-none absolute top-28 right-2 left-2 h-14 rounded-lg border-y border-neutral-300 bg-neutral-200/70 dark:border-white/[0.08] dark:bg-white/[0.07]" />
+        <div className="pointer-events-none absolute top-0 right-0 left-0 z-[2] h-20 bg-gradient-to-b from-neutral-50 via-neutral-50/70 to-transparent dark:from-[#141414] dark:via-[#141414]/70 dark:to-transparent" />
+        <div className="pointer-events-none absolute right-0 bottom-0 left-0 z-[2] h-20 bg-gradient-to-t from-neutral-50 via-neutral-50/70 to-transparent dark:from-[#141414] dark:via-[#141414]/70 dark:to-transparent" />
       </div>
     </div>
   );

@@ -16,11 +16,15 @@ import {
   resources,
   type Language,
 } from "@/lib/i18n";
+import {
+  loadPlatformSettings,
+  savePlatformSettings,
+} from "@/lib/platform-settings";
 
 type I18nContextValue = {
   language: Language;
   setLanguage: (language: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, options?: Record<string, unknown>) => string;
 };
 
 const I18nContext = createContext<I18nContextValue | null>(null);
@@ -37,16 +41,46 @@ if (!i18next.isInitialized) {
   });
 }
 
+function resolveInitialLanguage(): Language {
+  const savedLanguage = window.localStorage.getItem(STORAGE_KEY);
+  if (savedLanguage && isLanguage(savedLanguage)) {
+    return savedLanguage;
+  }
+
+  const settingsLanguage = loadPlatformSettings().language;
+  if (isLanguage(settingsLanguage)) {
+    return settingsLanguage;
+  }
+
+  return defaultLanguage;
+}
+
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(defaultLanguage);
 
   useEffect(() => {
-    const savedLanguage = window.localStorage.getItem(STORAGE_KEY);
+    const initial = resolveInitialLanguage();
+    setLanguageState(initial);
+    void i18next.changeLanguage(initial);
+  }, []);
 
-    if (savedLanguage && isLanguage(savedLanguage)) {
-      setLanguageState(savedLanguage);
-      void i18next.changeLanguage(savedLanguage);
+  useEffect(() => {
+    function onSettingsChanged() {
+      const next = loadPlatformSettings().language;
+      if (isLanguage(next)) {
+        setLanguageState(next);
+        window.localStorage.setItem(STORAGE_KEY, next);
+        void i18next.changeLanguage(next);
+      }
     }
+
+    window.addEventListener("eilo-platform-settings-changed", onSettingsChanged);
+    return () => {
+      window.removeEventListener(
+        "eilo-platform-settings-changed",
+        onSettingsChanged,
+      );
+    };
   }, []);
 
   useEffect(() => {
@@ -58,10 +92,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     setLanguageState(nextLanguage);
     window.localStorage.setItem(STORAGE_KEY, nextLanguage);
     void i18next.changeLanguage(nextLanguage);
+    savePlatformSettings({
+      ...loadPlatformSettings(),
+      language: nextLanguage,
+    });
   }, []);
 
   const t = useCallback(
-    (key: string) => i18next.getFixedT(language)(key),
+    (key: string, options?: Record<string, unknown>) =>
+      i18next.getFixedT(language)(key, options),
     [language],
   );
 

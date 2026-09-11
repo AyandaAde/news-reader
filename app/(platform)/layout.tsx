@@ -18,7 +18,7 @@ export default async function PlatformLayout({
   return (
     <div
       className={cn(
-        "platform-shell min-h-svh overflow-x-hidden bg-black text-[#e2e2e2] antialiased",
+        "platform-shell min-h-svh overflow-x-hidden bg-neutral-50 text-neutral-900 antialiased dark:bg-black dark:text-[#e2e2e2]",
         googleSans.variable,
         googleSans.className,
       )}

@@ -16,12 +16,12 @@ export function PlatformManageAccountScreen() {
         <button
           type="button"
           onClick={() => router.back()}
-          className="flex size-10 items-center justify-center rounded-full text-white transition-colors hover:bg-white/10 active:scale-95"
+          className="flex size-10 items-center justify-center rounded-full text-neutral-900 transition-colors hover:bg-neutral-100 active:scale-95 dark:text-white dark:hover:bg-white/10"
           aria-label="Go back"
         >
           <MaterialIcon name="arrow_back" className="text-[22px]" />
         </button>
-        <h1 className="text-[1.65rem] font-bold tracking-tight text-white">
+        <h1 className="text-[1.65rem] font-bold tracking-tight text-neutral-900 dark:text-white">
           Manage Account
         </h1>
       </header>

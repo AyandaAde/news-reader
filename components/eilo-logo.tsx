@@ -29,10 +29,13 @@ export function EiloLogo({
   className,
   priority = false,
   variant = "full",
+  forceTheme,
 }: {
   className?: string;
   priority?: boolean;
   variant?: "full" | "wordmark" | "mark";
+  /** Force a logo color independent of the app theme (e.g. always light on dark chrome). */
+  forceTheme?: "light" | "dark";
 }) {
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -41,9 +44,15 @@ export function EiloLogo({
     setMounted(true);
   }, []);
 
-  const isDark = !mounted || resolvedTheme === "dark";
+  const isDark =
+    forceTheme === "dark"
+      ? true
+      : forceTheme === "light"
+        ? false
+        : !mounted || resolvedTheme === "dark";
 
   if (variant === "mark") {
+    // mark-dark = white glyph for dark backgrounds; mark-light = dark glyph for light backgrounds
     const markSrc = isDark ? EILO_MARK_DARK : EILO_MARK_LIGHT;
 
     return (
@@ -58,6 +67,7 @@ export function EiloLogo({
     );
   }
 
+  // logo-dark = white wordmark for dark backgrounds; logo.png = dark wordmark for light backgrounds
   const src = isDark ? EILO_LOGO_DARK : EILO_LOGO_LIGHT;
   const dimensions =
     variant === "wordmark"

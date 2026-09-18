@@ -26,25 +26,25 @@ function normalizeSavedLocations(
     return null;
   }
 
-  return value
-    .map((item, index) => {
-      const city = typeof item.city === "string" ? item.city.trim() : "";
-      if (!city) {
-        return null;
-      }
+  const locations: NewsReaderWeatherSavedLocation[] = [];
 
-      const id =
+  for (const [index, item] of value.entries()) {
+    const city = typeof item.city === "string" ? item.city.trim() : "";
+    if (!city) {
+      continue;
+    }
+
+    locations.push({
+      id:
         typeof item.id === "string" && item.id.trim()
           ? item.id.trim()
-          : `loc-${index}`;
+          : `loc-${index}`,
+      city,
+      isHome: Boolean(item.isHome),
+    });
+  }
 
-      return {
-        id,
-        city,
-        isHome: Boolean(item.isHome),
-      };
-    })
-    .filter((item): item is NewsReaderWeatherSavedLocation => item !== null);
+  return locations;
 }
 
 export async function PUT(req: NextRequest) {

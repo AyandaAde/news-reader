@@ -7,11 +7,11 @@ import {
 import { ensureBackendUser } from "@/lib/server/user-location";
 import { NextRequest, NextResponse } from "next/server";
 
-const ALLOWED_LANGUAGES = new Set(
+const ALLOWED_LANGUAGES = new Set<string>(
   LANGUAGE_OPTIONS.map((option) => option.value),
 );
 
-const ALLOWED_PODCAST_LOCALES = new Set([
+const ALLOWED_PODCAST_LOCALES = new Set<string>([
   ...LANGUAGE_OPTIONS.map((option) => option.value),
   ...PREMIUM_PODCAST_LANGUAGE_OPTIONS.map((option) => option.value),
 ]);

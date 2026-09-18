@@ -73,7 +73,7 @@ function getSendTargets(): SmtpTarget[] {
 }
 
 function createTransporter(target: SmtpTarget) {
-  const options: SMTPTransport.Options = {
+  const options: SMTPTransport.Options & { family: 4 } = {
     host: target.host,
     port: target.port,
     secure: target.secure,

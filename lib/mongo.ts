@@ -1,4 +1,4 @@
-import { MongoClient, type Db, type Document } from "mongodb";
+import { MongoClient, type Db, type UpdateFilter } from "mongodb";
 
 import { env } from "@/env";
 
@@ -13,9 +13,11 @@ export type UserPodcast = {
   createdAt: string;
 };
 
-type MongoUserDocument = Document & {
+type MongoUserDocument = {
   clerkUserId: string;
-  podcasts?: UserPodcast[];
+  podcasts: UserPodcast[];
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 declare global {
@@ -62,22 +64,20 @@ export async function appendUserPodcast(
   const db = await getMongoDb();
   const users = db.collection<MongoUserDocument>("users");
 
-  await users.updateOne(
-    { clerkUserId },
-    {
-      $setOnInsert: {
-        clerkUserId,
-        createdAt: new Date().toISOString(),
-      },
-      $push: {
-        podcasts: podcast,
-      },
-      $set: {
-        updatedAt: new Date().toISOString(),
-      },
+  const update: UpdateFilter<MongoUserDocument> = {
+    $setOnInsert: {
+      clerkUserId,
+      createdAt: new Date().toISOString(),
     },
-    { upsert: true },
-  );
+    $push: {
+      podcasts: podcast,
+    },
+    $set: {
+      updatedAt: new Date().toISOString(),
+    },
+  };
+
+  await users.updateOne({ clerkUserId }, update, { upsert: true });
 
   return podcast;
 }

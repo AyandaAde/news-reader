@@ -427,31 +427,32 @@ function normalizeBriefingRoutineFromApi(
     return [];
   }
 
-  return value
-    .map((item, index) => {
-      if (!item || typeof item !== "object") {
-        return null;
-      }
+  const slots: NewsReaderBriefingRoutineSlot[] = [];
 
-      const slot = item as Record<string, unknown>;
-      const type =
-        typeof slot.type === "string" ? slot.type : "podcast";
-      const label =
-        typeof slot.label === "string" && slot.label.trim()
-          ? slot.label
-          : type;
-      const id =
-        typeof slot.id === "string" && slot.id.trim()
-          ? slot.id
-          : `${type}-${index}`;
-      const podcastId =
-        typeof slot.podcastId === "string" && slot.podcastId.trim()
-          ? slot.podcastId
-          : null;
+  for (const [index, item] of value.entries()) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
 
-      return { id, type, label, podcastId };
-    })
-    .filter((slot): slot is NewsReaderBriefingRoutineSlot => slot !== null);
+    const slot = item as Record<string, unknown>;
+    const type = typeof slot.type === "string" ? slot.type : "podcast";
+    const label =
+      typeof slot.label === "string" && slot.label.trim()
+        ? slot.label
+        : type;
+    const id =
+      typeof slot.id === "string" && slot.id.trim()
+        ? slot.id
+        : `${type}-${index}`;
+    const podcastId =
+      typeof slot.podcastId === "string" && slot.podcastId.trim()
+        ? slot.podcastId
+        : null;
+
+    slots.push({ id, type, label, podcastId });
+  }
+
+  return slots;
 }
 
 function normalizeWeatherSavedLocationsFromApi(
@@ -461,35 +462,37 @@ function normalizeWeatherSavedLocationsFromApi(
     return [];
   }
 
-  return value
-    .map((item, index) => {
-      if (!item || typeof item !== "object") {
-        return null;
-      }
+  const locations: NewsReaderWeatherSavedLocation[] = [];
 
-      const record = item as Record<string, unknown>;
-      const city =
-        typeof record.city === "string"
-          ? record.city.trim()
-          : typeof record.City === "string"
-            ? record.City.trim()
-            : "";
-      if (!city) {
-        return null;
-      }
+  for (const [index, item] of value.entries()) {
+    if (!item || typeof item !== "object") {
+      continue;
+    }
 
-      const idRaw =
-        typeof record.id === "string"
-          ? record.id
-          : typeof record.Id === "string"
-            ? record.Id
-            : "";
-      const id = idRaw.trim() || `loc-${index}`;
-      const isHome = Boolean(record.isHome ?? record.IsHome);
+    const record = item as Record<string, unknown>;
+    const city =
+      typeof record.city === "string"
+        ? record.city.trim()
+        : typeof record.City === "string"
+          ? record.City.trim()
+          : "";
+    if (!city) {
+      continue;
+    }
 
-      return { id, city, isHome };
-    })
-    .filter((item): item is NewsReaderWeatherSavedLocation => item !== null);
+    const idRaw =
+      typeof record.id === "string"
+        ? record.id
+        : typeof record.Id === "string"
+          ? record.Id
+          : "";
+    const id = idRaw.trim() || `loc-${index}`;
+    const isHome = Boolean(record.isHome ?? record.IsHome);
+
+    locations.push({ id, city, isHome });
+  }
+
+  return locations;
 }
 
 export function normalizeNewsReaderUser(

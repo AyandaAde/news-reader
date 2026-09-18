@@ -1,4 +1,4 @@
-import { defaultLanguage, isLanguage, type Language } from "@/lib/i18n";
+import { coerceLanguage, defaultLanguage, type Language } from "@/lib/i18n";
 
 type ClerkEmailUserMetadata = {
   unsafe_metadata?: { locale?: string | null } | null;
@@ -11,16 +11,13 @@ function normalizeLocale(value: string | null | undefined): Language | null {
   }
 
   const normalized = value.trim().toLowerCase().replace("_", "-");
-  if (isLanguage(normalized)) {
-    return normalized;
+  const direct = coerceLanguage(normalized);
+  if (direct) {
+    return direct;
   }
 
   const primary = normalized.split("-", 1)[0];
-  if (primary === "zh") {
-    return "zh";
-  }
-
-  return isLanguage(primary) ? primary : null;
+  return primary ? coerceLanguage(primary) : null;
 }
 
 export function getLocaleFromClerkMetadata(user?: ClerkEmailUserMetadata | null) {

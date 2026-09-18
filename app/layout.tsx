@@ -22,7 +22,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Eilo — Your world, in podcasts.",
   description:
-    "AI-powered email summaries and podcasts.",
+    "AI-powered podcasts that turn information into engaging, personalized audio.",
 };
 
 export default function RootLayout({

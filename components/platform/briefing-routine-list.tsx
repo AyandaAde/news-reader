@@ -83,12 +83,15 @@ export function BriefingRoutineList({
                 ? "mail"
                 : slot.type === "news"
                   ? "public"
-                  : "headphones"
+                  : slot.type === "weather"
+                    ? "partly_cloudy_day"
+                    : "headphones"
             }
             className={cn(
               "text-[20px]",
               slot.type === "email" && "text-[#34c759]",
               slot.type === "news" && "text-blue-400",
+              slot.type === "weather" && "text-sky-400",
               slot.type === "podcast" && "text-purple-400",
             )}
           />

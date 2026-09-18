@@ -3,6 +3,7 @@
 import { useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/components/i18n-provider";
 import { PlatformEditProfileModal } from "@/components/platform/platform-edit-profile-modal";
@@ -27,6 +28,13 @@ const profileTabIds = [
 ] as const;
 
 type ProfileTabId = (typeof profileTabIds)[number];
+
+function isProfileTabId(value: string | null): value is ProfileTabId {
+  return (
+    value !== null &&
+    (profileTabIds as readonly string[]).includes(value)
+  );
+}
 
 const dayKeys = {
   Mon: "platform.profile.dayMon",
@@ -122,7 +130,12 @@ function ShowCard({
 export function PlatformProfileScreen() {
   const { t } = useI18n();
   const { user } = useUser();
-  const [activeTab, setActiveTab] = useState<ProfileTabId>("my-briefings");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<ProfileTabId>(() => {
+    const tab = searchParams.get("tab");
+    return isProfileTabId(tab) ? tab : "my-briefings";
+  });
   const [editOpen, setEditOpen] = useState(false);
   const [localProfile, setLocalProfile] = useState<{
     name: string;
@@ -132,6 +145,21 @@ export function PlatformProfileScreen() {
   useEffect(() => {
     setLocalProfile(loadStoredPlatformProfile());
   }, []);
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (isProfileTabId(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
+
+  function selectTab(tab: ProfileTabId) {
+    setActiveTab(tab);
+    router.replace(
+      tab === "settings" ? "/profile?tab=settings" : "/profile",
+      { scroll: false },
+    );
+  }
 
   const tabs = useMemo(
     () =>
@@ -200,7 +228,7 @@ export function PlatformProfileScreen() {
             <div className="mt-3 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-neutral-500 sm:justify-start dark:text-[#888888]">
               <button
                 type="button"
-                onClick={() => setActiveTab("podcasts")}
+                onClick={() => selectTab("podcasts")}
                 className="transition-opacity hover:opacity-80"
               >
                 <span className="font-semibold text-neutral-900 dark:text-white">
@@ -210,7 +238,7 @@ export function PlatformProfileScreen() {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab("my-briefings")}
+                onClick={() => selectTab("my-briefings")}
                 className="transition-opacity hover:opacity-80"
               >
                 <span className="font-semibold text-neutral-900 dark:text-white">
@@ -248,7 +276,7 @@ export function PlatformProfileScreen() {
                 <button
                   key={tab.id}
                   type="button"
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => selectTab(tab.id)}
                   className={cn(
                     "shrink-0 whitespace-nowrap text-sm font-medium transition-colors md:shrink",
                     active

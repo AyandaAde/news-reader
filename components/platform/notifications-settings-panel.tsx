@@ -31,12 +31,12 @@ function NotificationToggle({
 }) {
   return (
     <div className="flex items-center justify-between gap-4 px-4 py-4">
-      <div>
+      <div className="min-w-0">
         <p className="text-[15px] font-semibold text-neutral-900 dark:text-white">
           {label}
         </p>
         {description ? (
-          <p className="mt-1 text-[13px] text-neutral-500 dark:text-[#888888]">
+          <p className="mt-0.5 text-xs text-pretty text-neutral-500 dark:text-[#888888]">
             {description}
           </p>
         ) : null}
@@ -48,17 +48,15 @@ function NotificationToggle({
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          "relative h-[31px] w-[51px] shrink-0 rounded-full transition-colors",
-          checked ? "bg-neutral-900 dark:bg-white" : "bg-neutral-300 dark:bg-[#39393d]",
+          "relative h-[31px] w-[51px] shrink-0 rounded-full transition-[background-color,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.96]",
+          checked ? "bg-[#4ade80]" : "bg-neutral-300 dark:bg-[#39393d]",
           disabled && "cursor-not-allowed opacity-50",
         )}
       >
         <span
           className={cn(
-            "absolute top-0.5 size-[27px] rounded-full transition-[left,background-color]",
-            checked
-              ? "left-[22px] bg-white dark:bg-black"
-              : "left-0.5 bg-white",
+            "absolute top-0.5 size-[27px] rounded-full bg-white transition-[left] duration-200 ease-[cubic-bezier(0.2,0,0,1)]",
+            checked ? "left-[22px]" : "left-0.5",
           )}
         />
       </button>
@@ -71,9 +69,9 @@ export function NotificationsSettingsPanel({
   onChange,
   onSave,
 }: NotificationsSettingsPanelProps) {
-  const [permission, setPermission] = useState<NotificationPermission | "unsupported">(
-    "default",
-  );
+  const [permission, setPermission] = useState<
+    NotificationPermission | "unsupported"
+  >("default");
 
   useEffect(() => {
     if (typeof window === "undefined" || !("Notification" in window)) {
@@ -111,60 +109,72 @@ export function NotificationsSettingsPanel({
     onChange({ [key]: nextChecked });
   }
 
-  const togglesDisabled = permission === "denied" || permission === "unsupported";
+  const togglesDisabled =
+    permission === "denied" || permission === "unsupported";
 
   return (
-    <div className="flex flex-col gap-5">
-      <p className="text-sm leading-6 text-neutral-500 dark:text-[#888888]">
+    <div className="flex flex-col gap-6">
+      <p className="px-1 text-[15px] leading-6 text-pretty text-neutral-500 dark:text-[#888888]">
         Choose which notifications you&apos;d like to receive.
       </p>
 
       {permission === "denied" ? (
         <div className="rounded-[14px] border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-500 dark:border-[#262626] dark:bg-[#141414] dark:text-[#888888]">
-          Notifications are blocked in your browser. Enable them in your browser settings
-          to receive alerts.
+          Notifications are blocked in your browser. Enable them in your browser
+          settings to receive alerts.
         </div>
       ) : null}
 
       {permission === "unsupported" ? (
         <div className="rounded-[14px] border border-neutral-200 bg-neutral-50 px-4 py-3 text-sm text-neutral-500 dark:border-[#262626] dark:bg-[#141414] dark:text-[#888888]">
-          Push notifications are not supported in this browser. Your preferences will still
-          be saved.
+          Push notifications are not supported in this browser. Your preferences
+          will still be saved.
         </div>
       ) : null}
 
-      <div className="overflow-hidden rounded-[14px] border border-neutral-200 bg-white dark:border-[#262626] dark:bg-[#141414]">
-        <div className="divide-y divide-neutral-200 dark:divide-[#262626]">
-          <NotificationToggle
-            checked={draft.notifyNewBrief}
-            disabled={togglesDisabled}
-            onChange={(checked) => void handleToggle("notifyNewBrief", checked)}
-            label="New Brief Ready"
-            description="When your Daily Brief is generated"
-          />
-          <NotificationToggle
-            checked={draft.notifyLiveStation}
-            disabled={togglesDisabled}
-            onChange={(checked) => void handleToggle("notifyLiveStation", checked)}
-            label="Live Station Starting"
-            description="When a live broadcast begins"
-          />
-          <NotificationToggle
-            checked={draft.notifyNewEpisode}
-            disabled={togglesDisabled}
-            onChange={(checked) => void handleToggle("notifyNewEpisode", checked)}
-            label="New Episode"
-            description="From shows you follow"
-          />
+      <div>
+        <p className="mb-2.5 px-1 text-[13px] font-semibold tracking-[0.5px] text-neutral-500 uppercase dark:text-[#888888]">
+          Alerts
+        </p>
+        <div className="overflow-hidden rounded-[16px] bg-neutral-50 dark:bg-[#141414]">
+          <div className="divide-y divide-neutral-200/80 dark:divide-[#262626]">
+            <NotificationToggle
+              checked={draft.notifyNewBrief}
+              disabled={togglesDisabled}
+              onChange={(checked) =>
+                void handleToggle("notifyNewBrief", checked)
+              }
+              label="New Brief Ready"
+              description="When your Daily Brief is generated"
+            />
+            <NotificationToggle
+              checked={draft.notifyLiveStation}
+              disabled={togglesDisabled}
+              onChange={(checked) =>
+                void handleToggle("notifyLiveStation", checked)
+              }
+              label="Live Station Starting"
+              description="When a live broadcast begins"
+            />
+            <NotificationToggle
+              checked={draft.notifyNewEpisode}
+              disabled={togglesDisabled}
+              onChange={(checked) =>
+                void handleToggle("notifyNewEpisode", checked)
+              }
+              label="New Episode"
+              description="From shows you follow"
+            />
+          </div>
         </div>
       </div>
 
       <button
         type="button"
         onClick={onSave}
-        className="w-full rounded-[10px] bg-neutral-900 px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-black"
+        className="mb-1 w-full rounded-[14px] bg-[#4ade80] p-3.5 text-[15px] font-semibold text-black transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:opacity-90 active:scale-[0.96]"
       >
-        Save
+        Save Settings
       </button>
     </div>
   );

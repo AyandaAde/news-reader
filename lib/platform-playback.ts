@@ -5,4 +5,5 @@ export type PlatformPlaybackItem = {
   image: string;
   elapsed?: string;
   duration?: string;
+  audioUrl?: string | null;
 };

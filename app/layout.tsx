@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Eilo — Unlock your productivity",
+  title: "Eilo — Your world, in podcasts.",
   description:
     "AI-powered email summaries and podcasts.",
 };

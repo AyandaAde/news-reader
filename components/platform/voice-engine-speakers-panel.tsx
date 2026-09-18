@@ -5,7 +5,14 @@ import {
   CONVERSATION_STYLES,
   type ConversationStyle,
 } from "@/lib/platform-settings";
-import { voicesByEngine } from "@/lib/voice-catalog";
+import {
+  VOICE_ENGINE_TIERS,
+  defaultSpeakersForEngine,
+  providerIdForVoiceEngineTier,
+  voiceEngineTierFromProvider,
+  voicesByEngine,
+  type VoiceEngineTierId,
+} from "@/lib/voice-catalog";
 import { cn } from "@/lib/utils";
 import { VoiceWheelPicker } from "@/components/platform/voice-wheel-picker";
 
@@ -56,6 +63,23 @@ export function VoiceEngineSpeakersPanel({
     () => voicesByEngine(draft.voiceEngine),
     [draft.voiceEngine],
   );
+  const selectedTier = voiceEngineTierFromProvider(draft.voiceEngine);
+
+  const handleVoiceEngineTierChange = useCallback(
+    (tierId: VoiceEngineTierId) => {
+      if (voiceEngineTierFromProvider(draft.voiceEngine) === tierId) {
+        return;
+      }
+      const voiceEngine = providerIdForVoiceEngineTier(tierId);
+      const speakers = defaultSpeakersForEngine(voiceEngine);
+      onChange({
+        voiceEngine,
+        speakerA: speakers.speakerA,
+        speakerB: speakers.speakerB,
+      });
+    },
+    [draft.voiceEngine, onChange],
+  );
 
   const handleSpeakerAChange = useCallback(
     (speakerA: string) => onChange({ speakerA }),
@@ -69,6 +93,53 @@ export function VoiceEngineSpeakersPanel({
 
   return (
     <div className="flex flex-col gap-5">
+      <div>
+        <p className="mb-2.5 px-1 text-[13px] font-semibold tracking-[0.5px] text-neutral-500 uppercase dark:text-[#888888]">
+          Voice Engine
+        </p>
+        <div className="flex flex-col gap-2.5">
+          {VOICE_ENGINE_TIERS.map((option) => {
+            const selected = selectedTier === option.id;
+
+            return (
+              <button
+                key={option.id}
+                type="button"
+                disabled={disabled}
+                onClick={() => handleVoiceEngineTierChange(option.id)}
+                className={cn(
+                  "flex items-center gap-3.5 rounded-[14px] border bg-neutral-50 p-3.5 text-left transition-colors dark:bg-[#141414]",
+                  selected
+                    ? "border-[#4ade80]"
+                    : "border-transparent hover:border-neutral-300 dark:hover:border-white/10",
+                )}
+              >
+                <div className="flex-1">
+                  <p className="text-[15px] font-semibold text-neutral-900 dark:text-white">
+                    {option.label}
+                  </p>
+                  <p className="text-xs text-neutral-500 dark:text-[#888888]">
+                    {option.description}
+                  </p>
+                </div>
+                <div
+                  className={cn(
+                    "flex size-5 shrink-0 items-center justify-center rounded-full",
+                    selected
+                      ? "bg-[#4ade80]"
+                      : "border-2 border-neutral-300 dark:border-[#313131]",
+                  )}
+                >
+                  {selected ? (
+                    <MaterialIcon name="check" className="text-[12px] text-black" />
+                  ) : null}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div>
         <p className="mb-2.5 px-1 text-[13px] font-semibold tracking-[0.5px] text-neutral-500 uppercase dark:text-[#888888]">
           Conversation Style

@@ -3,7 +3,7 @@
 import { useClerk, useUser } from "@clerk/nextjs";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   Compass,
   Home,
@@ -11,6 +11,7 @@ import {
   LogOut,
   Moon,
   Radio,
+  Settings,
   Sun,
   User,
   X,
@@ -40,6 +41,12 @@ const navItems = [
   { href: "/discover", labelKey: "platform.sidebar.discover", icon: Compass },
   { href: "/live", labelKey: "platform.sidebar.live", icon: Radio },
   { href: "/profile", labelKey: "platform.sidebar.profile", icon: User },
+  {
+    href: "/profile?tab=settings",
+    labelKey: "platform.sidebar.settings",
+    icon: Settings,
+    match: "settings" as const,
+  },
 ] as const;
 
 export type PlatformSidebarProps = {
@@ -364,9 +371,11 @@ function SidebarLogoutButton() {
 
 function PlatformSidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { open, animate } = useSidebar();
   const { t } = useI18n();
   const collapsed = animate && !open;
+  const profileTab = searchParams.get("tab");
 
   return (
     <>
@@ -378,16 +387,20 @@ function PlatformSidebarPanel({ onNavigate }: { onNavigate?: () => void }) {
             collapsed && "items-center",
           )}
         >
-          {navItems.map(({ href, labelKey, icon }) => {
-            const active =
-              pathname === href || pathname.startsWith(`${href}/`);
+          {navItems.map((item) => {
+            const isSettings = "match" in item && item.match === "settings";
+            const active = isSettings
+              ? pathname === "/profile" && profileTab === "settings"
+              : item.href === "/profile"
+                ? pathname === "/profile" && profileTab !== "settings"
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
 
             return (
               <PlatformSidebarLink
-                key={href}
-                href={href}
-                label={t(labelKey)}
-                icon={icon}
+                key={item.href}
+                href={item.href}
+                label={t(item.labelKey)}
+                icon={item.icon}
                 active={active}
                 onNavigate={onNavigate}
               />

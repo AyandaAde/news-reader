@@ -70,8 +70,16 @@ export function getNewDeviceSignInEmailCopy(locale: string): NewDeviceSignInEmai
   if (isLanguage(locale)) {
     return {
       ...englishCopy,
-      htmlLang: locale === "zh" ? "zh-CN" : locale,
-      dir: locale === "ar" ? "rtl" : "ltr",
+      htmlLang: locale === "cmn" ? "zh-CN" : locale,
+      dir:
+        locale === "ar" ||
+        locale === "he" ||
+        locale === "fa" ||
+        locale === "ur" ||
+        locale === "ps" ||
+        locale === "sd"
+          ? "rtl"
+          : "ltr",
     };
   }
 

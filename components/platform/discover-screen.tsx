@@ -190,7 +190,7 @@ export function PlatformDiscoverScreen() {
   const { t } = useI18n();
   const [discoverFilter, setDiscoverFilter] = useState("all");
   const liveScroll = useHorizontalScroll(240);
-  const trendingScroll = useHorizontalScroll(520);
+  const trendingScroll = useHorizontalScroll(360);
   const podcastScroll = useHorizontalScroll(280);
 
   const playLabel = t("platform.home.play");
@@ -387,28 +387,28 @@ export function PlatformDiscoverScreen() {
         >
           {trendingNowItems.map((item) => (
             <li key={item.id} className="shrink-0">
-              <article className="platform-trending-card group relative h-[280px] w-[480px] max-w-[85vw] overflow-hidden rounded-xl border border-neutral-200 dark:border-[#262626]">
+              <article className="platform-trending-card group relative h-[200px] w-[320px] max-w-[75vw] overflow-hidden rounded-xl border border-neutral-200 dark:border-[#262626]">
               <Image
                 src={item.image}
                 alt={item.title}
                 fill
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
-                sizes="480px"
+                sizes="320px"
               />
               <div className="absolute inset-0 z-10 bg-gradient-to-t from-black via-black/50 to-transparent" />
-              <div className="absolute bottom-0 left-0 z-20 w-full p-4">
-                <div className="mb-1.5 flex items-center gap-2">
+              <div className="absolute bottom-0 left-0 z-20 w-full p-3">
+                <div className="mb-1 flex items-center gap-2">
                   <span className="rounded bg-white px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-black">
                     {item.badge}
                   </span>
-                  <span className="text-[11px] tracking-[0.05em] text-[#c4c7c8]">
+                  <span className="text-[10px] tracking-[0.05em] text-[#c4c7c8]">
                     {item.meta}
                   </span>
                 </div>
-                <h3 className="mb-1 text-lg font-bold leading-tight text-white">
+                <h3 className="mb-1 text-base font-bold leading-tight text-white">
                   {item.title}
                 </h3>
-                <p className="mb-3 line-clamp-2 text-xs leading-5 text-[#c4c7c8]">
+                <p className="mb-2 line-clamp-2 text-[11px] leading-4 text-[#c4c7c8]">
                   {item.description}
                 </p>
                 <button
@@ -423,12 +423,12 @@ export function PlatformDiscoverScreen() {
                       duration: item.duration,
                     })
                   }
-                  className="flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-bold text-black transition-all hover:opacity-90 active:scale-95"
+                  className="flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold text-black transition-all hover:opacity-90 active:scale-95"
                 >
                   <MaterialIcon
                     name="play_arrow"
                     filled
-                    className="text-[16px]"
+                    className="text-[14px]"
                   />
                   {t("platform.discover.listen")}
                 </button>

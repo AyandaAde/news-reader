@@ -8,7 +8,11 @@ type WeatherResponse = {
   error?: string;
 };
 
-export function useHomeWeather(enabled: boolean) {
+export function useHomeWeather(
+  enabled: boolean,
+  location?: string | null,
+  refreshKey: string | number = 0,
+) {
   const [weather, setWeather] = useState<NewsReaderWeather | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -22,16 +26,26 @@ export function useHomeWeather(enabled: boolean) {
     }
 
     let cancelled = false;
+    const trimmedLocation = location?.trim() || "";
+
+    setWeather(null);
+    setIsLoading(true);
+    setError(null);
 
     void (async () => {
-      setIsLoading(true);
-      setError(null);
-
       try {
-        const response = await fetch("/api/weather", {
-          method: "GET",
-          cache: "no-store",
-        });
+        const params = new URLSearchParams();
+        if (trimmedLocation) {
+          params.set("location", trimmedLocation);
+        }
+
+        const response = await fetch(
+          params.size > 0 ? `/api/weather?${params.toString()}` : "/api/weather",
+          {
+            method: "GET",
+            cache: "no-store",
+          },
+        );
 
         const payload = (await response.json().catch(() => null)) as
           | WeatherResponse
@@ -64,7 +78,7 @@ export function useHomeWeather(enabled: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [enabled]);
+  }, [enabled, location, refreshKey]);
 
   return { weather, isLoading, error };
 }

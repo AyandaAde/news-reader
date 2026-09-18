@@ -1,26 +1,22 @@
 import type { Resource } from "i18next";
 import { downloadNavLabels, downloadTranslations } from "./download-i18n";
+import { LANGUAGE_OPTIONS } from "./platform-settings";
 import { platformTranslations } from "./platform-i18n";
 
 export const defaultLanguage = "en";
 
-export const languages = [
-  { value: "en", label: "English" },
-  { value: "es", label: "Spanish" },
-  { value: "zh", label: "Mandarin" },
-  { value: "hi", label: "Hindi" },
-  { value: "pt", label: "Portuguese" },
-  { value: "fr", label: "French" },
-  { value: "ar", label: "Arabic" },
-  { value: "ja", label: "Japanese" },
-  { value: "de", label: "German" },
-  { value: "id", label: "Indonesian" },
-  { value: "ms", label: "Malay" },
-] as const;
+export const languages = LANGUAGE_OPTIONS;
 
 export type Language = (typeof languages)[number]["value"];
 
-export const rtlLanguages: readonly Language[] = ["ar"];
+export const rtlLanguages: readonly Language[] = [
+  "ar",
+  "fa",
+  "he",
+  "ps",
+  "sd",
+  "ur",
+];
 
 export function isRtlLanguage(value: Language): boolean {
   return rtlLanguages.includes(value);
@@ -28,6 +24,15 @@ export function isRtlLanguage(value: Language): boolean {
 
 export function isLanguage(value: string): value is Language {
   return languages.some((language) => language.value === value);
+}
+
+/** Accepts legacy `zh` and normalizes to `cmn`. */
+export function coerceLanguage(value: string): Language | null {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "zh") {
+    return "cmn";
+  }
+  return isLanguage(normalized) ? normalized : null;
 }
 
 const en = {
@@ -40,10 +45,10 @@ const en = {
     signIn: "Sign In",
   },
   hero: {
-    titleLine1: "Unlock your",
-    titleLine2: "productivity",
+    titleLine1: "Your world,",
+    titleLine2: "in podcasts.",
     description:
-      "Through AI-powered email summaries that keep you focused on what matters.",
+      "Through AI-powered podcasts that turn information into engaging, personalized audio.",
     cta: "Try it out",
   },
   core: {
@@ -72,9 +77,9 @@ const en = {
         "Stay informed while walking, commuting, cooking, or getting ready. Screen optional.",
     },
     liveStations: {
-      title: "Live stations & Discover",
+      title: "Audio stations & Discover",
       description:
-        "Browse shows, follow what you care about, and drop into live audio stations—without the noise of a typical feed.",
+        "Browse shows, follow what you care about, and drop into an audio station without the noise of a typical feed.",
     },
     tags: {
       private: "Private",
@@ -82,6 +87,48 @@ const en = {
       discover: "Discover",
       liveStations: "Live stations",
       personalTopics: "Personal topics",
+    },
+  },
+  podcastCreation: {
+    eyebrow: "Podcast Creation",
+    title: "Create your story.",
+    titleAccent: "Share your voice.",
+    description:
+      "Create podcasts others can listen to and share them across platforms. Publish your episodes to Spotify, Apple Podcasts, YouTube, and more, and reach listeners wherever they listen.",
+    topics: {
+      title: "Choose your topics",
+      description:
+        "News, tech, markets, sports, or your own mix. Shape every episode around what you actually want.",
+    },
+    length: {
+      title: "Set the length",
+      description:
+        "A quick thirty-minutes hit or a deeper dive. Match the episode to your commute, workout, or morning routine.",
+    },
+    voices: {
+      title: "Voices & style",
+      description:
+        "Host and co-host dialogue that feels natural, casual, broadcast, or tailored to how you like to listen.",
+    },
+    generate: {
+      title: "Share to your preferred platform",
+      description:
+        "Share your podcast directly to your preferred platform and reach your audience wherever they listen.",
+    },
+    library: {
+      title: "Your podcast library",
+      description:
+        "Keep every podcast you create in one place. Revisit your favorites, replay episodes anytime, and keep creating shows around the topics you love.",
+    },
+    tags: {
+      news: "News",
+      tech: "Tech",
+      markets: "Markets",
+      hostCohost: "Host & Co-host",
+      customStyle: "Custom style",
+      yourShows: "Your shows",
+      replayAnytime: "Replay anytime",
+      shareReady: "Share-ready",
     },
   },
   listen: {
@@ -115,8 +162,7 @@ const en = {
   download: downloadTranslations.en,
   platform: platformTranslations.en,
   footer: {
-    description:
-      "Your personal audio companion a calmer way to keep up with what matters.",
+    description: "Your world, in podcasts.",
     product: "Product",
     company: "Company",
     legal: "Legal",
@@ -1577,6 +1623,7 @@ export const resources: Resource = {
   en: { translation: en },
   es: { translation: es },
   zh: { translation: zh },
+  cmn: { translation: zh },
   hi: { translation: hi },
   pt: { translation: pt },
   fr: { translation: fr },

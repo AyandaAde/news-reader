@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 
 const ITEM_HEIGHT = 56;
 const CENTER_INDEX = 2;
-const VIEWPORT_HEIGHT = 280;
+const VIEWPORT_HEIGHT = ITEM_HEIGHT * 5;
 
 type VoiceWheelPickerProps = {
   voices: VoiceInfo[];

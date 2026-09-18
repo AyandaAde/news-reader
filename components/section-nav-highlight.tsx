@@ -4,12 +4,18 @@ import { useEffect } from "react";
 
 const HIGHLIGHT_IDS = new Set([
   "features",
+  "podcast-creation",
   "listen",
   "feature-daily-brief",
   "feature-conversation-recall",
   "feature-email-briefings",
   "feature-listen-anywhere",
   "feature-live-stations",
+  "podcast-creation-topics",
+  "podcast-creation-length",
+  "podcast-creation-voices",
+  "podcast-creation-generate",
+  "podcast-creation-library",
   "listen-email-inbox",
   "listen-web-news",
   "listen-routine",

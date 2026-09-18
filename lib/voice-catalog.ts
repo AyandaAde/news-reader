@@ -45,6 +45,42 @@ export const VOICE_ENGINES: VoiceEngineInfo[] = [
   },
 ];
 
+/** User-facing voice engine tiers mapped to TTS providers in the database. */
+export type VoiceEngineTierId = "standard" | "premium";
+
+export const VOICE_ENGINE_TIERS = [
+  {
+    id: "standard" as const,
+    label: "Standard",
+    description: "Standard voice production",
+    providerId: "GeminiTTS",
+  },
+  {
+    id: "premium" as const,
+    label: "Premium",
+    description: "More human-sounding voice production",
+    providerId: "ElevenTTS2_5",
+  },
+] as const;
+
+export function voiceEngineTierFromProvider(
+  providerId: string,
+): VoiceEngineTierId {
+  if (providerId === "GeminiTTS") {
+    return "standard";
+  }
+  return "premium";
+}
+
+export function providerIdForVoiceEngineTier(
+  tierId: VoiceEngineTierId,
+): string {
+  return (
+    VOICE_ENGINE_TIERS.find((tier) => tier.id === tierId)?.providerId ??
+    "ElevenTTS2_5"
+  );
+}
+
 const elevenLabsVoices: Omit<VoiceInfo, "engine">[] = [
   { id: "XEQBC9sleaE3f5ff82UR", name: "Charlotte", description: "Podcasts & lifestyle" },
   { id: "Q1QcmfZPmFDVUWmzASdy", name: "Matt", description: "Dramatic radio host" },

@@ -15,7 +15,17 @@ export async function GET(req: NextRequest) {
 
   try {
     const user = await ensureBackendUser(req, userId);
-    const query = buildNewsReaderWeatherQuery(user);
+    const locationParam = req.nextUrl.searchParams.get("location");
+    const indexParam = req.nextUrl.searchParams.get("index");
+    const locationIndex =
+      indexParam != null && indexParam.trim() !== ""
+        ? Number.parseInt(indexParam, 10)
+        : undefined;
+
+    const query = buildNewsReaderWeatherQuery(user, {
+      location: locationParam,
+      locationIndex: Number.isFinite(locationIndex) ? locationIndex : undefined,
+    });
 
     const weather = await getNewsReaderWeather(query);
 

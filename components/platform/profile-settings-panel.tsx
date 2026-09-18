@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { BriefingRoutineList } from "@/components/platform/briefing-routine-list";
+import { BriefingRoutineAddSelect } from "@/components/platform/briefing-routine-add-select";
 import {
   VoiceEngineSpeakersPanel,
   type VoiceEngineSpeakersDraft,
@@ -23,18 +24,27 @@ import {
 } from "@/components/platform/weather-settings-panel";
 import { PlatformSignOutButton } from "@/components/platform/platform-sign-out-button";
 import { useI18n } from "@/components/i18n-provider";
+import { isLanguage } from "@/lib/i18n";
 import { profileShows } from "@/lib/platform-profile";
 import {
   DEFAULT_PLATFORM_SETTINGS,
   LANGUAGE_OPTIONS,
+  MAX_BRIEFING_ROUTINE_ITEMS,
   getSubscriptionLabel,
   loadPlatformSettings,
+  mapApiBriefingRoutine,
+  podcastLocalizationFromLocale,
+  resolvePodcastLocale,
+  ensurePodcastLocalizationForVoice,
   savePlatformSettings,
   SETTINGS_SECTIONS,
   type BriefingRoutineSlot,
+  type ConversationStyle,
   type PlatformSettings,
   type SettingsSectionId,
 } from "@/lib/platform-settings";
+import { voiceEngineTierFromProvider } from "@/lib/voice-catalog";
+import type { NewsReaderUser } from "@/lib/news-reader-api";
 import { cn } from "@/lib/utils";
 
 const SETTINGS_SECTION_I18N: Record<
@@ -138,7 +148,7 @@ export function ProfileSettingsPanel({
   emailAddress,
   onEditProfile,
 }: ProfileSettingsPanelProps) {
-  const { t } = useI18n();
+  const { t, setLanguage } = useI18n();
   const [activeSection, setActiveSection] = useState<SettingsSectionId | null>(null);
   const [settings, setSettings] = useState<PlatformSettings>(DEFAULT_PLATFORM_SETTINGS);
   const [savedMessage, setSavedMessage] = useState<string | null>(null);
@@ -151,8 +161,309 @@ export function ProfileSettingsPanel({
   const previousSectionRef = useRef<SettingsSectionId | null>(null);
 
   useEffect(() => {
-    setSettings(loadPlatformSettings());
+    const local = loadPlatformSettings();
+    setSettings(local);
+
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const response = await fetch("/api/user/get", {
+          method: "GET",
+          cache: "no-store",
+        });
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          user?: NewsReaderUser;
+        };
+        if (!payload.user || cancelled) {
+          return;
+        }
+
+        const fromApi = mapApiBriefingRoutine(payload.user.briefingRoutine);
+        const weatherLocations = payload.user.weatherSavedLocations;
+        const weatherZipCode = payload.user.weatherZipCode;
+
+        if (cancelled) {
+          return;
+        }
+
+        if (fromApi !== null) {
+          if (fromApi.length === 0 && local.briefingRoutine.length > 0) {
+            const synced = await persistBriefingRoutine(local.briefingRoutine);
+            if (synced && !cancelled) {
+              setSettings((current) => {
+                const next = { ...current, briefingRoutine: synced };
+                savePlatformSettings(next);
+                return next;
+              });
+            }
+          } else {
+            setSettings((current) => {
+              const next = {
+                ...current,
+                briefingRoutine:
+                  fromApi.length > 0 ? fromApi : current.briefingRoutine,
+              };
+              savePlatformSettings(next);
+              return next;
+            });
+          }
+        }
+
+        if (
+          (Array.isArray(weatherLocations) && weatherLocations.length > 0) ||
+          typeof weatherZipCode === "string"
+        ) {
+          setSettings((current) => {
+            const next = {
+              ...current,
+              ...(typeof weatherZipCode === "string"
+                ? { weatherZipCode }
+                : {}),
+              ...(Array.isArray(weatherLocations) && weatherLocations.length > 0
+                ? {
+                    weatherSavedLocations: weatherLocations.map((location) => ({
+                      id: location.id,
+                      city: location.city,
+                      isHome: Boolean(location.isHome),
+                    })),
+                  }
+                : {}),
+            };
+            savePlatformSettings(next);
+            return next;
+          });
+        }
+
+        const voice = payload.user.voiceSettings;
+        if (voice?.conversationStyle) {
+          const style = voice.conversationStyle as ConversationStyle;
+          const allowed: ConversationStyle[] = [
+            "HostCohost",
+            "ReporterAnalyst",
+            "AssistantHuman",
+            "Custom",
+          ];
+          if (allowed.includes(style)) {
+            setSettings((current) => {
+              const next = {
+                ...current,
+                conversationStyle: style,
+                customPrompt: voice.conversationStyleCustom ?? "",
+                voiceEngine: voice.ttsProviderName || current.voiceEngine,
+                speakerA: voice.hostVoice || current.speakerA,
+                speakerB: voice.hostVoiceB || current.speakerB,
+                useGlobalVoiceOverride: voice.useGlobalVoiceOverride,
+              };
+              savePlatformSettings(next);
+              return next;
+            });
+          }
+        }
+
+        const apiLanguage =
+          typeof payload.user.locale === "string"
+            ? payload.user.locale.trim().toLowerCase()
+            : typeof payload.user.language === "string"
+              ? payload.user.language.trim().toLowerCase()
+              : "";
+        if (
+          apiLanguage &&
+          LANGUAGE_OPTIONS.some((option) => option.value === apiLanguage)
+        ) {
+          setSettings((current) => {
+            const next = {
+              ...current,
+              language: apiLanguage,
+            };
+            savePlatformSettings(next);
+            return next;
+          });
+          if (isLanguage(apiLanguage)) {
+            setLanguage(apiLanguage);
+          }
+        }
+
+        const apiPodcastLocale =
+          typeof payload.user.podcastLocale === "string"
+            ? payload.user.podcastLocale.trim().toLowerCase()
+            : "";
+        const isPremiumVoice =
+          voiceEngineTierFromProvider(
+            payload.user.voiceSettings?.ttsProviderName ||
+              settings.voiceEngine,
+          ) === "premium";
+        if (apiPodcastLocale) {
+          const localization = podcastLocalizationFromLocale(
+            apiPodcastLocale,
+            apiLanguage || undefined,
+            isPremiumVoice,
+          );
+          const ensured = ensurePodcastLocalizationForVoice({
+            language: apiLanguage || settings.language,
+            podcastLocalizationMode: localization.podcastLocalizationMode,
+            podcastLocalizationRegion: localization.podcastLocalizationRegion,
+            isPremiumVoice,
+          });
+          setSettings((current) => {
+            const next = {
+              ...current,
+              podcastLocalizationMode: ensured.podcastLocalizationMode,
+              podcastLocalizationRegion: ensured.podcastLocalizationRegion,
+            };
+            savePlatformSettings(next);
+            return next;
+          });
+        } else if (isPremiumVoice) {
+          const ensured = ensurePodcastLocalizationForVoice({
+            language: apiLanguage || settings.language,
+            podcastLocalizationMode: settings.podcastLocalizationMode,
+            podcastLocalizationRegion: settings.podcastLocalizationRegion,
+            isPremiumVoice: true,
+          });
+          setSettings((current) => {
+            const next = {
+              ...current,
+              ...ensured,
+            };
+            savePlatformSettings(next);
+            return next;
+          });
+        }
+
+        if (typeof payload.user.briefReadyNotifications === "boolean") {
+          setSettings((current) => {
+            const next = {
+              ...current,
+              notifyNewBrief: payload.user!.briefReadyNotifications!,
+            };
+            savePlatformSettings(next);
+            return next;
+          });
+        }
+
+        if (typeof payload.user.newEpisodeNotifications === "boolean") {
+          setSettings((current) => {
+            const next = {
+              ...current,
+              notifyNewEpisode: payload.user!.newEpisodeNotifications!,
+            };
+            savePlatformSettings(next);
+            return next;
+          });
+        }
+      } catch (error) {
+        console.error("Failed to hydrate briefing routine:", error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
+
+  async function persistBriefingRoutine(
+    routine: BriefingRoutineSlot[],
+  ): Promise<BriefingRoutineSlot[] | null> {
+    try {
+      const response = await fetch("/api/user/briefing-routine", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          briefingRoutine: routine.map((slot) => ({
+            id: slot.id,
+            type: slot.type,
+            label: slot.label,
+            podcastId: slot.podcastId ?? null,
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        toast.error(payload?.error ?? "Failed to save briefing routine");
+        return null;
+      }
+
+      const payload = (await response.json()) as { user?: NewsReaderUser };
+      return (
+        mapApiBriefingRoutine(payload.user?.briefingRoutine) ?? routine
+      );
+    } catch (error) {
+      console.error("Failed to persist briefing routine:", error);
+      toast.error("Failed to save briefing routine");
+      return null;
+    }
+  }
+
+  async function persistWeatherSettings(
+    draft: WeatherSettingsDraft,
+  ): Promise<boolean> {
+    updateSettings({
+      weatherZipCode: draft.weatherZipCode,
+      weatherSavedLocations: draft.weatherSavedLocations,
+      weatherTemperatureUnit: draft.weatherTemperatureUnit,
+      weatherDailyForecastAlerts: draft.weatherDailyForecastAlerts,
+      weatherSevereWeatherAlerts: draft.weatherSevereWeatherAlerts,
+      weatherDeliveryTime: draft.weatherDeliveryTime,
+    });
+
+    try {
+      const response = await fetch("/api/user/weather-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          weatherZipCode: draft.weatherZipCode,
+          weatherSavedLocations: draft.weatherSavedLocations.map((location) => ({
+            id: location.id,
+            city: location.city,
+            isHome: Boolean(location.isHome),
+          })),
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        toast.error(payload?.error ?? "Failed to save weather location");
+        return false;
+      }
+
+      const payload = (await response.json()) as { user?: NewsReaderUser };
+      const savedLocations = payload.user?.weatherSavedLocations;
+      if (savedLocations && savedLocations.length > 0) {
+        const nextLocations = savedLocations.map((location) => ({
+          id: location.id,
+          city: location.city,
+          isHome: Boolean(location.isHome),
+        }));
+        updateSettings({ weatherSavedLocations: nextLocations });
+        setWeatherDraft((current) =>
+          current
+            ? {
+                ...current,
+                weatherZipCode:
+                  payload.user?.weatherZipCode ?? current.weatherZipCode,
+                weatherSavedLocations: nextLocations,
+              }
+            : current,
+        );
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Failed to persist weather settings:", error);
+      toast.error("Failed to save weather location");
+      return false;
+    }
+  }
 
   useEffect(() => {
     if (activeSection === "voice-style") {
@@ -192,11 +503,27 @@ export function ProfileSettingsPanel({
 
     if (activeSection === "language") {
       if (previousSectionRef.current !== "language") {
-        setLanguageDraft({
+        const isPremiumVoice =
+          voiceEngineTierFromProvider(settings.voiceEngine) === "premium";
+        const localization = ensurePodcastLocalizationForVoice({
           language: settings.language,
           podcastLocalizationMode: settings.podcastLocalizationMode,
           podcastLocalizationRegion: settings.podcastLocalizationRegion,
+          isPremiumVoice,
         });
+        setLanguageDraft({
+          language: settings.language,
+          podcastLocalizationMode: localization.podcastLocalizationMode,
+          podcastLocalizationRegion: localization.podcastLocalizationRegion,
+        });
+        if (
+          localization.podcastLocalizationMode !==
+            settings.podcastLocalizationMode ||
+          localization.podcastLocalizationRegion !==
+            settings.podcastLocalizationRegion
+        ) {
+          updateSettings(localization);
+        }
       }
       setVoiceDraft(null);
       setWeatherDraft(null);
@@ -249,18 +576,118 @@ export function ProfileSettingsPanel({
     toast.success("Success", { description: "Routine Saved" });
   }
 
+  async function persistVoiceSettings(
+    draft: VoiceEngineSpeakersDraft,
+  ): Promise<boolean> {
+    updateSettings({
+      conversationStyle: draft.conversationStyle,
+      customPrompt: draft.customPrompt,
+      voiceEngine: draft.voiceEngine,
+      speakerA: draft.speakerA,
+      speakerB: draft.speakerB,
+      useGlobalVoiceOverride: true,
+    });
+
+    try {
+      const response = await fetch("/api/user/voice-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          useGlobalVoiceOverride: true,
+          conversationStyle: draft.conversationStyle,
+          conversationStyleCustom:
+            draft.conversationStyle === "Custom"
+              ? draft.customPrompt.trim() || null
+              : null,
+          ttsProviderName: draft.voiceEngine,
+          hostVoice: draft.speakerA,
+          hostVoiceB: draft.speakerB,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        toast.error(payload?.error ?? "Failed to save voice settings");
+        return false;
+      }
+
+      const payload = (await response.json()) as { user?: NewsReaderUser };
+      const voice = payload.user?.voiceSettings;
+      if (voice?.conversationStyle) {
+        const style = voice.conversationStyle as ConversationStyle;
+        const allowed: ConversationStyle[] = [
+          "HostCohost",
+          "ReporterAnalyst",
+          "AssistantHuman",
+          "Custom",
+        ];
+        if (allowed.includes(style)) {
+          updateSettings({
+            conversationStyle: style,
+            customPrompt: voice.conversationStyleCustom ?? "",
+            voiceEngine: voice.ttsProviderName || draft.voiceEngine,
+            speakerA: voice.hostVoice || draft.speakerA,
+            speakerB: voice.hostVoiceB || draft.speakerB,
+            useGlobalVoiceOverride: voice.useGlobalVoiceOverride,
+          });
+          setVoiceDraft((current) =>
+            current
+              ? {
+                  ...current,
+                  conversationStyle: style,
+                  customPrompt: voice.conversationStyleCustom ?? "",
+                  voiceEngine: voice.ttsProviderName || current.voiceEngine,
+                  speakerA: voice.hostVoice || current.speakerA,
+                  speakerB: voice.hostVoiceB || current.speakerB,
+                }
+              : current,
+          );
+        }
+      }
+
+      const nextVoiceEngine =
+        voice?.ttsProviderName || draft.voiceEngine || settings.voiceEngine;
+      if (voiceEngineTierFromProvider(nextVoiceEngine) === "premium") {
+        const ensured = ensurePodcastLocalizationForVoice({
+          language: settings.language,
+          podcastLocalizationMode: settings.podcastLocalizationMode,
+          podcastLocalizationRegion: settings.podcastLocalizationRegion,
+          isPremiumVoice: true,
+        });
+        if (
+          ensured.podcastLocalizationMode !==
+            settings.podcastLocalizationMode ||
+          ensured.podcastLocalizationRegion !==
+            settings.podcastLocalizationRegion
+        ) {
+          await persistLanguageSettings({
+            language: settings.language,
+            ...ensured,
+          });
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Failed to persist voice settings:", error);
+      toast.error("Failed to save voice settings");
+      return false;
+    }
+  }
+
   function saveVoiceStyleDraft() {
     if (!voiceDraft) {
       return;
     }
 
-    updateSettings({
-      conversationStyle: voiceDraft.conversationStyle,
-      customPrompt: voiceDraft.customPrompt,
-      speakerA: voiceDraft.speakerA,
-      speakerB: voiceDraft.speakerB,
-    });
-    toast.success("Success", { description: "Settings Saved" });
+    void (async () => {
+      const saved = await persistVoiceSettings(voiceDraft);
+      if (saved) {
+        toast.success("Success", { description: "Settings Saved" });
+      }
+    })();
   }
 
   function saveWeatherDraft() {
@@ -268,26 +695,229 @@ export function ProfileSettingsPanel({
       return;
     }
 
-    updateSettings({
-      weatherZipCode: weatherDraft.weatherZipCode,
-      weatherSavedLocations: weatherDraft.weatherSavedLocations,
-      weatherTemperatureUnit: weatherDraft.weatherTemperatureUnit,
-      weatherDailyForecastAlerts: weatherDraft.weatherDailyForecastAlerts,
-      weatherSevereWeatherAlerts: weatherDraft.weatherSevereWeatherAlerts,
-      weatherDeliveryTime: weatherDraft.weatherDeliveryTime,
+    void (async () => {
+      const saved = await persistWeatherSettings(weatherDraft);
+      if (saved) {
+        toast.success("Success", { description: "Settings Saved" });
+      }
+    })();
+  }
+
+  function handleWeatherLocationAdded(
+    weatherSavedLocations: WeatherSettingsDraft["weatherSavedLocations"],
+  ) {
+    if (!weatherDraft) {
+      return;
+    }
+
+    const nextDraft = { ...weatherDraft, weatherSavedLocations };
+    setWeatherDraft(nextDraft);
+    void (async () => {
+      const saved = await persistWeatherSettings(nextDraft);
+      if (saved) {
+        toast.success("Success", { description: "Location Saved" });
+      }
+    })();
+  }
+
+  async function persistLanguageSettings(
+    draft: LanguageSettingsDraft,
+  ): Promise<boolean> {
+    const isPremiumVoice =
+      voiceEngineTierFromProvider(settings.voiceEngine) === "premium";
+    const ensured = ensurePodcastLocalizationForVoice({
+      language: draft.language,
+      podcastLocalizationMode: draft.podcastLocalizationMode,
+      podcastLocalizationRegion: draft.podcastLocalizationRegion,
+      isPremiumVoice,
     });
-    toast.success("Success", { description: "Settings Saved" });
+    const nextDraft = { ...draft, ...ensured };
+    const podcastLocale = resolvePodcastLocale({
+      ...nextDraft,
+      isPremiumVoice,
+    });
+
+    updateSettings({
+      language: nextDraft.language,
+      podcastLocalizationMode: nextDraft.podcastLocalizationMode,
+      podcastLocalizationRegion: nextDraft.podcastLocalizationRegion,
+    });
+    setLanguageDraft(nextDraft);
+
+    if (isLanguage(nextDraft.language)) {
+      setLanguage(nextDraft.language);
+    }
+
+    try {
+      const response = await fetch("/api/user/language-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          locale: nextDraft.language,
+          language: nextDraft.language,
+          podcastLocale,
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        toast.error(payload?.error ?? "Failed to save language settings");
+        return false;
+      }
+
+      const payload = (await response.json()) as { user?: NewsReaderUser };
+      const apiLanguage =
+        typeof payload.user?.locale === "string"
+          ? payload.user.locale.trim().toLowerCase()
+          : typeof payload.user?.language === "string"
+            ? payload.user.language.trim().toLowerCase()
+            : "";
+      if (
+        apiLanguage &&
+        LANGUAGE_OPTIONS.some((option) => option.value === apiLanguage)
+      ) {
+        updateSettings({ language: apiLanguage });
+        setLanguageDraft((current) =>
+          current ? { ...current, language: apiLanguage } : current,
+        );
+        if (isLanguage(apiLanguage)) {
+          setLanguage(apiLanguage);
+        }
+      }
+
+      const apiPodcastLocale =
+        typeof payload.user?.podcastLocale === "string"
+          ? payload.user.podcastLocale.trim().toLowerCase()
+          : "";
+      if (apiPodcastLocale) {
+        const localization = podcastLocalizationFromLocale(
+          apiPodcastLocale,
+          apiLanguage || nextDraft.language,
+          isPremiumVoice,
+        );
+        const ensuredLocalization = ensurePodcastLocalizationForVoice({
+          language: apiLanguage || nextDraft.language,
+          podcastLocalizationMode: localization.podcastLocalizationMode,
+          podcastLocalizationRegion: localization.podcastLocalizationRegion,
+          isPremiumVoice,
+        });
+        updateSettings({
+          podcastLocalizationMode: ensuredLocalization.podcastLocalizationMode,
+          podcastLocalizationRegion:
+            ensuredLocalization.podcastLocalizationRegion,
+        });
+        setLanguageDraft((current) =>
+          current
+            ? {
+                ...current,
+                podcastLocalizationMode:
+                  ensuredLocalization.podcastLocalizationMode,
+                podcastLocalizationRegion:
+                  ensuredLocalization.podcastLocalizationRegion,
+              }
+            : current,
+        );
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Failed to persist language settings:", error);
+      toast.error("Failed to save language settings");
+      return false;
+    }
   }
 
   function saveLanguageDraft() {
     if (!languageDraft) return;
 
-    updateSettings({
-      language: languageDraft.language,
-      podcastLocalizationMode: languageDraft.podcastLocalizationMode,
-      podcastLocalizationRegion: languageDraft.podcastLocalizationRegion,
-    });
-    toast.success("Success", { description: "Settings Saved" });
+    void (async () => {
+      const saved = await persistLanguageSettings(languageDraft);
+      if (saved) {
+        toast.success("Success", { description: "Settings Saved" });
+      }
+    })();
+  }
+
+  async function persistBriefReadyNotifications(
+    enabled: boolean,
+  ): Promise<boolean> {
+    updateSettings({ notifyNewBrief: enabled });
+    setNotificationsDraft((current) =>
+      current ? { ...current, notifyNewBrief: enabled } : current,
+    );
+
+    try {
+      const response = await fetch("/api/user/notification-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ briefReadyNotifications: enabled }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        toast.error(payload?.error ?? "Failed to save notification settings");
+        return false;
+      }
+
+      const payload = (await response.json()) as { user?: NewsReaderUser };
+      if (typeof payload.user?.briefReadyNotifications === "boolean") {
+        const next = payload.user.briefReadyNotifications;
+        updateSettings({ notifyNewBrief: next });
+        setNotificationsDraft((current) =>
+          current ? { ...current, notifyNewBrief: next } : current,
+        );
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Failed to persist notification settings:", error);
+      toast.error("Failed to save notification settings");
+      return false;
+    }
+  }
+
+  async function persistNewEpisodeNotifications(
+    enabled: boolean,
+  ): Promise<boolean> {
+    updateSettings({ notifyNewEpisode: enabled });
+    setNotificationsDraft((current) =>
+      current ? { ...current, notifyNewEpisode: enabled } : current,
+    );
+
+    try {
+      const response = await fetch("/api/user/notification-settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newEpisodeNotifications: enabled }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        toast.error(payload?.error ?? "Failed to save notification settings");
+        return false;
+      }
+
+      const payload = (await response.json()) as { user?: NewsReaderUser };
+      if (typeof payload.user?.newEpisodeNotifications === "boolean") {
+        const next = payload.user.newEpisodeNotifications;
+        updateSettings({ notifyNewEpisode: next });
+        setNotificationsDraft((current) =>
+          current ? { ...current, notifyNewEpisode: next } : current,
+        );
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Failed to persist notification settings:", error);
+      toast.error("Failed to save notification settings");
+      return false;
+    }
   }
 
   function saveNotificationsDraft() {
@@ -300,22 +930,40 @@ export function ProfileSettingsPanel({
       notifyLiveStation: notificationsDraft.notifyLiveStation,
       notifyNewEpisode: notificationsDraft.notifyNewEpisode,
     });
-    toast.success("Success", { description: "Settings Saved" });
+
+    void (async () => {
+      const [briefSaved, episodeSaved] = await Promise.all([
+        persistBriefReadyNotifications(notificationsDraft.notifyNewBrief),
+        persistNewEpisodeNotifications(notificationsDraft.notifyNewEpisode),
+      ]);
+      if (briefSaved && episodeSaved) {
+        toast.success("Success", { description: "Settings Saved" });
+      }
+    })();
   }
 
   function reorderRoutineSlots(next: BriefingRoutineSlot[]) {
-    updateSettings({ briefingRoutine: next });
+    const clipped = next.slice(0, MAX_BRIEFING_ROUTINE_ITEMS);
+    updateSettings({ briefingRoutine: clipped });
     showRoutineSaved();
+    void persistBriefingRoutine(clipped);
   }
 
   function removeRoutineSlot(id: string) {
-    updateSettings({
-      briefingRoutine: settings.briefingRoutine.filter((slot) => slot.id !== id),
-    });
+    const next = settings.briefingRoutine.filter((slot) => slot.id !== id);
+    updateSettings({ briefingRoutine: next });
     showRoutineSaved();
+    void persistBriefingRoutine(next);
   }
 
   function addRoutineSlot(slot: Omit<BriefingRoutineSlot, "id">) {
+    if (settings.briefingRoutine.length >= MAX_BRIEFING_ROUTINE_ITEMS) {
+      toast.error(
+        `You can add up to ${MAX_BRIEFING_ROUTINE_ITEMS} items to your routine.`,
+      );
+      return;
+    }
+
     if (settings.briefingRoutine.some((item) => item.type === slot.type && slot.type !== "podcast")) {
       return;
     }
@@ -327,13 +975,14 @@ export function ProfileSettingsPanel({
       return;
     }
 
-    updateSettings({
-      briefingRoutine: [
-        ...settings.briefingRoutine,
-        { ...slot, id: `${slot.type}-${Date.now()}` },
-      ],
-    });
+    const next = [
+      ...settings.briefingRoutine,
+      { ...slot, id: `${slot.type}-${Date.now()}` },
+    ].slice(0, MAX_BRIEFING_ROUTINE_ITEMS);
+
+    updateSettings({ briefingRoutine: next });
     showRoutineSaved();
+    void persistBriefingRoutine(next);
   }
 
   if (activeSection) {
@@ -341,6 +990,11 @@ export function ProfileSettingsPanel({
     const sectionCopy = activeSection
       ? SETTINGS_SECTION_I18N[activeSection]
       : null;
+
+    const weatherLabel = t("platform.profile.weatherBrief");
+    const newsLabel = t("platform.profile.worldNews");
+    const atRoutineLimit =
+      settings.briefingRoutine.length >= MAX_BRIEFING_ROUTINE_ITEMS;
 
     return (
       <section>
@@ -377,57 +1031,22 @@ export function ProfileSettingsPanel({
               <p className="mb-2 text-[13px] text-neutral-500 dark:text-[#888888]">
                 {t("platform.profile.addToRoutine")}
               </p>
-              <div className="flex flex-wrap gap-2">
-                {!settings.briefingRoutine.some((slot) => slot.type === "email") ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      addRoutineSlot({
-                        type: "email",
-                        label: t("platform.profile.emailBrief"),
-                      })
-                    }
-                    className="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:border-white/10 dark:bg-white/5 dark:text-[#c4c7c8] dark:hover:bg-white/10 dark:hover:text-white"
-                  >
-                    <MaterialIcon name="mail" className="text-[16px]" />
-                    {t("platform.profile.emailBrief")}
-                  </button>
-                ) : null}
-                {!settings.briefingRoutine.some((slot) => slot.type === "news") ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      addRoutineSlot({
-                        type: "news",
-                        label: t("platform.profile.worldNews"),
-                      })
-                    }
-                    className="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:border-white/10 dark:bg-white/5 dark:text-[#c4c7c8] dark:hover:bg-white/10 dark:hover:text-white"
-                  >
-                    <MaterialIcon name="public" className="text-[16px]" />
-                    {t("platform.profile.worldNews")}
-                  </button>
-                ) : null}
-                {profileShows.map((podcast) =>
-                  settings.briefingRoutine.some((slot) => slot.podcastId === podcast.id) ? null : (
-                    <button
-                      key={podcast.id}
-                      type="button"
-                      onClick={() =>
-                        addRoutineSlot({
-                          type: "podcast",
-                          label: podcast.title,
-                          podcastId: podcast.id,
-                        })
-                      }
-                      className="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-50 px-3.5 py-2 text-sm text-neutral-700 transition-colors hover:bg-neutral-100 hover:text-neutral-900 dark:border-white/10 dark:bg-white/5 dark:text-[#c4c7c8] dark:hover:bg-white/10 dark:hover:text-white"
-                    >
-                      <MaterialIcon name="headphones" className="text-[16px]" />
-                      {podcast.title}
-                    </button>
-                  ),
-                )}
-              </div>
+              <BriefingRoutineAddSelect
+                routine={settings.briefingRoutine}
+                weatherLabel={weatherLabel}
+                newsLabel={newsLabel}
+                podcasts={profileShows}
+                atLimit={atRoutineLimit}
+                placeholder={t("platform.profile.selectToAdd")}
+                searchPlaceholder={t("platform.profile.searchRoutine")}
+                emptyLabel={
+                  atRoutineLimit
+                    ? t("platform.profile.routineMax")
+                    : t("platform.profile.routineFull")
+                }
+                noMatchesLabel={t("platform.profile.noRoutineMatch")}
+                onAdd={addRoutineSlot}
+              />
             </div>
           </div>
         ) : null}
@@ -435,7 +1054,31 @@ export function ProfileSettingsPanel({
         {activeSection === "voice-style" && voiceDraft ? (
           <VoiceEngineSpeakersPanel
             draft={voiceDraft}
-            onChange={(patch) => setVoiceDraft((current) => (current ? { ...current, ...patch } : current))}
+            onChange={(patch) => {
+              setVoiceDraft((current) => {
+                if (!current) {
+                  return current;
+                }
+                return { ...current, ...patch };
+              });
+
+              if (
+                (patch.conversationStyle || patch.voiceEngine) &&
+                voiceDraft
+              ) {
+                const nextDraft = { ...voiceDraft, ...patch };
+                void (async () => {
+                  const saved = await persistVoiceSettings(nextDraft);
+                  if (saved) {
+                    toast.success("Success", {
+                      description: patch.voiceEngine
+                        ? "Voice engine saved"
+                        : "Conversation style saved",
+                    });
+                  }
+                })();
+              }
+            }}
             onSave={saveVoiceStyleDraft}
           />
         ) : null}
@@ -447,15 +1090,31 @@ export function ProfileSettingsPanel({
               setWeatherDraft((current) => (current ? { ...current, ...patch } : current))
             }
             onSave={saveWeatherDraft}
+            onAddLocation={handleWeatherLocationAdded}
           />
         ) : null}
 
         {activeSection === "language" && languageDraft ? (
           <LanguageSettingsPanel
             draft={languageDraft}
-            onChange={(patch) =>
-              setLanguageDraft((current) => (current ? { ...current, ...patch } : current))
+            isPremiumVoice={
+              voiceEngineTierFromProvider(settings.voiceEngine) === "premium"
             }
+            onChange={(patch) => {
+              setLanguageDraft((current) =>
+                current ? { ...current, ...patch } : current,
+              );
+
+              if (
+                languageDraft &&
+                (typeof patch.language === "string" ||
+                  typeof patch.podcastLocalizationMode === "string" ||
+                  typeof patch.podcastLocalizationRegion === "string")
+              ) {
+                const nextDraft = { ...languageDraft, ...patch };
+                void persistLanguageSettings(nextDraft);
+              }
+            }}
             onSave={saveLanguageDraft}
           />
         ) : null}
@@ -463,11 +1122,25 @@ export function ProfileSettingsPanel({
         {activeSection === "notifications" && notificationsDraft ? (
           <NotificationsSettingsPanel
             draft={notificationsDraft}
-            onChange={(patch) =>
+            onChange={(patch) => {
               setNotificationsDraft((current) =>
                 current ? { ...current, ...patch } : current,
-              )
-            }
+              );
+
+              if (
+                typeof patch.notifyNewBrief === "boolean" &&
+                notificationsDraft
+              ) {
+                void persistBriefReadyNotifications(patch.notifyNewBrief);
+              }
+
+              if (
+                typeof patch.notifyNewEpisode === "boolean" &&
+                notificationsDraft
+              ) {
+                void persistNewEpisodeNotifications(patch.notifyNewEpisode);
+              }
+            }}
             onSave={saveNotificationsDraft}
           />
         ) : null}

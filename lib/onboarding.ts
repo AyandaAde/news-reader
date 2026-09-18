@@ -12,21 +12,12 @@ export const ONBOARDING_STEPS = [
 export type OnboardingStep = (typeof ONBOARDING_STEPS)[number];
 
 export const TOPIC_OPTIONS = [
-  "World News",
-  "Business",
-  "Science",
-  "Sports",
-  "Entertainment",
-  "Technology",
-  "Health",
-  "Finance",
-  "Music",
-  "Food",
-  "AI",
-  "Travel",
-  "Books",
-  "Gaming",
-  "Climate",
+  "AI & Technology",
+  "Business & Startups",
+  "Money & Investing",
+  "Dating & Relationships",
+  "Pop Culture",
+  "Psychology",
 ] as const;
 
 export const BRIEF_ITEMS = [

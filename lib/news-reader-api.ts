@@ -24,6 +24,19 @@ export type ProvisionNewsReaderUserResult = {
   created: boolean;
 };
 
+export type NewsReaderBriefingRoutineSlot = {
+  id: string;
+  type: "email" | "news" | "weather" | "podcast" | string;
+  label: string;
+  podcastId?: string | null;
+};
+
+export type NewsReaderWeatherSavedLocation = {
+  id: string;
+  city: string;
+  isHome?: boolean;
+};
+
 export type NewsReaderUser = {
   id: string;
   clerkUserId: string;
@@ -43,6 +56,25 @@ export type NewsReaderUser = {
   hasGoogleAccessToken: boolean;
   briefCount: number;
   latestBriefStoryCount: number;
+  briefingRoutine: NewsReaderBriefingRoutineSlot[];
+  weatherZipCode?: string | null;
+  weatherSavedLocations?: NewsReaderWeatherSavedLocation[];
+  voiceSettings?: NewsReaderVoiceSettings | null;
+  language?: string | null;
+  locale?: string | null;
+  podcastLocale?: string | null;
+  briefReadyNotifications?: boolean;
+  newEpisodeNotifications?: boolean;
+  podcastReadyNotifications?: boolean;
+};
+
+export type NewsReaderVoiceSettings = {
+  useGlobalVoiceOverride: boolean;
+  conversationStyle: string;
+  conversationStyleCustom: string | null;
+  ttsProviderName: string;
+  hostVoice: string;
+  hostVoiceB: string;
 };
 
 export type NewsReaderPodcast = {
@@ -107,9 +139,29 @@ function normalizeLocation(
 
 export function buildNewsReaderWeatherQuery(
   user: NewsReaderUser | null | undefined,
+  options?: { location?: string | null; locationIndex?: number },
 ): NewsReaderWeatherQuery {
+  const explicitLocation = options?.location?.trim();
+  if (explicitLocation) {
+    return { location: explicitLocation };
+  }
+
   if (!user) {
     return { location: DEFAULT_WEATHER_LOCATION };
+  }
+
+  const savedLocations = user.weatherSavedLocations ?? [];
+  const locationIndex =
+    typeof options?.locationIndex === "number" &&
+    Number.isFinite(options.locationIndex)
+      ? Math.max(0, Math.floor(options.locationIndex))
+      : 0;
+  const selectedSavedLocation =
+    savedLocations[locationIndex]?.city?.trim() ||
+    savedLocations[0]?.city?.trim();
+
+  if (selectedSavedLocation) {
+    return { location: selectedSavedLocation };
   }
 
   const hasCoords =
@@ -118,17 +170,24 @@ export function buildNewsReaderWeatherQuery(
     Number.isFinite(user.locationLatitude) &&
     Number.isFinite(user.locationLongitude);
 
-  const locationLabel =
+  const rawLabel =
     user.locationLabel?.trim() ||
     [user.locationCity, user.locationRegion].filter(Boolean).join(", ") ||
     user.locationCountry?.trim() ||
     null;
 
+  // Coordinate-looking labels are a failed reverse-geocode fallback. Prefer
+  // lat/lon so the weather API can resolve a real city name.
+  const locationLabel =
+    rawLabel && !/^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/.test(rawLabel)
+      ? rawLabel
+      : null;
+
   if (hasCoords) {
     return {
       latitude: user.locationLatitude,
       longitude: user.locationLongitude,
-      location: locationLabel ?? DEFAULT_WEATHER_LOCATION,
+      ...(locationLabel ? { location: locationLabel } : {}),
     };
   }
 
@@ -317,7 +376,9 @@ export async function getNewsReaderUserByClerkId(
       return null;
     }
 
-    return (await response.json()) as NewsReaderUser;
+    return normalizeNewsReaderUser(
+      (await response.json()) as NewsReaderUser,
+    );
   } catch (error) {
     console.error("News.Reader user lookup error:", error);
     return null;
@@ -356,5 +417,553 @@ export async function getNewsReaderPodcastsByClerkId(
   } catch (error) {
     console.error("News.Reader podcast lookup error:", error);
     return [];
+  }
+}
+
+function normalizeBriefingRoutineFromApi(
+  value: unknown,
+): NewsReaderBriefingRoutineSlot[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item, index) => {
+      if (!item || typeof item !== "object") {
+        return null;
+      }
+
+      const slot = item as Record<string, unknown>;
+      const type =
+        typeof slot.type === "string" ? slot.type : "podcast";
+      const label =
+        typeof slot.label === "string" && slot.label.trim()
+          ? slot.label
+          : type;
+      const id =
+        typeof slot.id === "string" && slot.id.trim()
+          ? slot.id
+          : `${type}-${index}`;
+      const podcastId =
+        typeof slot.podcastId === "string" && slot.podcastId.trim()
+          ? slot.podcastId
+          : null;
+
+      return { id, type, label, podcastId };
+    })
+    .filter((slot): slot is NewsReaderBriefingRoutineSlot => slot !== null);
+}
+
+function normalizeWeatherSavedLocationsFromApi(
+  value: unknown,
+): NewsReaderWeatherSavedLocation[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item, index) => {
+      if (!item || typeof item !== "object") {
+        return null;
+      }
+
+      const record = item as Record<string, unknown>;
+      const city =
+        typeof record.city === "string"
+          ? record.city.trim()
+          : typeof record.City === "string"
+            ? record.City.trim()
+            : "";
+      if (!city) {
+        return null;
+      }
+
+      const idRaw =
+        typeof record.id === "string"
+          ? record.id
+          : typeof record.Id === "string"
+            ? record.Id
+            : "";
+      const id = idRaw.trim() || `loc-${index}`;
+      const isHome = Boolean(record.isHome ?? record.IsHome);
+
+      return { id, city, isHome };
+    })
+    .filter((item): item is NewsReaderWeatherSavedLocation => item !== null);
+}
+
+export function normalizeNewsReaderUser(
+  payload: NewsReaderUser | Record<string, unknown>,
+): NewsReaderUser {
+  const record = payload as Record<string, unknown>;
+  const user = payload as NewsReaderUser;
+
+  const weatherZipCodeRaw =
+    record.weatherZipCode ?? record.WeatherZipCode ?? user.weatherZipCode;
+  const weatherZipCode =
+    typeof weatherZipCodeRaw === "string" && weatherZipCodeRaw.trim()
+      ? weatherZipCodeRaw.trim()
+      : null;
+
+  return {
+    ...user,
+    briefingRoutine: normalizeBriefingRoutineFromApi(
+      record.briefingRoutine ?? user.briefingRoutine,
+    ),
+    weatherZipCode,
+    weatherSavedLocations: normalizeWeatherSavedLocationsFromApi(
+      record.weatherSavedLocations ??
+        record.WeatherSavedLocations ??
+        user.weatherSavedLocations,
+    ),
+    voiceSettings: normalizeVoiceSettingsFromApi(
+      record.voiceSettings ?? record.VoiceSettings ?? user.voiceSettings,
+    ),
+    language: normalizeLanguageFromApi(
+      record.locale ??
+        record.Locale ??
+        record.language ??
+        record.Language,
+    ),
+    locale: normalizeLanguageFromApi(
+      record.locale ??
+        record.Locale ??
+        record.language ??
+        record.Language,
+    ),
+    podcastLocale: normalizePodcastLocaleFromApi(
+      record.podcastLocale ?? record.PodcastLocale,
+    ),
+    briefReadyNotifications: normalizeBooleanFromApi(
+      record.briefReadyNotifications ?? record.BriefReadyNotifications,
+      true,
+    ),
+    newEpisodeNotifications: normalizeBooleanFromApi(
+      record.newEpisodeNotifications ?? record.NewEpisodeNotifications,
+      true,
+    ),
+    podcastReadyNotifications: normalizeBooleanFromApi(
+      record.podcastReadyNotifications ?? record.PodcastReadyNotifications,
+      true,
+    ),
+  };
+}
+
+function normalizeBooleanFromApi(value: unknown, fallback: boolean): boolean {
+  if (typeof value === "boolean") {
+    return value;
+  }
+  return fallback;
+}
+
+function normalizeLanguageFromApi(value: unknown): string | null {
+  if (typeof value !== "string") {
+    return null;
+  }
+  const language = value.trim().toLowerCase();
+  if (!language) {
+    return null;
+  }
+  if (language === "zh") {
+    return "cmn";
+  }
+  return language;
+}
+
+function normalizePodcastLocaleFromApi(value: unknown): string | null {
+  return normalizeLanguageFromApi(value);
+}
+
+function normalizeVoiceSettingsFromApi(
+  value: unknown,
+): NewsReaderVoiceSettings | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const conversationStyle =
+    typeof record.conversationStyle === "string"
+      ? record.conversationStyle.trim()
+      : typeof record.ConversationStyle === "string"
+        ? record.ConversationStyle.trim()
+        : "";
+  if (!conversationStyle) {
+    return null;
+  }
+
+  const customRaw =
+    record.conversationStyleCustom ?? record.ConversationStyleCustom;
+  const conversationStyleCustom =
+    typeof customRaw === "string" && customRaw.trim()
+      ? customRaw.trim()
+      : null;
+
+  const ttsProviderName =
+    typeof record.ttsProviderName === "string" && record.ttsProviderName.trim()
+      ? record.ttsProviderName.trim()
+      : typeof record.TtsProviderName === "string" &&
+          record.TtsProviderName.trim()
+        ? record.TtsProviderName.trim()
+        : "ElevenTTS2_5";
+
+  const hostVoice =
+    typeof record.hostVoice === "string" && record.hostVoice.trim()
+      ? record.hostVoice.trim()
+      : typeof record.HostVoice === "string" && record.HostVoice.trim()
+        ? record.HostVoice.trim()
+        : "";
+
+  const hostVoiceB =
+    typeof record.hostVoiceB === "string" && record.hostVoiceB.trim()
+      ? record.hostVoiceB.trim()
+      : typeof record.HostVoiceB === "string" && record.HostVoiceB.trim()
+        ? record.HostVoiceB.trim()
+        : "";
+
+  return {
+    useGlobalVoiceOverride: Boolean(
+      record.useGlobalVoiceOverride ?? record.UseGlobalVoiceOverride ?? true,
+    ),
+    conversationStyle,
+    conversationStyleCustom,
+    ttsProviderName,
+    hostVoice,
+    hostVoiceB,
+  };
+}
+
+export async function updateNewsReaderBriefingRoutine(
+  clerkUserId: string,
+  briefingRoutine: NewsReaderBriefingRoutineSlot[],
+): Promise<NewsReaderUser | null> {
+  const baseUrl = getNewsReaderApiBaseUrl();
+
+  try {
+    const response = await fetch(
+      `${baseUrl}/users/clerk/${encodeURIComponent(clerkUserId)}/briefing-routine`,
+      {
+        method: "PUT",
+        headers: getNewsReaderApiHeaders(),
+        body: JSON.stringify({ briefingRoutine }),
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        "News.Reader briefing routine update failed:",
+        response.status,
+        await response.text(),
+      );
+      return null;
+    }
+
+    return normalizeNewsReaderUser(
+      (await response.json()) as NewsReaderUser,
+    );
+  } catch (error) {
+    console.error("News.Reader briefing routine update error:", error);
+    return null;
+  }
+}
+
+export type UpdateNewsReaderWeatherSettingsInput = {
+  weatherZipCode?: string | null;
+  weatherSavedLocations: NewsReaderWeatherSavedLocation[];
+  primaryLocation?: NewsReaderUserLocation | IpLocation | null;
+};
+
+export async function updateNewsReaderWeatherSettings(
+  clerkUserId: string,
+  input: UpdateNewsReaderWeatherSettingsInput,
+): Promise<NewsReaderUser | null> {
+  const baseUrl = getNewsReaderApiBaseUrl();
+
+  try {
+    const response = await fetch(
+      `${baseUrl}/users/clerk/${encodeURIComponent(clerkUserId)}/weather-settings`,
+      {
+        method: "PUT",
+        headers: getNewsReaderApiHeaders(),
+        body: JSON.stringify({
+          weatherZipCode: input.weatherZipCode ?? null,
+          weatherSavedLocations: input.weatherSavedLocations.map((location) => ({
+            id: location.id,
+            city: location.city,
+            isHome: Boolean(location.isHome),
+          })),
+          primaryLocation: normalizeLocation(input.primaryLocation) ?? null,
+        }),
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        "News.Reader weather settings update failed:",
+        response.status,
+        await response.text(),
+      );
+      return null;
+    }
+
+    return normalizeNewsReaderUser(
+      (await response.json()) as NewsReaderUser,
+    );
+  } catch (error) {
+    console.error("News.Reader weather settings update error:", error);
+    return null;
+  }
+}
+
+export type UpdateNewsReaderVoiceSettingsInput = {
+  useGlobalVoiceOverride?: boolean;
+  conversationStyle: string;
+  conversationStyleCustom?: string | null;
+  ttsProviderName?: string;
+  hostVoice: string;
+  hostVoiceB: string;
+};
+
+export async function updateNewsReaderVoiceSettings(
+  clerkUserId: string,
+  input: UpdateNewsReaderVoiceSettingsInput,
+): Promise<NewsReaderUser | null> {
+  const baseUrl = getNewsReaderApiBaseUrl();
+
+  try {
+    const response = await fetch(
+      `${baseUrl}/users/clerk/${encodeURIComponent(clerkUserId)}/voice-settings`,
+      {
+        method: "PUT",
+        headers: getNewsReaderApiHeaders(),
+        body: JSON.stringify({
+          useGlobalVoiceOverride: input.useGlobalVoiceOverride ?? true,
+          conversationStyle: input.conversationStyle,
+          conversationStyleCustom: input.conversationStyleCustom ?? null,
+          ttsProviderName: input.ttsProviderName ?? null,
+          hostVoice: input.hostVoice,
+          hostVoiceB: input.hostVoiceB,
+        }),
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        "News.Reader voice settings update failed:",
+        response.status,
+        await response.text(),
+      );
+      return null;
+    }
+
+    return normalizeNewsReaderUser(
+      (await response.json()) as NewsReaderUser,
+    );
+  } catch (error) {
+    console.error("News.Reader voice settings update error:", error);
+    return null;
+  }
+}
+
+export async function updateNewsReaderLanguageSettings(
+  clerkUserId: string,
+  input: {
+    language: string;
+    podcastLocale?: string;
+  },
+): Promise<NewsReaderUser | null> {
+  const baseUrl = getNewsReaderApiBaseUrl();
+
+  try {
+    const response = await fetch(
+      `${baseUrl}/users/clerk/${encodeURIComponent(clerkUserId)}/language-settings`,
+      {
+        method: "PUT",
+        headers: getNewsReaderApiHeaders(),
+        body: JSON.stringify({
+          locale: input.language,
+          language: input.language,
+          podcastLocale: input.podcastLocale,
+        }),
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        "News.Reader language settings update failed:",
+        response.status,
+        await response.text(),
+      );
+      return null;
+    }
+
+    return normalizeNewsReaderUser(
+      (await response.json()) as NewsReaderUser,
+    );
+  } catch (error) {
+    console.error("News.Reader language settings update error:", error);
+    return null;
+  }
+}
+
+export async function updateNewsReaderNotificationSettings(
+  clerkUserId: string,
+  input: {
+    briefReadyNotifications?: boolean;
+    newEpisodeNotifications?: boolean;
+  },
+): Promise<NewsReaderUser | null> {
+  const baseUrl = getNewsReaderApiBaseUrl();
+
+  try {
+    const response = await fetch(
+      `${baseUrl}/users/clerk/${encodeURIComponent(clerkUserId)}/notification-settings`,
+      {
+        method: "PUT",
+        headers: getNewsReaderApiHeaders(),
+        body: JSON.stringify({
+          briefReadyNotifications: input.briefReadyNotifications,
+          newEpisodeNotifications: input.newEpisodeNotifications,
+        }),
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        "News.Reader notification settings update failed:",
+        response.status,
+        await response.text(),
+      );
+      return null;
+    }
+
+    return normalizeNewsReaderUser(
+      (await response.json()) as NewsReaderUser,
+    );
+  } catch (error) {
+    console.error("News.Reader notification settings update error:", error);
+    return null;
+  }
+}
+
+export type GenerateDailyPodcastInput = {
+  clerkUserId: string;
+  topics: string[];
+  language: string;
+  durationMinutes: number;
+  instructions?: string | null;
+};
+
+export type GenerateDailyPodcastResult = {
+  success: boolean;
+  message: string;
+  podcastId: string;
+  title: string | null;
+  audioUrl: string;
+  audioChunkCount: number | null;
+  audioGeneratedAt: string | null;
+};
+
+export async function generateNewsReaderDailyPodcast(
+  input: GenerateDailyPodcastInput,
+): Promise<GenerateDailyPodcastResult | null> {
+  const baseUrl = getNewsReaderApiBaseUrl();
+
+  try {
+    const response = await fetch(`${baseUrl}/api/briefings/generate`, {
+      method: "POST",
+      headers: getNewsReaderApiHeaders(),
+      body: JSON.stringify({
+        userId: input.clerkUserId,
+        topics: input.topics,
+        language: input.language,
+        durationMinutes: input.durationMinutes,
+        instructions: input.instructions ?? undefined,
+      }),
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      console.error(
+        "News.Reader daily podcast generate failed:",
+        response.status,
+        await response.text(),
+      );
+      return null;
+    }
+
+    const payload = (await response.json()) as Record<string, unknown>;
+    const success = payload.success === true || payload.Success === true;
+    const podcastId = String(payload.podcastId ?? payload.PodcastId ?? "");
+    const audioUrl = String(payload.audioUrl ?? payload.AudioUrl ?? "");
+    const message =
+      typeof (payload.message ?? payload.Message) === "string"
+        ? String(payload.message ?? payload.Message)
+        : "Podcast generated successfully.";
+
+    if (!success || !podcastId || !audioUrl) {
+      return null;
+    }
+
+    return {
+      success: true,
+      message,
+      podcastId,
+      title:
+        typeof (payload.title ?? payload.Title) === "string"
+          ? String(payload.title ?? payload.Title)
+          : null,
+      audioUrl,
+      audioChunkCount:
+        typeof (payload.audioChunkCount ?? payload.AudioChunkCount) === "number"
+          ? Number(payload.audioChunkCount ?? payload.AudioChunkCount)
+          : null,
+      audioGeneratedAt:
+        typeof (payload.audioGeneratedAt ?? payload.AudioGeneratedAt) ===
+        "string"
+          ? String(payload.audioGeneratedAt ?? payload.AudioGeneratedAt)
+          : null,
+    };
+  } catch (error) {
+    console.error("News.Reader daily podcast generate error:", error);
+    return null;
+  }
+}
+
+export async function fetchNewsReaderDailyPodcastAudio(
+  podcastId: string,
+): Promise<ArrayBuffer | null> {
+  const baseUrl = getNewsReaderApiBaseUrl();
+
+  try {
+    const response = await fetch(
+      `${baseUrl}/api/podcasts/${encodeURIComponent(podcastId)}/audio`,
+      {
+        method: "GET",
+        headers: {
+          "X-Api-Key": env.NEWS_READER_API_KEY,
+        },
+        cache: "no-store",
+      },
+    );
+
+    if (!response.ok) {
+      console.error(
+        "News.Reader daily podcast audio fetch failed:",
+        response.status,
+        await response.text(),
+      );
+      return null;
+    }
+
+    return await response.arrayBuffer();
+  } catch (error) {
+    console.error("News.Reader daily podcast audio fetch error:", error);
+    return null;
   }
 }

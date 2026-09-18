@@ -73,6 +73,9 @@ export const Header = ({
                 <HoveredLink href="/#feature-live-stations">
                   {t("core.liveStations.title")}
                 </HoveredLink>
+                <HoveredLink href="/#podcast-creation">
+                  {t("podcastCreation.eyebrow")}
+                </HoveredLink>
               </div>
             </MenuItem>
 

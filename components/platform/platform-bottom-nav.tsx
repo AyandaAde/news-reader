@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 const items = [
   { href: "/home", label: "Home", icon: "home" },
   { href: "/discover", label: "Discover", icon: "explore" },
-  { href: "/live", label: "Live", icon: "sensors" },
+  { href: "/live", label: "Listen", icon: "sensors" },
   { href: "/profile", label: "Profile", icon: "person" },
 ] as const;
 

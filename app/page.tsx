@@ -3,6 +3,7 @@
 import { Header } from "@/components/header";
 import { Hero } from "@/components/hero";
 import { FeaturesSection } from "@/components/features-section";
+import { PodcastCreationSection } from "@/components/podcast-creation-section";
 import { IntegrationSection } from "@/components/integration-section";
 import { DownloadAppSection } from "@/components/download-app-section";
 import { CtaSection } from "@/components/cta-section";
@@ -18,6 +19,7 @@ export default function Home() {
       <main>
         <Hero />
         <FeaturesSection />
+        <PodcastCreationSection />
         <IntegrationSection />
         <DownloadAppSection />
         <CtaSection />

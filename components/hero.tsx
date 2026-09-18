@@ -26,7 +26,7 @@ export function Hero() {
           {t("hero.description")}
         </p>
 
-        <Link className="contents max-sm:hidden" href="/#get-started">
+        <Link className="contents max-sm:hidden" href="/sign-up">
           <Button
             className="mt-14"
             onMouseEnter={() => setHovering(true)}
@@ -35,7 +35,7 @@ export function Hero() {
             {t("hero.cta")}
           </Button>
         </Link>
-        <Link className="contents sm:hidden" href="/#get-started">
+        <Link className="contents sm:hidden" href="/sign-up">
           <Button
             size="sm"
             className="mt-14"

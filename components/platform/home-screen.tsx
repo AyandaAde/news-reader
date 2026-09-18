@@ -3,9 +3,11 @@
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { MapPin, Play, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, MapPin, Play, Plus } from "lucide-react";
+import { toast } from "sonner";
 import { AddLocationModal } from "@/components/platform/add-location-modal";
 import { ConnectGoogleModal } from "@/components/platform/connect-google-modal";
+import { NewPodcastModal } from "@/components/platform/new-podcast-modal";
 import {
   ExpandableCards,
   type ExpandableCardItem,
@@ -27,6 +29,10 @@ import { buildDisplayName } from "@/lib/auth/clerk-user";
 import { getFirstName, getTimeOfDayGreeting } from "@/lib/time-greeting";
 import { getWeatherTemperatureValue } from "@/lib/weather-temperature";
 import { getWeatherIcon } from "@/lib/weather-icon";
+import {
+  getPodcastDurationMinutes,
+  type NewPodcastConfig,
+} from "@/lib/new-podcast";
 import { TOPIC_OPTIONS } from "@/lib/onboarding";
 import { TOPIC_LABEL_KEYS } from "@/lib/platform-topic-labels";
 import { topBriefingsItems } from "@/lib/platform-briefings";
@@ -34,7 +40,6 @@ import {
   PODCAST_PLACEHOLDER_IMAGE,
   podcastsToForYouCards,
 } from "@/lib/platform-podcasts";
-
 const trendingItems = [
   {
     title: "The AI Pulse",
@@ -162,8 +167,12 @@ export function PlatformHomeScreen() {
   const trendingScroll = useHorizontalScroll();
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [isGoogleConnectModalOpen, setIsGoogleConnectModalOpen] = useState(false);
+  const [isNewPodcastModalOpen, setIsNewPodcastModalOpen] = useState(false);
+  const [isCreatingPodcast, setIsCreatingPodcast] = useState(false);
+  const [newPodcastError, setNewPodcastError] = useState<string | null>(null);
   const [isConnectingGoogle, setIsConnectingGoogle] = useState(false);
   const [googleConnectError, setGoogleConnectError] = useState<string | null>(null);
+  const [weatherCityIndex, setWeatherCityIndex] = useState(0);
   const {
     user: backendUser,
     isLoading: isBackendUserLoading,
@@ -174,8 +183,71 @@ export function PlatformHomeScreen() {
   const isHomeReady = !isBackendUserLoading && !isLocating;
   const hasUserLocation = userHasStoredLocation(backendUser);
   const showLocationPrompt = isHomeReady && !hasUserLocation;
+  const weatherCities = useMemo(() => {
+    const locations = backendUser?.weatherSavedLocations ?? [];
+    if (locations.length > 0) {
+      const homeIndex = locations.findIndex((location) => location.isHome);
+      const ordered =
+        homeIndex > 0
+          ? [
+              locations[homeIndex],
+              ...locations.slice(0, homeIndex),
+              ...locations.slice(homeIndex + 1),
+            ]
+          : locations;
+
+      return ordered
+        .map((location) => location.city?.trim())
+        .filter((city): city is string => Boolean(city));
+    }
+
+    const fallback =
+      backendUser?.locationLabel?.trim() ||
+      [backendUser?.locationCity, backendUser?.locationRegion]
+        .filter(Boolean)
+        .join(", ")
+        .trim();
+
+    return fallback ? [fallback] : [];
+  }, [backendUser]);
+
+  const homeWeatherCityKey =
+    backendUser?.weatherSavedLocations?.find((location) => location.isHome)
+      ?.id ??
+    backendUser?.weatherSavedLocations?.[0]?.id ??
+    weatherCities[0] ??
+    "";
+
+  useEffect(() => {
+    setWeatherCityIndex(0);
+  }, [homeWeatherCityKey]);
+
+  useEffect(() => {
+    if (weatherCities.length === 0) {
+      setWeatherCityIndex(0);
+      return;
+    }
+
+    setWeatherCityIndex((current) =>
+      Math.min(current, weatherCities.length - 1),
+    );
+  }, [weatherCities]);
+
+  const selectedWeatherCity =
+    weatherCities[weatherCityIndex] ?? weatherCities[0] ?? null;
+  const canCycleWeatherCities = weatherCities.length > 1;
+  const weatherRefreshKey = [
+    homeWeatherCityKey,
+    selectedWeatherCity ?? "",
+    backendUser?.updatedAt ?? "",
+    backendUser?.locationLatitude ?? "",
+    backendUser?.locationLongitude ?? "",
+  ].join("|");
+
   const { weather, isLoading: isWeatherLoading } = useHomeWeather(
     isHomeReady && hasUserLocation,
+    selectedWeatherCity,
+    weatherRefreshKey,
   );
   const { unit: weatherTemperatureUnit, setTemperatureUnit } =
     useWeatherTemperatureUnit();
@@ -194,8 +266,26 @@ export function PlatformHomeScreen() {
       : null;
   const weatherCondition = weather?.condition ?? null;
   const WeatherIcon = getWeatherIcon(weather?.iconId ?? "i-cloud-sun");
-  const weatherLocationLabel =
-    weather?.location ?? homeLocationLabel ?? null;
+  const weatherLocationLabel = (() => {
+    const selectedLabel = selectedWeatherCity?.trim() || null;
+    const weatherLabel = weather?.location?.trim() || null;
+    const looksLikeCoordinates = (value: string) =>
+      /^-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?$/.test(value);
+
+    if (selectedLabel && !looksLikeCoordinates(selectedLabel)) {
+      return selectedLabel;
+    }
+
+    if (weatherLabel && !looksLikeCoordinates(weatherLabel)) {
+      return weatherLabel;
+    }
+
+    if (homeLocationLabel && !looksLikeCoordinates(homeLocationLabel)) {
+      return homeLocationLabel;
+    }
+
+    return selectedLabel ?? weatherLabel ?? homeLocationLabel ?? null;
+  })();
   const showWeatherLoading = isHomeReady && isWeatherLoading && !weather;
   const hasBriefs = (backendUser?.briefCount ?? 0) > 0;
   const dailyBriefStoryCount = backendUser?.latestBriefStoryCount ?? 0;
@@ -325,7 +415,7 @@ export function PlatformHomeScreen() {
     router.replace("/home", { scroll: false });
   }, [refetchUser, router]);
 
-  function handleNewBriefClick() {
+  function handleNewEmailBriefClick() {
     if (!backendUser?.hasGoogleAccessToken) {
       setGoogleConnectError(null);
       setIsConnectingGoogle(false);
@@ -334,6 +424,71 @@ export function PlatformHomeScreen() {
     }
 
     router.push("/discover");
+  }
+
+  function handleNewPodcastBriefClick() {
+    setNewPodcastError(null);
+    setIsNewPodcastModalOpen(true);
+  }
+
+  async function handleCreatePodcast(config: NewPodcastConfig) {
+    setIsCreatingPodcast(true);
+    setNewPodcastError(null);
+
+    try {
+      const response = await fetch("/api/briefings/generate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          topics: config.topics,
+          language: config.language,
+          durationMinutes: getPodcastDurationMinutes(config.durationId),
+        }),
+      });
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
+        const message =
+          payload?.error ?? t("platform.home.createPodcastFailed");
+        setNewPodcastError(message);
+        toast.error(message);
+        return;
+      }
+
+      const payload = (await response.json()) as {
+        success?: boolean;
+        podcastId?: string;
+        title?: string | null;
+        audioUrl?: string;
+      };
+
+      if (!payload.success || !payload.podcastId || !payload.audioUrl) {
+        const message = t("platform.home.createPodcastFailed");
+        setNewPodcastError(message);
+        toast.error(message);
+        return;
+      }
+
+      setIsNewPodcastModalOpen(false);
+      play({
+        id: payload.podcastId,
+        title: payload.title || t("platform.home.newPodcastBrief"),
+        subtitle: config.topics.slice(0, 2).join(" · "),
+        image: PODCAST_PLACEHOLDER_IMAGE,
+        audioUrl: payload.audioUrl,
+      });
+      toast.success(t("platform.home.createPodcast"));
+    } catch {
+      const message = t("platform.home.createPodcastFailed");
+      setNewPodcastError(message);
+      toast.error(message);
+    } finally {
+      setIsCreatingPodcast(false);
+    }
   }
 
   async function handleConnectGoogle() {
@@ -395,6 +550,7 @@ export function PlatformHomeScreen() {
         onSave={async (cityId) => {
           const savedUser = await saveCityLocation(cityId);
           if (savedUser) {
+            setWeatherCityIndex(0);
             setIsLocationModalOpen(false);
           }
         }}
@@ -406,6 +562,23 @@ export function PlatformHomeScreen() {
         isConnecting={isConnectingGoogle}
         error={googleConnectError}
         onConnect={handleConnectGoogle}
+      />
+
+      <NewPodcastModal
+        open={isNewPodcastModalOpen}
+        onOpenChange={(open) => {
+          if (isCreatingPodcast && !open) {
+            return;
+          }
+          setIsNewPodcastModalOpen(open);
+          if (!open) {
+            setNewPodcastError(null);
+          }
+        }}
+        defaultLanguage={language}
+        isCreating={isCreatingPodcast}
+        errorMessage={newPodcastError}
+        onCreate={handleCreatePodcast}
       />
 
       <section className="mb-8 md:mb-10">
@@ -429,7 +602,7 @@ export function PlatformHomeScreen() {
                     ? dailyBriefSubtitle
                     : t("platform.home.createBriefEmpty")}
               </p>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap items-center gap-3">
                 {isHomeReady && hasBriefs ? (
                   <button
                     type="button"
@@ -449,14 +622,24 @@ export function PlatformHomeScreen() {
                     {t("platform.home.play")}
                   </button>
                 ) : null}
-                <button
-                  type="button"
-                  onClick={handleNewBriefClick}
-                  className="flex items-center gap-2 rounded-full border border-white/30 px-6 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white/10"
-                >
-                  <Plus className="size-5" aria-hidden />
-                  {t("platform.home.newBrief")}
-                </button>
+                <div className="flex flex-nowrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleNewEmailBriefClick}
+                    className="flex shrink-0 items-center gap-2 rounded-full border border-white/30 px-5 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white/10"
+                  >
+                    <Plus className="size-5" aria-hidden />
+                    {t("platform.home.newBrief")}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleNewPodcastBriefClick}
+                    className="flex shrink-0 items-center gap-2 rounded-full border border-white/30 px-5 py-2.5 font-mono text-[12px] font-medium tracking-[0.05em] text-white transition-colors hover:bg-white/10"
+                  >
+                    <Plus className="size-5" aria-hidden />
+                    {t("platform.home.newPodcastBrief")}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -481,7 +664,38 @@ export function PlatformHomeScreen() {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col items-start gap-2 md:items-end">
+                  {canCycleWeatherCities ? (
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        aria-label="Previous city weather"
+                        onClick={() =>
+                          setWeatherCityIndex(
+                            (current) =>
+                              (current - 1 + weatherCities.length) %
+                              weatherCities.length,
+                          )
+                        }
+                        className="rounded-full border border-white/20 p-1 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                      >
+                        <ChevronLeft className="size-4" aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Next city weather"
+                        onClick={() =>
+                          setWeatherCityIndex(
+                            (current) => (current + 1) % weatherCities.length,
+                          )
+                        }
+                        className="rounded-full border border-white/20 p-1 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+                      >
+                        <ChevronRight className="size-4" aria-hidden />
+                      </button>
+                    </div>
+                  ) : null}
+                  <div className="flex items-center gap-3">
                   <div className="flex flex-col items-start md:items-end">
                     <div className="flex flex-wrap items-baseline justify-start gap-x-2 gap-y-1 md:justify-end">
                       <div className="flex items-baseline gap-1.5">
@@ -540,6 +754,7 @@ export function PlatformHomeScreen() {
                     </span>
                   </div>
                   <WeatherIcon className="size-8 shrink-0 text-white" aria-hidden />
+                  </div>
                 </div>
               )}
             </div>

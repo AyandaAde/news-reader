@@ -11,7 +11,7 @@ import {
 } from "react";
 import {
   defaultLanguage,
-  isLanguage,
+  coerceLanguage,
   isRtlLanguage,
   resources,
   type Language,
@@ -43,13 +43,15 @@ if (!i18next.isInitialized) {
 
 function resolveInitialLanguage(): Language {
   const savedLanguage = window.localStorage.getItem(STORAGE_KEY);
-  if (savedLanguage && isLanguage(savedLanguage)) {
-    return savedLanguage;
+  const coercedSaved = savedLanguage ? coerceLanguage(savedLanguage) : null;
+  if (coercedSaved) {
+    return coercedSaved;
   }
 
   const settingsLanguage = loadPlatformSettings().language;
-  if (isLanguage(settingsLanguage)) {
-    return settingsLanguage;
+  const coercedSettings = coerceLanguage(settingsLanguage);
+  if (coercedSettings) {
+    return coercedSettings;
   }
 
   return defaultLanguage;
@@ -66,8 +68,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     function onSettingsChanged() {
-      const next = loadPlatformSettings().language;
-      if (isLanguage(next)) {
+      const next = coerceLanguage(loadPlatformSettings().language);
+      if (next) {
         setLanguageState(next);
         window.localStorage.setItem(STORAGE_KEY, next);
         void i18next.changeLanguage(next);

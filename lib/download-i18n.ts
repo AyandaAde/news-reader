@@ -268,6 +268,56 @@ export const downloadTranslations = {
     googlePlayLine1: "Dapatkan di",
     googlePlayLine2: "Google Play",
   },
+  it: {
+    eyebrow: "App mobile",
+    title: "Scarica l'app",
+    description:
+      "Porta Eilo sempre con te. Ascolta il tuo briefing quotidiano, segui le stazioni in diretta e resta aggiornato senza fissare lo schermo.",
+    scanQr: "Scansiona il codice QR",
+    appPreview: "App mobile Eilo su iPhone e Android",
+    qrModal: {
+      title: "Scansiona il codice QR",
+      description:
+        "Scansiona con il telefono per scaricare Eilo su iOS o Android.",
+      iosDescription:
+        "Scansiona con il telefono per scaricare Eilo dall'App Store.",
+      androidDescription:
+        "Scansiona con il telefono per scaricare Eilo da Google Play.",
+      ios: "iOS",
+      android: "Android",
+    },
+    appStore: "Scarica dall'App Store",
+    appStoreLine1: "Scarica dall'",
+    appStoreLine2: "App Store",
+    googlePlay: "Disponibile su Google Play",
+    googlePlayLine1: "Disponibile su",
+    googlePlayLine2: "Google Play",
+  },
+  ko: {
+    eyebrow: "모바일 앱",
+    title: "앱 다운로드",
+    description:
+      "Eilo를 어디서나 함께하세요. 화면을 계속 보지 않아도 데일리 브리프를 듣고, 라이브 스테이션을 팔로우하며 최신 소식을 확인할 수 있습니다.",
+    scanQr: "QR 코드 스캔",
+    appPreview: "iPhone 및 Android용 Eilo 모바일 앱",
+    qrModal: {
+      title: "QR 코드 스캔",
+      description:
+        "휴대폰으로 스캔하여 iOS 또는 Android용 Eilo를 다운로드하세요.",
+      iosDescription:
+        "휴대폰으로 스캔하여 App Store에서 Eilo를 다운로드하세요.",
+      androidDescription:
+        "휴대폰으로 스캔하여 Google Play에서 Eilo를 다운로드하세요.",
+      ios: "iOS",
+      android: "Android",
+    },
+    appStore: "App Store에서 다운로드",
+    appStoreLine1: "다운로드",
+    appStoreLine2: "App Store",
+    googlePlay: "Google Play에서 다운로드",
+    googlePlayLine1: "다운로드",
+    googlePlayLine2: "Google Play",
+  },
 } as const;
 
 export const downloadNavLabels = {
@@ -282,4 +332,6 @@ export const downloadNavLabels = {
   de: "Download",
   id: "Unduh",
   ms: "Muat turun",
+  it: "Scarica",
+  ko: "다운로드",
 } as const;

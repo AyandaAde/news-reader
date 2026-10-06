@@ -308,7 +308,7 @@ export function PlatformDiscoverScreen() {
           {liveNowItems.map((station) => (
             <li key={station.id} className="shrink-0">
               <Link
-                href="/live"
+                href="/listen"
                 className="group relative block w-56 overflow-hidden rounded-lg border border-neutral-200 bg-white transition-colors hover:border-neutral-400 dark:border-[#262626] dark:bg-[#1f1f1f] dark:hover:border-white/20"
               >
               <div className="relative aspect-[16/10] overflow-hidden">

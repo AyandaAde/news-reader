@@ -12,7 +12,7 @@ export function Hero() {
 
   return (
     <div className="relative flex h-svh flex-col justify-between overflow-x-hidden bg-[#f5f5f7] text-[#131313] dark:bg-black dark:text-white">
-      <div className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0" aria-hidden="true">
         <GL hovering={hovering} />
       </div>
 

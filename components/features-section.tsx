@@ -89,9 +89,9 @@ export function FeaturesSection() {
               <div className="mb-3 flex h-8 w-8 items-center justify-center rounded bg-white/10">
                 <Headphones className="size-4 text-on-surface" />
               </div>
-              <h4 className="mb-1 text-base font-bold text-on-surface">
+              <h3 className="mb-1 text-base font-bold text-on-surface">
                 {t("core.listenAnywhere.title")}
-              </h4>
+              </h3>
               <p className="text-sm text-on-surface-variant">
                 {t("core.listenAnywhere.description")}
               </p>
@@ -108,9 +108,9 @@ export function FeaturesSection() {
               <AudioLines className="size-6" />
             </div>
             <div className="min-w-0 flex-1">
-              <h4 className="mb-2 text-lg font-bold text-on-surface">
+              <h3 className="mb-2 text-lg font-bold text-on-surface">
                 {t("core.liveStations.title")}
-              </h4>
+              </h3>
               <p className="mb-4 text-sm leading-relaxed text-on-surface-variant md:text-base">
                 {t("core.liveStations.description")}
               </p>

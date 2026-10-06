@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { href: "/home", labelKey: "platform.sidebar.home", icon: Home },
   { href: "/discover", labelKey: "platform.sidebar.discover", icon: Compass },
-  { href: "/live", labelKey: "platform.sidebar.live", icon: Radio },
+  { href: "/listen", labelKey: "platform.sidebar.live", icon: Radio },
   { href: "/profile", labelKey: "platform.sidebar.profile", icon: User },
   {
     href: "/profile?tab=settings",

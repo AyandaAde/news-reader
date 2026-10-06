@@ -22,7 +22,7 @@ function FooterLinkColumn({
 }) {
   return (
     <div>
-      <h5 className={footerHeadingClassName}>{title}</h5>
+      <p className={footerHeadingClassName}>{title}</p>
       <ul className="space-y-3">
         {links.map((link) => (
           <li key={link.label}>
@@ -69,12 +69,20 @@ export function Footer() {
 
             <FooterLinkColumn
               title={t("footer.company")}
-              links={[{ label: t("footer.about"), href: "#" }]}
+              links={[
+                { label: t("footer.about"), href: "/#features" },
+                { label: t("nav.getStarted"), href: "/sign-up" },
+              ]}
             />
 
             <FooterLinkColumn
               title={t("footer.legal")}
-              links={[{ label: t("footer.privacy"), href: "#" }]}
+              links={[
+                {
+                  label: t("footer.privacy"),
+                  href: "mailto:support@eilo.app?subject=Privacy%20Policy",
+                },
+              ]}
             />
           </div>
 

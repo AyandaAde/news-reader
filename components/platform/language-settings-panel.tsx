@@ -2,11 +2,14 @@
 
 import { useMemo, useState } from "react";
 
+import { useI18n } from "@/components/i18n-provider";
 import {
   appLanguageSupportsPremiumPodcastMatch,
+  coerceCustomPodcastRegion,
   getCustomPodcastLanguageOptions,
+  getLanguageEnglishLabel,
   getLanguageRegionalLabel,
-  LANGUAGE_OPTIONS,
+  APP_LANGUAGE_OPTIONS,
   type PodcastLocalizationMode,
 } from "@/lib/platform-settings";
 import { cn } from "@/lib/utils";
@@ -59,6 +62,7 @@ export function LanguageSettingsPanel({
   onChange,
   onSave,
 }: LanguageSettingsPanelProps) {
+  const { t } = useI18n();
   const [searchQuery, setSearchQuery] = useState("");
   const [languageOpen, setLanguageOpen] = useState(false);
   const [regionSearchQuery, setRegionSearchQuery] = useState("");
@@ -76,12 +80,14 @@ export function LanguageSettingsPanel({
 
   const filteredLanguages = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
-    if (!query) return LANGUAGE_OPTIONS;
+    if (!query) return APP_LANGUAGE_OPTIONS;
 
-    return LANGUAGE_OPTIONS.filter((option) => {
+    return APP_LANGUAGE_OPTIONS.filter((option) => {
       const regionalLabel = getLanguageRegionalLabel(option.value).toLowerCase();
+      const englishLabel = getLanguageEnglishLabel(option.value).toLowerCase();
       return (
         regionalLabel.includes(query) ||
+        englishLabel.includes(query) ||
         option.label.toLowerCase().includes(query)
       );
     });
@@ -93,8 +99,10 @@ export function LanguageSettingsPanel({
 
     return customLanguageOptions.filter((option) => {
       const regionalLabel = getLanguageRegionalLabel(option.value).toLowerCase();
+      const englishLabel = getLanguageEnglishLabel(option.value).toLowerCase();
       return (
         regionalLabel.includes(query) ||
+        englishLabel.includes(query) ||
         option.label.toLowerCase().includes(query)
       );
     });
@@ -105,10 +113,9 @@ export function LanguageSettingsPanel({
     if (isPremiumVoice && !appLanguageSupportsPremiumPodcastMatch(language)) {
       nextPatch.podcastLocalizationMode = "custom";
       nextPatch.podcastLocalizationRegion =
-        draft.podcastLocalizationMode === "custom" &&
-        draft.podcastLocalizationRegion.length === 3
-          ? draft.podcastLocalizationRegion
-          : "eng";
+        draft.podcastLocalizationMode === "custom"
+          ? coerceCustomPodcastRegion(draft.podcastLocalizationRegion)
+          : "en";
       setCustomOpen(true);
     }
     onChange(nextPatch);
@@ -119,20 +126,19 @@ export function LanguageSettingsPanel({
   return (
     <div className="flex flex-col gap-6">
       <p className="px-1 text-[15px] leading-6 text-pretty text-neutral-500 dark:text-[#888888]">
-        Choose the language for menus, briefings, and notifications across the
-        app.
+        {t("platform.profile.languageIntro")}
       </p>
 
       <div>
         <p className="mb-2.5 px-1 text-[13px] font-semibold tracking-[0.5px] text-neutral-500 uppercase dark:text-[#888888]">
-          App Language
+          {t("platform.profile.languageAppLanguage")}
         </p>
 
         <div className="overflow-hidden rounded-[16px] bg-neutral-50 p-2 dark:bg-[#141414]">
           <button
             type="button"
             aria-expanded={languageOpen}
-            aria-label="App language"
+            aria-label={t("platform.profile.languageAppLanguageAria")}
             onClick={() => setLanguageOpen((open) => !open)}
             className="flex w-full items-center gap-3 rounded-[12px] border border-transparent bg-white px-3.5 py-3.5 text-left transition-[border-color,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] active:scale-[0.98] dark:bg-[#1a1a1a]"
           >
@@ -141,7 +147,7 @@ export function LanguageSettingsPanel({
                 {getLanguageRegionalLabel(draft.language)}
               </p>
               <p className="mt-0.5 text-xs text-neutral-500 dark:text-[#888888]">
-                Tap to change language
+                {t("platform.profile.languageTapToChange")}
               </p>
             </div>
             <MaterialIcon
@@ -160,7 +166,7 @@ export function LanguageSettingsPanel({
                 <input
                   value={searchQuery}
                   onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search languages"
+                  placeholder={t("platform.profile.languageSearchPlaceholder")}
                   autoFocus
                   className="w-full rounded-[10px] border border-transparent bg-white py-2.5 pr-3.5 pl-10 text-sm text-neutral-900 outline-none transition-[border-color,background-color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] placeholder:text-neutral-400 focus:border-neutral-300 dark:bg-[#1a1a1a] dark:text-white dark:placeholder:text-[#666666] dark:focus:border-white/15"
                 />
@@ -169,7 +175,8 @@ export function LanguageSettingsPanel({
               <div className="hide-scrollbar flex max-h-[280px] flex-col gap-1.5 overflow-y-auto overscroll-contain">
                 {filteredLanguages.map((option) => {
                   const selected = draft.language === option.value;
-                  const regional = getLanguageRegionalLabel(option.value);
+                  const nativeLabel = getLanguageRegionalLabel(option.value);
+                  const englishLabel = getLanguageEnglishLabel(option.value);
 
                   return (
                     <button
@@ -185,11 +192,11 @@ export function LanguageSettingsPanel({
                     >
                       <div className="min-w-0 flex-1">
                         <p className="text-[15px] font-semibold text-balance text-neutral-900 dark:text-white">
-                          {regional}
+                          {nativeLabel}
                         </p>
-                        {regional !== option.label ? (
+                        {englishLabel !== nativeLabel ? (
                           <p className="mt-0.5 text-xs text-neutral-500 dark:text-[#888888]">
-                            {option.label}
+                            {englishLabel}
                           </p>
                         ) : null}
                       </div>
@@ -199,7 +206,7 @@ export function LanguageSettingsPanel({
                 })}
                 {filteredLanguages.length === 0 ? (
                   <p className="px-2 py-4 text-sm text-neutral-500 dark:text-[#888888]">
-                    No languages match your search.
+                    {t("platform.profile.languageNoMatches")}
                   </p>
                 ) : null}
               </div>
@@ -210,12 +217,12 @@ export function LanguageSettingsPanel({
 
       <div>
         <p className="mb-1 px-1 text-[13px] font-semibold tracking-[0.5px] text-neutral-500 uppercase dark:text-[#888888]">
-          Podcast & Briefing
+          {t("platform.profile.languagePodcastSection")}
         </p>
         <p className="mb-2.5 px-1 text-sm text-pretty text-neutral-500 dark:text-[#888888]">
-          Prioritize audio content in this language.
+          {t("platform.profile.languagePodcastIntro")}
           {!matchAppAllowed
-            ? " Your app language isn’t available for Premium voice, so choose a podcast language below (English by default)."
+            ? ` ${t("platform.profile.languagePremiumFallbackNote")}`
             : null}
         </p>
 
@@ -237,10 +244,12 @@ export function LanguageSettingsPanel({
             >
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-semibold text-neutral-900 dark:text-white">
-                  Match App Language
+                  {t("platform.profile.languageMatchApp")}
                 </p>
                 <p className="mt-0.5 text-xs text-neutral-500 dark:text-[#888888]">
-                  Currently {getLanguageRegionalLabel(draft.language)}
+                  {t("platform.profile.languageCurrently", {
+                    language: getLanguageRegionalLabel(draft.language),
+                  })}
                 </p>
               </div>
               <SelectionCheck selected={matchAppSelected} />
@@ -271,10 +280,9 @@ export function LanguageSettingsPanel({
                   podcastLocalizationMode: "custom",
                   ...(isPremiumVoice
                     ? {
-                        podcastLocalizationRegion:
-                          draft.podcastLocalizationRegion.length === 3
-                            ? draft.podcastLocalizationRegion
-                            : "eng",
+                        podcastLocalizationRegion: coerceCustomPodcastRegion(
+                          draft.podcastLocalizationRegion || "en",
+                        ),
                       }
                     : {}),
                 });
@@ -287,12 +295,12 @@ export function LanguageSettingsPanel({
             >
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-semibold text-neutral-900 dark:text-white">
-                  Custom Selection
+                  {t("platform.profile.languageCustomSelection")}
                 </p>
                 <p className="mt-0.5 text-xs text-neutral-500 dark:text-[#888888]">
                   {customSelected
                     ? getLanguageRegionalLabel(draft.podcastLocalizationRegion)
-                    : "Select a specific language"}
+                    : t("platform.profile.languageSelectSpecific")}
                 </p>
               </div>
               <SelectionCheck selected={customSelected} />
@@ -310,7 +318,7 @@ export function LanguageSettingsPanel({
                     onChange={(event) =>
                       setRegionSearchQuery(event.target.value)
                     }
-                    placeholder="Search languages"
+                    placeholder={t("platform.profile.languageSearchPlaceholder")}
                     className="w-full rounded-[10px] border border-transparent bg-white py-2 pr-3 pl-9 text-sm text-neutral-900 outline-none transition-[border-color] duration-200 ease-[cubic-bezier(0.2,0,0,1)] placeholder:text-neutral-400 focus:border-neutral-300 dark:bg-[#1a1a1a] dark:text-white dark:placeholder:text-[#666666] dark:focus:border-white/15"
                   />
                 </label>
@@ -319,7 +327,8 @@ export function LanguageSettingsPanel({
                   {filteredCustomLanguages.map((option) => {
                     const selected =
                       draft.podcastLocalizationRegion === option.value;
-                    const regional = getLanguageRegionalLabel(option.value);
+                    const nativeLabel = getLanguageRegionalLabel(option.value);
+                    const englishLabel = getLanguageEnglishLabel(option.value);
 
                     return (
                       <button
@@ -342,11 +351,11 @@ export function LanguageSettingsPanel({
                       >
                         <div className="min-w-0 flex-1">
                           <span className="block truncate text-[14px] font-medium text-neutral-900 dark:text-white">
-                            {regional}
+                            {nativeLabel}
                           </span>
-                          {regional !== option.label ? (
+                          {englishLabel !== nativeLabel ? (
                             <span className="mt-0.5 block text-xs text-neutral-500 dark:text-[#888888]">
-                              {option.label}
+                              {englishLabel}
                             </span>
                           ) : null}
                         </div>
@@ -356,7 +365,7 @@ export function LanguageSettingsPanel({
                   })}
                   {filteredCustomLanguages.length === 0 ? (
                     <p className="px-2 py-3 text-sm text-neutral-500 dark:text-[#888888]">
-                      No languages match your search.
+                      {t("platform.profile.languageNoMatches")}
                     </p>
                   ) : null}
                 </div>
@@ -371,7 +380,7 @@ export function LanguageSettingsPanel({
         onClick={onSave}
         className="mb-1 w-full rounded-[14px] bg-[#4ade80] p-3.5 text-[15px] font-semibold text-black transition-[opacity,transform] duration-200 ease-[cubic-bezier(0.2,0,0,1)] hover:opacity-90 active:scale-[0.96]"
       >
-        Save Settings
+        {t("platform.profile.saveSettings")}
       </button>
     </div>
   );

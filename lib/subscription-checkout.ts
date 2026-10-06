@@ -1,22 +1,55 @@
 export type BillingCycle = "monthly" | "annual";
 
-export const PREMIUM_MONTHLY_PRICE = 37.5;
-export const PREMIUM_ANNUAL_DISCOUNT = 0.2;
+export const PREMIUM_MONTHLY_PRICE = 40;
+export const PREMIUM_ANNUAL_MONTHLY_PRICE = 32;
+export const PREMIUM_ANNUAL_DISCOUNT =
+  (PREMIUM_MONTHLY_PRICE - PREMIUM_ANNUAL_MONTHLY_PRICE) / PREMIUM_MONTHLY_PRICE;
 
 export const PREMIUM_CHECKOUT_FEATURES = [
-  { icon: "mail", label: "Daily Email Briefings" },
-  { icon: "podcasts", label: "Localised Podcasts" },
-  { icon: "graphic_eq", label: "Ultra Hi-Fi Voices" },
-  { icon: "download_done", label: "Offline Localization" },
-  { icon: "block", label: "Ad-Free Experience" },
+  {
+    icon: "mail",
+    titleKey: "platform.profile.checkoutFeatureDailyEmail",
+    descKey: "platform.profile.checkoutFeatureDailyEmailDesc",
+  },
+  {
+    icon: "podcasts",
+    titleKey: "platform.profile.checkoutFeatureLocalisedPodcasts",
+    descKey: "platform.profile.checkoutFeatureLocalisedPodcastsDesc",
+  },
+  {
+    icon: "equalizer",
+    titleKey: "platform.profile.checkoutFeatureHiFiVoices",
+    descKey: "platform.profile.checkoutFeatureHiFiVoicesDesc",
+  },
+  {
+    icon: "download",
+    titleKey: "platform.profile.checkoutFeatureOffline",
+    descKey: "platform.profile.checkoutFeatureOfflineDesc",
+  },
+  {
+    icon: "block",
+    titleKey: "platform.profile.checkoutFeatureAdFree",
+    descKey: "platform.profile.checkoutFeatureAdFreeDesc",
+  },
 ] as const;
+
+export type PremiumCheckoutFeatureIcon =
+  (typeof PREMIUM_CHECKOUT_FEATURES)[number]["icon"];
 
 export function getPremiumDisplayPrice(cycle: BillingCycle) {
   if (cycle === "monthly") {
     return PREMIUM_MONTHLY_PRICE;
   }
 
-  return PREMIUM_MONTHLY_PRICE * (1 - PREMIUM_ANNUAL_DISCOUNT);
+  return PREMIUM_ANNUAL_MONTHLY_PRICE;
+}
+
+export function getPremiumAnnualTotal() {
+  return getPremiumDisplayPrice("annual") * 12;
+}
+
+export function getPremiumAnnualSavings() {
+  return PREMIUM_MONTHLY_PRICE * 12 - getPremiumAnnualTotal();
 }
 
 export function formatPremiumPrice(amount: number) {

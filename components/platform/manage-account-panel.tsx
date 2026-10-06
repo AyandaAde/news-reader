@@ -3,6 +3,7 @@
 import { useClerk } from "@clerk/nextjs";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useI18n } from "@/components/i18n-provider";
 import {
   DEFAULT_ACCOUNT_DEVICES,
   type AccountDevice,
@@ -38,6 +39,8 @@ function DeviceCard({
   device: AccountDevice;
   onLogout?: () => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <div className="rounded-[1.1rem] border border-neutral-200 bg-white p-4 dark:border-[#262626] dark:bg-[#141414]">
       <div className="flex items-start gap-3.5">
@@ -53,7 +56,7 @@ function DeviceCard({
           {device.isCurrent ? (
             <p className="mt-2 flex items-center gap-2 text-sm text-[#34c759]">
               <span className="size-2 rounded-full bg-[#34c759]" />
-              Active now • This device
+              {t("platform.profile.manageActiveNow")}
             </p>
           ) : (
             <p className="mt-2 text-sm text-neutral-500 dark:text-[#888888]">
@@ -68,7 +71,7 @@ function DeviceCard({
             className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-900 transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-[#333333] dark:text-white dark:hover:border-white/30 dark:hover:bg-white/5"
           >
             <MaterialIcon name="logout" className="text-[14px]" />
-            Log out
+            {t("platform.profile.manageDeviceLogout")}
           </button>
         ) : null}
       </div>
@@ -78,6 +81,7 @@ function DeviceCard({
 
 export function ManageAccountPanel() {
   const { signOut } = useClerk();
+  const { t } = useI18n();
   const [devices, setDevices] = useState(DEFAULT_ACCOUNT_DEVICES);
 
   const otherDevices = useMemo(
@@ -87,22 +91,22 @@ export function ManageAccountPanel() {
 
   function removeDevice(deviceId: string) {
     setDevices((current) => current.filter((device) => device.id !== deviceId));
-    toast.success("Device signed out", {
-      description: "That session has been removed from your account.",
+    toast.success(t("platform.profile.manageDeviceSignedOut"), {
+      description: t("platform.profile.manageDeviceSignedOutDesc"),
     });
   }
 
   function handleSignOutOthers() {
     if (otherDevices.length === 0) {
-      toast.info("No other sessions", {
-        description: "You are only signed in on this device.",
+      toast.info(t("platform.profile.manageNoOtherSessions"), {
+        description: t("platform.profile.manageNoOtherSessionsDesc"),
       });
       return;
     }
 
     setDevices((current) => current.filter((device) => device.isCurrent));
-    toast.success("Signed out everywhere else", {
-      description: "All other devices have been signed out.",
+    toast.success(t("platform.profile.manageSignedOutElsewhere"), {
+      description: t("platform.profile.manageSignedOutElsewhereDesc"),
     });
   }
 
@@ -111,8 +115,8 @@ export function ManageAccountPanel() {
   }
 
   function handleAddPasskey() {
-    toast.info("Passkeys coming soon", {
-      description: "Face ID, Touch ID, and hardware key support will be available soon.",
+    toast.info(t("platform.profile.managePasskeysComingSoon"), {
+      description: t("platform.profile.managePasskeysComingSoonDesc"),
     });
   }
 
@@ -120,10 +124,10 @@ export function ManageAccountPanel() {
     <div className="mx-auto w-full max-w-4xl space-y-6">
       <section>
         <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
-          Devices & Sessions
+          {t("platform.profile.manageDevicesTitle")}
         </h2>
         <p className="mt-0.5 text-sm leading-5 text-neutral-500 dark:text-[#888888]">
-          Manage the devices actively logged into your account.
+          {t("platform.profile.manageDevicesIntro")}
         </p>
         <div className="mt-2 space-y-2">
           {devices.map((device) => (
@@ -140,10 +144,10 @@ export function ManageAccountPanel() {
 
       <section>
         <h2 className="text-lg font-semibold text-neutral-900 dark:text-white">
-          Security & Passkeys
+          {t("platform.profile.manageSecurityTitle")}
         </h2>
         <p className="mt-0.5 text-sm leading-5 text-neutral-500 dark:text-[#888888]">
-          Secure your account with biometric or hardware keys.
+          {t("platform.profile.manageSecurityIntro")}
         </p>
 
         <div className="mt-2 rounded-[1.35rem] border border-neutral-200 bg-white px-4 py-5 text-center dark:border-[#262626] dark:bg-[#141414]">
@@ -154,11 +158,10 @@ export function ManageAccountPanel() {
             />
           </div>
           <p className="text-base font-semibold text-neutral-900 dark:text-white">
-            No passkeys added yet
+            {t("platform.profile.manageNoPasskeys")}
           </p>
           <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-neutral-500 dark:text-[#888888]">
-            Sign in faster and more securely using Face ID, Touch ID, or a hardware
-            security key.
+            {t("platform.profile.managePasskeysIntro")}
           </p>
           <button
             type="button"
@@ -166,7 +169,7 @@ export function ManageAccountPanel() {
             className="mt-4 inline-flex items-center gap-2 rounded-full bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-black"
           >
             <MaterialIcon name="add" className="text-[18px]" />
-            Add Passkey
+            {t("platform.profile.manageAddPasskey")}
           </button>
         </div>
       </section>
@@ -178,7 +181,7 @@ export function ManageAccountPanel() {
           className="flex w-full items-center justify-center gap-2 rounded-full border border-neutral-300 px-4 py-3.5 text-sm font-medium text-neutral-900 transition-colors hover:border-neutral-400 hover:bg-neutral-100 dark:border-[#333333] dark:text-white dark:hover:border-white/30 dark:hover:bg-white/5"
         >
           <MaterialIcon name="phonelink_off" className="text-[18px]" />
-          Sign out of all other devices
+          {t("platform.profile.manageSignOutOthers")}
         </button>
         <button
           type="button"
@@ -186,7 +189,7 @@ export function ManageAccountPanel() {
           className="flex w-full items-center justify-center gap-2 rounded-full border border-[#ff6b6b]/40 px-4 py-3.5 text-sm font-medium text-[#ff6b6b] transition-colors hover:border-[#ff6b6b]/60 hover:bg-[#ff6b6b]/10"
         >
           <MaterialIcon name="logout" className="text-[18px]" />
-          Sign out of this device
+          {t("platform.profile.manageSignOutThisDevice")}
         </button>
       </div>
     </div>

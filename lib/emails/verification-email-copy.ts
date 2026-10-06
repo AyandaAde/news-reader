@@ -1,4 +1,4 @@
-import { defaultLanguage, isLanguage, type Language } from "@/lib/i18n";
+import { defaultLanguage, isLanguage, isRtlLanguage, type Language } from "@/lib/i18n";
 
 export type VerificationEmailFlow = "sign-in" | "sign-up";
 
@@ -55,15 +55,7 @@ export function getVerificationEmailCopy(locale: string): VerificationEmailCopy 
     return {
       ...englishCopy,
       htmlLang: locale === "cmn" ? "zh-CN" : locale,
-      dir:
-        locale === "ar" ||
-        locale === "he" ||
-        locale === "fa" ||
-        locale === "ur" ||
-        locale === "ps" ||
-        locale === "sd"
-          ? "rtl"
-          : "ltr",
+      dir: isRtlLanguage(locale) ? "rtl" : "ltr",
     };
   }
 

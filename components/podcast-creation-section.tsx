@@ -96,9 +96,9 @@ export function PodcastCreationSection() {
               <div className="mb-3 flex h-8 w-8 items-center justify-center rounded bg-white/10">
                 <Sparkles className="size-4 text-on-surface" />
               </div>
-              <h4 className="mb-1 text-base font-bold text-on-surface">
+              <h3 className="mb-1 text-base font-bold text-on-surface">
                 {t("podcastCreation.generate.title")}
-              </h4>
+              </h3>
               <p className="text-sm text-on-surface-variant">
                 {t("podcastCreation.generate.description")}
               </p>
@@ -114,9 +114,9 @@ export function PodcastCreationSection() {
                 <Mic2 className="size-6" />
               </div>
               <div className="min-w-0 flex-1">
-                <h4 className="mb-2 text-lg font-bold text-on-surface">
+                <h3 className="mb-2 text-lg font-bold text-on-surface">
                   {t("podcastCreation.library.title")}
-                </h4>
+                </h3>
                 <p className="mb-4 text-sm leading-relaxed text-on-surface-variant md:text-base">
                   {t("podcastCreation.library.description")}
                 </p>

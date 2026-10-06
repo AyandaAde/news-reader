@@ -18,7 +18,15 @@ export async function PUT(req: NextRequest) {
   try {
     const user = await ensureBackendUser(req, userId);
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      // ensureBackendUser returns null for both "missing user" and News.Reader
+      // failures (lookup/provision 500s). Surface that as a backend error.
+      return NextResponse.json(
+        {
+          error:
+            "Could not reach your News.Reader account. The backend may be down or failing to provision the user.",
+        },
+        { status: 502 },
+      );
     }
 
     const body = (await req.json()) as UpdateNotificationSettingsBody;

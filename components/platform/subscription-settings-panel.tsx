@@ -1,5 +1,6 @@
 "use client";
 
+import { useI18n } from "@/components/i18n-provider";
 import {
   SUBSCRIPTION_PLANS,
   formatSubscriptionRenewalDate,
@@ -43,6 +44,7 @@ export function SubscriptionSettingsPanel({
   onManageBilling,
   onUpgrade,
 }: SubscriptionSettingsPanelProps) {
+  const { t } = useI18n();
   const planDetails = SUBSCRIPTION_PLANS[plan];
   const isPremium = plan === "premium";
 
@@ -72,7 +74,9 @@ export function SubscriptionSettingsPanel({
                       : "text-neutral-500 dark:text-[#888888]",
                   )}
                 >
-                  {isPremium ? "PRO MEMBER" : `${planDetails.title.toUpperCase()} PLAN`}
+                  {isPremium
+                    ? t("platform.profile.proMember")
+                    : `${planDetails.title.toUpperCase()} PLAN`}
                 </span>
               </div>
               <p className="text-[22px] font-semibold text-neutral-900 dark:text-white">

@@ -111,240 +111,70 @@ export const EMAIL_LOOKBACK_OPTIONS = [
   { hours: 168, label: "1 week" },
 ] as const;
 
-export const LANGUAGE_OPTIONS = [
-  { value: "af", label: "Afrikaans" },
-  { value: "sq", label: "Albanian" },
-  { value: "am", label: "Amharic" },
-  { value: "ar", label: "Arabic" },
-  { value: "hy", label: "Armenian" },
-  { value: "az", label: "Azerbaijani" },
-  { value: "eu", label: "Basque" },
-  { value: "be", label: "Belarusian" },
-  { value: "bn", label: "Bengali" },
-  { value: "bg", label: "Bulgarian" },
-  { value: "my", label: "Burmese" },
-  { value: "ca", label: "Catalan" },
-  { value: "ceb", label: "Cebuano" },
-  { value: "hr", label: "Croatian" },
-  { value: "cs", label: "Czech" },
-  { value: "da", label: "Danish" },
-  { value: "nl", label: "Dutch" },
-  { value: "en", label: "English" },
-  { value: "et", label: "Estonian" },
-  { value: "fil", label: "Filipino" },
-  { value: "fi", label: "Finnish" },
-  { value: "fr", label: "French" },
-  { value: "gl", label: "Galician" },
-  { value: "ka", label: "Georgian" },
-  { value: "de", label: "German" },
-  { value: "el", label: "Greek" },
-  { value: "gu", label: "Gujarati" },
-  { value: "ht", label: "Haitian Creole" },
-  { value: "he", label: "Hebrew" },
-  { value: "hi", label: "Hindi" },
-  { value: "hu", label: "Hungarian" },
-  { value: "is", label: "Icelandic" },
-  { value: "id", label: "Indonesian" },
-  { value: "it", label: "Italian" },
-  { value: "ja", label: "Japanese" },
-  { value: "jv", label: "Javanese" },
-  { value: "kn", label: "Kannada" },
-  { value: "kok", label: "Konkani" },
-  { value: "ko", label: "Korean" },
-  { value: "lo", label: "Lao" },
-  { value: "la", label: "Latin" },
-  { value: "lv", label: "Latvian" },
-  { value: "lt", label: "Lithuanian" },
-  { value: "lb", label: "Luxembourgish" },
-  { value: "mk", label: "Macedonian" },
-  { value: "mai", label: "Maithili" },
-  { value: "mg", label: "Malagasy" },
-  { value: "ms", label: "Malay" },
-  { value: "ml", label: "Malayalam" },
-  { value: "cmn", label: "Mandarin Chinese" },
-  { value: "mr", label: "Marathi" },
-  { value: "mn", label: "Mongolian" },
-  { value: "ne", label: "Nepali" },
-  { value: "nb", label: "Norwegian Bokmål" },
-  { value: "nn", label: "Norwegian Nynorsk" },
-  { value: "or", label: "Odia" },
-  { value: "ps", label: "Pashto" },
-  { value: "fa", label: "Persian" },
-  { value: "pl", label: "Polish" },
-  { value: "pt", label: "Portuguese" },
-  { value: "pa", label: "Punjabi" },
-  { value: "ro", label: "Romanian" },
-  { value: "ru", label: "Russian" },
-  { value: "sr", label: "Serbian" },
-  { value: "sd", label: "Sindhi" },
-  { value: "si", label: "Sinhala" },
-  { value: "sk", label: "Slovak" },
-  { value: "sl", label: "Slovenian" },
-  { value: "es", label: "Spanish" },
-  { value: "sw", label: "Swahili" },
-  { value: "sv", label: "Swedish" },
-  { value: "ta", label: "Tamil" },
-  { value: "te", label: "Telugu" },
-  { value: "th", label: "Thai" },
-  { value: "tr", label: "Turkish" },
-  { value: "uk", label: "Ukrainian" },
-  { value: "ur", label: "Urdu" },
-  { value: "vi", label: "Vietnamese" },
+/** App UI languages — keep in sync with `lib/i18n.ts` resources. */
+export const APP_LANGUAGE_OPTIONS = [
+  { value: "en", label: "English", englishLabel: "English" },
+  { value: "es", label: "Español", englishLabel: "Spanish" },
+  { value: "cmn", label: "中文", englishLabel: "Chinese" },
+  { value: "hi", label: "हिन्दी", englishLabel: "Hindi" },
+  { value: "pt", label: "Português", englishLabel: "Portuguese" },
+  { value: "fr", label: "Français", englishLabel: "French" },
+  { value: "ar", label: "العربية", englishLabel: "Arabic" },
+  { value: "ja", label: "日本語", englishLabel: "Japanese" },
+  { value: "de", label: "Deutsch", englishLabel: "German" },
+  { value: "id", label: "Bahasa Indonesia", englishLabel: "Indonesian" },
+  { value: "ms", label: "Bahasa Melayu", englishLabel: "Malay" },
+  { value: "it", label: "Italiano", englishLabel: "Italian" },
+  { value: "ko", label: "한국어", englishLabel: "Korean" },
 ] as const;
 
-export type AppLanguageCode = (typeof LANGUAGE_OPTIONS)[number]["value"];
+export type AppLanguageCode = (typeof APP_LANGUAGE_OPTIONS)[number]["value"];
+
+/** Podcast localisation languages — same set as the app sidebar. */
+export const LANGUAGE_OPTIONS = APP_LANGUAGE_OPTIONS;
+
+export type PodcastLanguageCode = (typeof LANGUAGE_OPTIONS)[number]["value"];
 
 /** ISO 639-3 podcast locales for premium voice engines (e.g. ElevenLabs). */
 export const PREMIUM_PODCAST_LANGUAGE_OPTIONS = [
-  { value: "afr", label: "Afrikaans" },
-  { value: "ara", label: "Arabic" },
-  { value: "hye", label: "Armenian" },
-  { value: "asm", label: "Assamese" },
-  { value: "aze", label: "Azerbaijani" },
-  { value: "bel", label: "Belarusian" },
-  { value: "ben", label: "Bengali" },
-  { value: "bos", label: "Bosnian" },
-  { value: "bul", label: "Bulgarian" },
-  { value: "cat", label: "Catalan" },
-  { value: "ceb", label: "Cebuano" },
-  { value: "nya", label: "Chichewa" },
-  { value: "hrv", label: "Croatian" },
-  { value: "ces", label: "Czech" },
-  { value: "dan", label: "Danish" },
-  { value: "nld", label: "Dutch" },
-  { value: "eng", label: "English" },
-  { value: "est", label: "Estonian" },
-  { value: "fil", label: "Filipino" },
-  { value: "fin", label: "Finnish" },
-  { value: "fra", label: "French" },
-  { value: "glg", label: "Galician" },
-  { value: "kat", label: "Georgian" },
-  { value: "deu", label: "German" },
-  { value: "ell", label: "Greek" },
-  { value: "guj", label: "Gujarati" },
-  { value: "hau", label: "Hausa" },
-  { value: "heb", label: "Hebrew" },
-  { value: "hin", label: "Hindi" },
-  { value: "hun", label: "Hungarian" },
-  { value: "isl", label: "Icelandic" },
-  { value: "ind", label: "Indonesian" },
-  { value: "gle", label: "Irish" },
-  { value: "ita", label: "Italian" },
-  { value: "jpn", label: "Japanese" },
-  { value: "jav", label: "Javanese" },
-  { value: "kan", label: "Kannada" },
-  { value: "kaz", label: "Kazakh" },
-  { value: "kir", label: "Kirghiz" },
-  { value: "kor", label: "Korean" },
-  { value: "lav", label: "Latvian" },
-  { value: "lin", label: "Lingala" },
-  { value: "lit", label: "Lithuanian" },
-  { value: "ltz", label: "Luxembourgish" },
-  { value: "mkd", label: "Macedonian" },
-  { value: "msa", label: "Malay" },
-  { value: "mal", label: "Malayalam" },
-  { value: "cmn", label: "Mandarin Chinese" },
-  { value: "mar", label: "Marathi" },
-  { value: "nep", label: "Nepali" },
-  { value: "nor", label: "Norwegian" },
-  { value: "pus", label: "Pashto" },
-  { value: "fas", label: "Persian" },
-  { value: "pol", label: "Polish" },
-  { value: "pan", label: "Punjabi" },
-  { value: "por", label: "Portuguese" },
-  { value: "ron", label: "Romanian" },
-  { value: "rus", label: "Russian" },
-  { value: "srp", label: "Serbian" },
-  { value: "snd", label: "Sindhi" },
-  { value: "slk", label: "Slovak" },
-  { value: "slv", label: "Slovenian" },
-  { value: "som", label: "Somali" },
-  { value: "spa", label: "Spanish" },
-  { value: "swa", label: "Swahili" },
-  { value: "swe", label: "Swedish" },
-  { value: "tam", label: "Tamil" },
-  { value: "tel", label: "Telugu" },
-  { value: "tha", label: "Thai" },
-  { value: "tur", label: "Turkish" },
-  { value: "ukr", label: "Ukrainian" },
-  { value: "urd", label: "Urdu" },
-  { value: "vie", label: "Vietnamese" },
-  { value: "cym", label: "Welsh" },
+  { value: "ara", label: "العربية", englishLabel: "Arabic" },
+  { value: "cmn", label: "中文", englishLabel: "Chinese" },
+  { value: "eng", label: "English", englishLabel: "English" },
+  { value: "fra", label: "Français", englishLabel: "French" },
+  { value: "deu", label: "Deutsch", englishLabel: "German" },
+  { value: "hin", label: "हिन्दी", englishLabel: "Hindi" },
+  { value: "ind", label: "Bahasa Indonesia", englishLabel: "Indonesian" },
+  { value: "ita", label: "Italiano", englishLabel: "Italian" },
+  { value: "jpn", label: "日本語", englishLabel: "Japanese" },
+  { value: "kor", label: "한국어", englishLabel: "Korean" },
+  { value: "msa", label: "Bahasa Melayu", englishLabel: "Malay" },
+  { value: "por", label: "Português", englishLabel: "Portuguese" },
+  { value: "spa", label: "Español", englishLabel: "Spanish" },
 ] as const;
 
 export type PremiumPodcastLanguageCode =
   (typeof PREMIUM_PODCAST_LANGUAGE_OPTIONS)[number]["value"];
 
 /** Maps app UI language codes onto premium podcast ISO 639-3 codes. */
-export const APP_LANGUAGE_TO_PREMIUM_PODCAST: Record<string, PremiumPodcastLanguageCode> =
-  {
-    af: "afr",
-    ar: "ara",
-    hy: "hye",
-    az: "aze",
-    be: "bel",
-    bn: "ben",
-    bg: "bul",
-    ca: "cat",
-    ceb: "ceb",
-    hr: "hrv",
-    cs: "ces",
-    da: "dan",
-    nl: "nld",
-    en: "eng",
-    et: "est",
-    fil: "fil",
-    fi: "fin",
-    fr: "fra",
-    gl: "glg",
-    ka: "kat",
-    de: "deu",
-    el: "ell",
-    gu: "guj",
-    he: "heb",
-    hi: "hin",
-    hu: "hun",
-    is: "isl",
-    id: "ind",
-    it: "ita",
-    ja: "jpn",
-    jv: "jav",
-    kn: "kan",
-    ko: "kor",
-    lv: "lav",
-    lt: "lit",
-    lb: "ltz",
-    mk: "mkd",
-    ms: "msa",
-    ml: "mal",
-    cmn: "cmn",
-    zh: "cmn",
-    mr: "mar",
-    ne: "nep",
-    nb: "nor",
-    nn: "nor",
-    ps: "pus",
-    fa: "fas",
-    pl: "pol",
-    pa: "pan",
-    pt: "por",
-    ro: "ron",
-    ru: "rus",
-    sr: "srp",
-    sd: "snd",
-    sk: "slk",
-    sl: "slv",
-    es: "spa",
-    sw: "swa",
-    sv: "swe",
-    ta: "tam",
-    te: "tel",
-    th: "tha",
-    tr: "tur",
-    uk: "ukr",
-    ur: "urd",
-    vi: "vie",
-  };
+export const APP_LANGUAGE_TO_PREMIUM_PODCAST: Record<
+  string,
+  PremiumPodcastLanguageCode
+> = {
+  ar: "ara",
+  cmn: "cmn",
+  zh: "cmn",
+  en: "eng",
+  fr: "fra",
+  de: "deu",
+  hi: "hin",
+  id: "ind",
+  it: "ita",
+  ja: "jpn",
+  ko: "kor",
+  ms: "msa",
+  pt: "por",
+  es: "spa",
+};
 
 export function isPremiumPodcastLanguageCode(value: string): boolean {
   return PREMIUM_PODCAST_LANGUAGE_OPTIONS.some(
@@ -366,10 +196,27 @@ export function appLanguageSupportsPremiumPodcastMatch(
   return mapAppLanguageToPremiumPodcastLocale(appLanguage) != null;
 }
 
-export function getCustomPodcastLanguageOptions(isPremiumVoice: boolean) {
-  return isPremiumVoice
-    ? PREMIUM_PODCAST_LANGUAGE_OPTIONS
-    : LANGUAGE_OPTIONS;
+export function getCustomPodcastLanguageOptions(_isPremiumVoice?: boolean) {
+  return APP_LANGUAGE_OPTIONS;
+}
+
+export function mapPremiumPodcastToAppLanguage(
+  premiumCode: string,
+): AppLanguageCode | null {
+  const normalized = premiumCode.trim().toLowerCase();
+  const match = APP_LANGUAGE_OPTIONS.find(
+    (option) => APP_LANGUAGE_TO_PREMIUM_PODCAST[option.value] === normalized,
+  );
+  return match?.value ?? null;
+}
+
+/** Normalize a custom podcast region to an app language code for the UI. */
+export function coerceCustomPodcastRegion(region: string): AppLanguageCode {
+  const normalized = region.trim().toLowerCase();
+  if (APP_LANGUAGE_OPTIONS.some((option) => option.value === normalized)) {
+    return normalized as AppLanguageCode;
+  }
+  return mapPremiumPodcastToAppLanguage(normalized) ?? "en";
 }
 
 export function ensurePodcastLocalizationForVoice(input: {
@@ -384,37 +231,34 @@ export function ensurePodcastLocalizationForVoice(input: {
   if (!input.isPremiumVoice) {
     return {
       podcastLocalizationMode: input.podcastLocalizationMode,
-      podcastLocalizationRegion: input.podcastLocalizationRegion,
+      podcastLocalizationRegion: coerceCustomPodcastRegion(
+        input.podcastLocalizationRegion || input.language,
+      ),
     };
   }
 
   const matchLocale = mapAppLanguageToPremiumPodcastLocale(input.language);
   if (!matchLocale) {
-    const region = isPremiumPodcastLanguageCode(
-      input.podcastLocalizationRegion,
-    )
-      ? input.podcastLocalizationRegion
-      : "eng";
     return {
       podcastLocalizationMode: "custom",
-      podcastLocalizationRegion: region,
+      podcastLocalizationRegion: coerceCustomPodcastRegion(
+        input.podcastLocalizationRegion || "en",
+      ),
     };
   }
 
   if (input.podcastLocalizationMode === "custom") {
     return {
       podcastLocalizationMode: "custom",
-      podcastLocalizationRegion: isPremiumPodcastLanguageCode(
-        input.podcastLocalizationRegion,
-      )
-        ? input.podcastLocalizationRegion
-        : matchLocale,
+      podcastLocalizationRegion: coerceCustomPodcastRegion(
+        input.podcastLocalizationRegion || input.language,
+      ),
     };
   }
 
   return {
     podcastLocalizationMode: "match-app",
-    podcastLocalizationRegion: matchLocale,
+    podcastLocalizationRegion: input.language,
   };
 }
 
@@ -425,7 +269,7 @@ export type SubscriptionPlan = "free" | "premium";
 export const SUBSCRIPTION_PLANS = {
   premium: {
     title: "Premium",
-    priceLabel: "$9.99 / month",
+    priceLabel: "$40 / month",
     features: [
       "Unlimited daily briefs",
       "Premium voice engines",
@@ -498,7 +342,6 @@ export const PODCAST_LOCALIZATION_REGIONS = [
   { value: "fa-ir", label: "Persian (Iran)" },
   { value: "pl-pl", label: "Polish (Poland)" },
   { value: "ro-ro", label: "Romanian (Romania)" },
-  { value: "ru-ru", label: "Russian (Russia)" },
   { value: "sk-sk", label: "Slovak (Slovakia)" },
   { value: "sv-se", label: "Swedish (Sweden)" },
   { value: "ta-in", label: "Tamil (India)" },
@@ -519,10 +362,13 @@ export function resolvePodcastLocale(input: {
 
   if (input.podcastLocalizationMode === "custom") {
     const region = input.podcastLocalizationRegion.trim().toLowerCase();
-    if (isPremiumVoice && !isPremiumPodcastLanguageCode(region)) {
-      return "eng";
+    if (isPremiumVoice) {
+      if (isPremiumPodcastLanguageCode(region)) {
+        return region;
+      }
+      return mapAppLanguageToPremiumPodcastLocale(region) ?? "eng";
     }
-    return region;
+    return coerceCustomPodcastRegion(region);
   }
 
   if (isPremiumVoice) {
@@ -553,33 +399,44 @@ export function podcastLocalizationFromLocale(
         ? mapAppLanguageToPremiumPodcastLocale(normalized.split("-")[0] ?? "")
         : null);
     const asPremium = premiumDirect?.value ?? mappedFromAppCode ?? "eng";
+    const asAppRegion =
+      mapPremiumPodcastToAppLanguage(asPremium) ??
+      (APP_LANGUAGE_OPTIONS.some((option) => option.value === normalized)
+        ? (normalized as AppLanguageCode)
+        : "en");
     const appMapped = app ? mapAppLanguageToPremiumPodcastLocale(app) : null;
 
     if (!appMapped) {
       return {
         podcastLocalizationMode: "custom",
-        podcastLocalizationRegion: asPremium,
+        podcastLocalizationRegion: asAppRegion,
       };
     }
 
     if (asPremium === appMapped) {
       return {
         podcastLocalizationMode: "match-app",
-        podcastLocalizationRegion: asPremium,
+        podcastLocalizationRegion: app || asAppRegion,
       };
     }
 
     return {
       podcastLocalizationMode: "custom",
-      podcastLocalizationRegion: asPremium,
+      podcastLocalizationRegion: asAppRegion,
     };
   }
 
-  const directMatch = LANGUAGE_OPTIONS.find(
+  const appDirect = APP_LANGUAGE_OPTIONS.find(
     (option) => option.value === normalized,
   );
+  const directMatch =
+    appDirect ??
+    LANGUAGE_OPTIONS.find((option) => option.value === normalized);
   const legacyBase = normalized.includes("-")
-    ? LANGUAGE_OPTIONS.find(
+    ? APP_LANGUAGE_OPTIONS.find(
+        (option) => option.value === normalized.split("-")[0],
+      ) ??
+      LANGUAGE_OPTIONS.find(
         (option) => option.value === normalized.split("-")[0],
       )
     : undefined;
@@ -592,108 +449,70 @@ export function podcastLocalizationFromLocale(
     };
   }
 
-  if (!app || asLanguage === app) {
+  const asAppRegion = coerceCustomPodcastRegion(asLanguage);
+
+  if (!app || asAppRegion === app) {
     return {
       podcastLocalizationMode: "match-app",
-      podcastLocalizationRegion: asLanguage,
+      podcastLocalizationRegion: asAppRegion,
     };
   }
 
   return {
     podcastLocalizationMode: "custom",
-    podcastLocalizationRegion: asLanguage,
+    podcastLocalizationRegion: asAppRegion,
   };
 }
 
+/** Native/endonym names shown as the primary label in language selects. */
 const LANGUAGE_REGIONAL_LABELS: Record<string, string> = {
-  af: "Afrikaans",
-  sq: "Albanian",
-  am: "Amharic",
-  ar: "Arabic",
-  hy: "Armenian",
-  az: "Azerbaijani",
-  eu: "Basque",
-  be: "Belarusian",
-  bn: "Bengali",
-  bg: "Bulgarian",
-  my: "Burmese",
-  ca: "Catalan",
-  ceb: "Cebuano",
-  hr: "Croatian",
-  cs: "Czech",
-  da: "Danish",
-  nl: "Dutch",
+  ar: "العربية",
+  cmn: "中文",
+  zh: "中文",
   en: "English",
-  et: "Estonian",
-  fil: "Filipino",
-  fi: "Finnish",
-  fr: "French",
-  gl: "Galician",
-  ka: "Georgian",
-  de: "German",
-  el: "Greek",
-  gu: "Gujarati",
-  ht: "Haitian Creole",
-  he: "Hebrew",
-  hi: "Hindi",
-  hu: "Hungarian",
-  is: "Icelandic",
-  id: "Indonesian",
-  it: "Italian",
-  ja: "Japanese",
-  jv: "Javanese",
-  kn: "Kannada",
-  kok: "Konkani",
-  ko: "Korean",
-  lo: "Lao",
-  la: "Latin",
-  lv: "Latvian",
-  lt: "Lithuanian",
-  lb: "Luxembourgish",
-  mk: "Macedonian",
-  mai: "Maithili",
-  mg: "Malagasy",
-  ms: "Malay",
-  ml: "Malayalam",
-  cmn: "Mandarin Chinese",
-  zh: "Mandarin Chinese",
-  mr: "Marathi",
-  mn: "Mongolian",
-  ne: "Nepali",
-  nb: "Norwegian Bokmål",
-  nn: "Norwegian Nynorsk",
-  or: "Odia",
-  ps: "Pashto",
-  fa: "Persian",
-  pl: "Polish",
-  pt: "Portuguese",
-  pa: "Punjabi",
-  ro: "Romanian",
-  ru: "Russian",
-  sr: "Serbian",
-  sd: "Sindhi",
-  si: "Sinhala",
-  sk: "Slovak",
-  sl: "Slovenian",
-  es: "Spanish",
-  sw: "Swahili",
-  sv: "Swedish",
-  ta: "Tamil",
-  te: "Telugu",
-  th: "Thai",
-  tr: "Turkish",
-  uk: "Ukrainian",
-  ur: "Urdu",
-  vi: "Vietnamese",
+  fr: "Français",
+  de: "Deutsch",
+  hi: "हिन्दी",
+  id: "Bahasa Indonesia",
+  it: "Italiano",
+  ja: "日本語",
+  ko: "한국어",
+  ms: "Bahasa Melayu",
+  pt: "Português",
+  es: "Español",
+  // Premium podcast ISO 639-3 codes
+  ara: "العربية",
+  eng: "English",
+  fra: "Français",
+  deu: "Deutsch",
+  hin: "हिन्दी",
+  ind: "Bahasa Indonesia",
+  ita: "Italiano",
+  jpn: "日本語",
+  kor: "한국어",
+  msa: "Bahasa Melayu",
+  por: "Português",
+  spa: "Español",
 };
 
 export function getLanguageRegionalLabel(value: string) {
   return (
     LANGUAGE_REGIONAL_LABELS[value] ??
+    APP_LANGUAGE_OPTIONS.find((option) => option.value === value)?.label ??
     LANGUAGE_OPTIONS.find((option) => option.value === value)?.label ??
     PREMIUM_PODCAST_LANGUAGE_OPTIONS.find((option) => option.value === value)
       ?.label ??
     "English"
+  );
+}
+
+export function getLanguageEnglishLabel(value: string) {
+  return (
+    APP_LANGUAGE_OPTIONS.find((option) => option.value === value)?.englishLabel ??
+    LANGUAGE_OPTIONS.find((option) => option.value === value)?.englishLabel ??
+    PREMIUM_PODCAST_LANGUAGE_OPTIONS.find((option) => option.value === value)
+      ?.englishLabel ??
+    getLanguageRegionalLabel(value)
   );
 }
 

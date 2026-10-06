@@ -2,13 +2,14 @@ import { getAuthenticatedUserId } from "@/lib/auth/server-auth";
 import { updateNewsReaderLanguageSettings } from "@/lib/news-reader-api";
 import {
   LANGUAGE_OPTIONS,
+  APP_LANGUAGE_OPTIONS,
   PREMIUM_PODCAST_LANGUAGE_OPTIONS,
 } from "@/lib/platform-settings";
 import { ensureBackendUser } from "@/lib/server/user-location";
 import { NextRequest, NextResponse } from "next/server";
 
 const ALLOWED_LANGUAGES = new Set<string>(
-  LANGUAGE_OPTIONS.map((option) => option.value),
+  APP_LANGUAGE_OPTIONS.map((option) => option.value),
 );
 
 const ALLOWED_PODCAST_LOCALES = new Set<string>([

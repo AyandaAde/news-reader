@@ -26,7 +26,7 @@ function PlatformShellContent({ children }: { children: React.ReactNode }) {
       <div
         className={cn(
           "relative flex h-svh min-w-0 flex-1 flex-col overflow-hidden",
-          pathname === "/live" && "platform-ambient-bg",
+          pathname === "/listen" && "platform-ambient-bg",
         )}
       >
         <PlatformHeader

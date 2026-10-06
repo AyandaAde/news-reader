@@ -1,11 +1,5 @@
-import type { Metadata } from "next";
-import { PlatformLiveScreen } from "@/components/platform/live-screen";
+import { redirect } from "next/navigation";
 
-export const metadata: Metadata = {
-  title: "Listen | EILO",
-  description: "Experience real-time news, market insights, and live audio curations.",
-};
-
-export default function LivePage() {
-  return <PlatformLiveScreen />;
+export default function LiveRedirectPage() {
+  redirect("/listen");
 }

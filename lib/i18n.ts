@@ -1,22 +1,15 @@
 import type { Resource } from "i18next";
+import { APP_LANGUAGE_OPTIONS } from "./platform-settings";
 import { downloadNavLabels, downloadTranslations } from "./download-i18n";
-import { LANGUAGE_OPTIONS } from "./platform-settings";
 import { platformTranslations } from "./platform-i18n";
 
 export const defaultLanguage = "en";
 
-export const languages = LANGUAGE_OPTIONS;
+export const languages = APP_LANGUAGE_OPTIONS;
 
 export type Language = (typeof languages)[number]["value"];
 
-export const rtlLanguages: readonly Language[] = [
-  "ar",
-  "fa",
-  "he",
-  "ps",
-  "sd",
-  "ur",
-];
+export const rtlLanguages: readonly Language[] = ["ar"];
 
 export function isRtlLanguage(value: Language): boolean {
   return rtlLanguages.includes(value);
@@ -1619,6 +1612,389 @@ const ms = {
   },
 };
 
+const it = {
+  nav: {
+    features: "Funzionalità",
+    listen: "Ascolta",
+    getStarted: "Inizia",
+    platform: "Piattaforma",
+    download: downloadNavLabels.it,
+    signIn: "Accedi",
+  },
+  hero: {
+    titleLine1: "Il tuo mondo,",
+    titleLine2: "in podcast.",
+    description:
+      "Con podcast basati sull'IA che trasformano le informazioni in audio coinvolgente e personalizzato.",
+    cta: "Provalo",
+  },
+  core: {
+    eyebrow: "Il tuo compagno audio",
+    title: "Racconta la tua giornata. Ascolta ciò che conta.",
+    description:
+      "Eilo non ti propone l'ennesimo feed. Trasforma email, notizie e interessi in un briefing tranquillo a due voci, da ascoltare ovunque.",
+    dailyBrief: {
+      title: "Briefing quotidiano",
+      description:
+        "Un briefing personalizzato sui tuoi argomenti, la posta in arrivo e la tua routine, pronto quando lo sei tu.",
+    },
+    conversationRecall: {
+      title: "Riepilogo della conversazione",
+      description:
+        "Un dialogo a due voci che spiega la storia e ti permette di approfondire ciò che conta.",
+    },
+    emailBriefings: {
+      title: "Briefing email",
+      description:
+        "Collega Gmail e ascolta ciò che richiede davvero la tua attenzione, senza scorrere all'infinito.",
+    },
+    listenAnywhere: {
+      title: "Ascolta ovunque",
+      description:
+        "Resta informato mentre cammini, sei in viaggio, cucini o ti prepari. Lo schermo è facoltativo.",
+    },
+    liveStations: {
+      title: "Stazioni audio e Scopri",
+      description:
+        "Esplora i programmi, segui ciò che ti interessa e accedi a una stazione audio senza il rumore di un feed tradizionale.",
+    },
+    tags: {
+      private: "Privato",
+      automated: "Automatico",
+      discover: "Scopri",
+      liveStations: "Stazioni live",
+      personalTopics: "Argomenti personali",
+    },
+  },
+  podcastCreation: {
+    eyebrow: "Creazione di podcast",
+    title: "Crea la tua storia.",
+    titleAccent: "Condividi la tua voce.",
+    description:
+      "Crea podcast che gli altri possano ascoltare e condividili sulle diverse piattaforme. Pubblica gli episodi su Spotify, Apple Podcasts, YouTube e altro ancora, per raggiungere gli ascoltatori ovunque.",
+    topics: {
+      title: "Scegli gli argomenti",
+      description:
+        "Notizie, tecnologia, mercati, sport o un mix tutto tuo. Costruisci ogni episodio intorno a ciò che vuoi davvero ascoltare.",
+    },
+    length: {
+      title: "Imposta la durata",
+      description:
+        "Un rapido episodio di trenta minuti o un approfondimento. Adattalo al tragitto, all'allenamento o alla routine mattutina.",
+    },
+    voices: {
+      title: "Voci e stile",
+      description:
+        "Un dialogo tra host e co-host naturale, informale, radiofonico o adattato al tuo modo di ascoltare.",
+    },
+    generate: {
+      title: "Condividi sulla tua piattaforma preferita",
+      description:
+        "Condividi il podcast direttamente sulla piattaforma che preferisci e raggiungi il pubblico ovunque ascolti.",
+    },
+    library: {
+      title: "La tua raccolta di podcast",
+      description:
+        "Conserva tutti i podcast che crei in un unico posto. Riascolta i tuoi preferiti, riproduci gli episodi quando vuoi e continua a creare programmi sugli argomenti che ami.",
+    },
+    tags: {
+      news: "Notizie",
+      tech: "Tecnologia",
+      markets: "Mercati",
+      hostCohost: "Host e co-host",
+      customStyle: "Stile personalizzato",
+      yourShows: "I tuoi programmi",
+      replayAnytime: "Riascolta quando vuoi",
+      shareReady: "Pronto da condividere",
+    },
+  },
+  listen: {
+    eyebrow: "Le fonti che contano",
+    title: "Dai un senso alla tua giornata",
+    titleAccent: "ad alta voce",
+    description:
+      "Collega le fonti che usi già. Eilo le trasforma in un briefing che puoi davvero ascoltare fino alla fine.",
+    emailInbox: {
+      title: "Posta in arrivo",
+      description:
+        "Estrai da Gmail le conversazioni importanti e ascoltale come un dialogo naturale, non come un muro di messaggi non letti.",
+    },
+    webNews: {
+      title: "Web e notizie",
+      description:
+        "Segui gli argomenti che ti interessano. Eilo seleziona ciò che conta e lo racconta con uno stile tranquillo e colloquiale.",
+    },
+    routine: {
+      title: "La tua routine",
+      description:
+        "Meteo, host e orari sotto il tuo controllo, perché ogni briefing si adatti al modo in cui vivi la giornata.",
+    },
+  },
+  cta: {
+    title: "Pronto ad ascoltare?",
+    description:
+      "Resta aggiornato senza abbassare lo sguardo. Inizia il tuo primo briefing Eilo in pochi minuti.",
+    button: "Inizia",
+  },
+  download: downloadTranslations.it,
+  platform: platformTranslations.it,
+  footer: {
+    description: "Il tuo mondo, in podcast.",
+    product: "Prodotto",
+    company: "Azienda",
+    legal: "Note legali",
+    about: "Chi siamo",
+    privacy: "Informativa sulla privacy",
+    copyright: "Tutti i diritti riservati.",
+    language: "Lingua",
+  },
+  auth: {
+    title: "Accedi",
+    screenTitle: "Benvenuto",
+    signInSubtitle: "Accedi ai tuoi briefing audio basati sull'IA.",
+    signUpSubtitle: "Crea un account per iniziare ad ascoltare i tuoi briefing audio basati sull'IA.",
+    tabSignIn: "Accedi",
+    tabCreateAccount: "Crea account",
+    email: "Indirizzo email",
+    emailPlaceholder: "nome@eilo.app",
+    password: "Password",
+    passwordPlaceholder: "••••••••",
+    forgotPassword: "Password dimenticata?",
+    showPassword: "Mostra password",
+    hidePassword: "Nascondi password",
+    submit: "Accedi",
+    createAccountSubmit: "Crea account",
+    orContinue: "oppure continua con",
+    google: "Google",
+    apple: "Apple",
+    noAccount: "Non hai un account?",
+    createAccount: "Crea un account",
+    card1Title: "Resta un passo avanti.",
+    card1Description:
+      "Briefing basati sull'IA che trasformano email e notizie in un ascolto piacevole.",
+    card2Title: "Ascolta ovunque.",
+    card2Description:
+      "La tua giornata, condensata in un audio da ascoltare anche in movimento.",
+    back: "Torna alla home",
+    emailRequired: "L'indirizzo email è obbligatorio.",
+    emailInvalid: "Inserisci un indirizzo email valido.",
+    code: "Codice di verifica",
+    codeSubtitle: "Inserisci il codice che abbiamo inviato a",
+    codeRequired: "Il codice di verifica è obbligatorio.",
+    codeInvalid: "Inserisci il codice a 6 cifre ricevuto via email.",
+    verify: "Verifica",
+    resendCode: "Invia di nuovo il codice",
+    resendCooldown: "Invia di nuovo il codice tra {{seconds}} s",
+    startOver: "Usa un altro indirizzo email",
+    codeSentAgain: "Abbiamo inviato un altro codice al tuo indirizzo email.",
+    genericError: "Si è verificato un problema. Riprova.",
+    createAccountHint: "Inserisci il tuo indirizzo email qui sopra per creare un account.",
+    accountNotFound: "Nessun account associato a questo indirizzo email. Creane uno.",
+    accountExists: "Esiste già un account con questo indirizzo email. Accedi.",
+    signUpIncomplete:
+      "Non siamo riusciti a completare la creazione dell'account. Tocca \"Usa un altro indirizzo email\" e riprova.",
+    displayName: "Il tuo nome",
+    displayNamePlaceholder: "Mario Rossi",
+    displayNameRequired: "Inserisci il tuo nome.",
+    termsAgreementPrefix: "Accetto i",
+    termsOfService: "Termini di servizio",
+    termsAgreementJoin: "e l'",
+    termsRequired:
+      "Devi accettare i Termini di servizio e l'Informativa sulla privacy.",
+  },
+};
+
+const ko = {
+  nav: {
+    features: "기능",
+    listen: "듣기",
+    getStarted: "시작하기",
+    platform: "플랫폼",
+    download: downloadNavLabels.ko,
+    signIn: "로그인",
+  },
+  hero: {
+    titleLine1: "당신의 세상을,",
+    titleLine2: "팟캐스트로.",
+    description:
+      "AI 기반 팟캐스트가 정보를 흥미롭고 개인화된 오디오로 바꿔 드립니다.",
+    cta: "사용해 보기",
+  },
+  core: {
+    eyebrow: "오디오 동반자",
+    title: "하루를 담고, 중요한 이야기를 들으세요.",
+    description:
+      "Eilo는 또 하나의 피드를 쏟아내지 않습니다. 이메일, 뉴스, 관심사를 어디서나 들을 수 있는 차분한 두 사람의 브리핑으로 바꿉니다.",
+    dailyBrief: {
+      title: "데일리 브리프",
+      description:
+        "주제, 받은편지함, 루틴에 맞춘 개인화 브리핑이 필요할 때 바로 준비됩니다.",
+    },
+    conversationRecall: {
+      title: "대화로 되짚기",
+      description:
+        "두 사람의 대화가 이야기를 설명하고, 중요한 내용은 더 깊이 알아볼 수 있게 합니다.",
+    },
+    emailBriefings: {
+      title: "이메일 브리핑",
+      description:
+        "Gmail을 연결하고 끝없이 스크롤하지 않아도 정말 확인해야 할 내용을 들어 보세요.",
+    },
+    listenAnywhere: {
+      title: "어디서나 듣기",
+      description:
+        "걷거나 출퇴근하고, 요리하거나 준비하는 동안에도 소식을 놓치지 마세요. 화면은 선택 사항입니다.",
+    },
+    liveStations: {
+      title: "오디오 스테이션 & 탐색",
+      description:
+        "쇼를 둘러보고 관심사를 팔로우하며, 일반적인 피드의 소음 없이 오디오 스테이션을 바로 들으세요.",
+    },
+    tags: {
+      private: "비공개",
+      automated: "자동화",
+      discover: "탐색",
+      liveStations: "라이브 스테이션",
+      personalTopics: "개인 관심사",
+    },
+  },
+  podcastCreation: {
+    eyebrow: "팟캐스트 제작",
+    title: "당신의 이야기를 만들고,",
+    titleAccent: "당신의 목소리를 전하세요.",
+    description:
+      "다른 사람들이 듣고 공유할 수 있는 팟캐스트를 만드세요. Spotify, Apple Podcasts, YouTube 등에 에피소드를 게시해 청취자가 있는 곳 어디서나 만나 보세요.",
+    topics: {
+      title: "주제 선택",
+      description:
+        "뉴스, 기술, 시장, 스포츠 또는 나만의 조합까지. 정말 듣고 싶은 내용으로 모든 에피소드를 구성하세요.",
+    },
+    length: {
+      title: "길이 설정",
+      description:
+        "빠르게 듣는 30분부터 깊이 있는 긴 이야기까지. 출퇴근, 운동, 아침 루틴에 맞춰 에피소드 길이를 정하세요.",
+    },
+    voices: {
+      title: "음성 & 스타일",
+      description:
+        "자연스럽고 편안한 대화, 방송 스타일 또는 취향에 맞춘 호스트와 공동 호스트의 대화를 만드세요.",
+    },
+    generate: {
+      title: "선호하는 플랫폼에 공유",
+      description:
+        "팟캐스트를 선호하는 플랫폼에 바로 공유하고 청취자가 있는 곳 어디서나 만나 보세요.",
+    },
+    library: {
+      title: "내 팟캐스트 라이브러리",
+      description:
+        "만든 모든 팟캐스트를 한곳에 보관하세요. 좋아하는 에피소드를 다시 듣고, 언제든 재생하며, 관심 있는 주제로 계속 새로운 쇼를 만들 수 있습니다.",
+    },
+    tags: {
+      news: "뉴스",
+      tech: "기술",
+      markets: "시장",
+      hostCohost: "호스트 & 공동 호스트",
+      customStyle: "사용자 지정 스타일",
+      yourShows: "내 쇼",
+      replayAnytime: "언제든 다시 듣기",
+      shareReady: "공유 준비 완료",
+    },
+  },
+  listen: {
+    eyebrow: "중요한 정보원",
+    title: "하루를 이해하세요",
+    titleAccent: "소리로",
+    description:
+      "이미 사용 중인 정보원을 연결하세요. Eilo가 끝까지 들을 수 있는 브리핑으로 바꿔 드립니다.",
+    emailInbox: {
+      title: "이메일 받은편지함",
+      description:
+        "Gmail에서 중요한 대화를 골라, 읽지 않은 메일 더미가 아닌 자연스러운 대화로 들어 보세요.",
+    },
+    webNews: {
+      title: "웹 & 뉴스",
+      description:
+        "관심 있는 주제를 팔로우하세요. Eilo가 핵심을 선별해 차분하고 대화하듯 들려 드립니다.",
+    },
+    routine: {
+      title: "나만의 루틴",
+      description:
+        "날씨, 호스트, 시간을 직접 설정해 모든 브리프가 하루의 흐름에 꼭 맞도록 하세요.",
+    },
+  },
+  cta: {
+    title: "들을 준비가 되셨나요?",
+    description:
+      "화면을 내려다보지 않고도 소식을 따라가세요. 몇 분 안에 첫 Eilo 브리핑을 시작할 수 있습니다.",
+    button: "시작하기",
+  },
+  download: downloadTranslations.ko,
+  platform: platformTranslations.ko,
+  footer: {
+    description: "당신의 세상을, 팟캐스트로.",
+    product: "제품",
+    company: "회사",
+    legal: "법률",
+    about: "소개",
+    privacy: "개인정보 처리방침",
+    copyright: "모든 권리 보유.",
+    language: "언어",
+  },
+  auth: {
+    title: "로그인",
+    screenTitle: "환영합니다",
+    signInSubtitle: "AI 오디오 브리핑을 이용하려면 로그인하세요.",
+    signUpSubtitle: "AI 오디오 브리핑을 시작하려면 계정을 만드세요.",
+    tabSignIn: "로그인",
+    tabCreateAccount: "계정 만들기",
+    email: "이메일 주소",
+    emailPlaceholder: "name@eilo.app",
+    password: "비밀번호",
+    passwordPlaceholder: "••••••••",
+    forgotPassword: "비밀번호를 잊으셨나요?",
+    showPassword: "비밀번호 표시",
+    hidePassword: "비밀번호 숨기기",
+    submit: "로그인",
+    createAccountSubmit: "계정 만들기",
+    orContinue: "또는 다음으로 계속",
+    google: "Google",
+    apple: "Apple",
+    noAccount: "계정이 없으신가요?",
+    createAccount: "계정 만들기",
+    card1Title: "한발 앞서가세요.",
+    card1Description:
+      "이메일과 뉴스를 차분한 오디오로 바꾸는 AI 브리핑.",
+    card2Title: "어디서나 들으세요.",
+    card2Description:
+      "하루를 이동 중에도 들을 수 있는 오디오로 간결하게 정리합니다.",
+    back: "홈으로 돌아가기",
+    emailRequired: "이메일을 입력하세요.",
+    emailInvalid: "유효한 이메일 주소를 입력하세요.",
+    code: "인증 코드",
+    codeSubtitle: "다음 주소로 전송된 코드를 입력하세요",
+    codeRequired: "인증 코드를 입력하세요.",
+    codeInvalid: "이메일로 받은 6자리 코드를 입력하세요.",
+    verify: "인증",
+    resendCode: "코드 다시 보내기",
+    resendCooldown: "{{seconds}}초 후 코드 다시 보내기",
+    startOver: "다른 이메일 사용",
+    codeSentAgain: "이메일로 새 코드를 보냈습니다.",
+    genericError: "문제가 발생했습니다. 다시 시도하세요.",
+    createAccountHint: "계정을 만들려면 위에 이메일을 입력하세요.",
+    accountNotFound: "해당 이메일의 계정을 찾을 수 없습니다. 새 계정을 만드세요.",
+    accountExists: "해당 이메일의 계정이 이미 있습니다. 로그인하세요.",
+    signUpIncomplete:
+      "계정 생성을 완료하지 못했습니다. \"다른 이메일 사용\"을 누르고 다시 시도하세요.",
+    displayName: "이름",
+    displayNamePlaceholder: "홍길동",
+    displayNameRequired: "이름을 입력하세요.",
+    termsAgreementPrefix: "다음에 동의합니다:",
+    termsOfService: "서비스 이용약관",
+    termsAgreementJoin: "및",
+    termsRequired: "서비스 이용약관 및 개인정보 처리방침에 동의해야 합니다.",
+  },
+};
+
 export const resources: Resource = {
   en: { translation: en },
   es: { translation: es },
@@ -1632,4 +2008,6 @@ export const resources: Resource = {
   de: { translation: de },
   id: { translation: id },
   ms: { translation: ms },
+  it: { translation: it },
+  ko: { translation: ko },
 };

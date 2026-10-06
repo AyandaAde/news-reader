@@ -1,31 +1,37 @@
-"use client";
+import type { Metadata } from "next";
+import { LandingPage } from "@/components/landing-page";
+import { JsonLd, getLandingJsonLd } from "@/components/seo/json-ld";
+import { absoluteUrl, siteConfig } from "@/lib/seo";
 
-import { Header } from "@/components/header";
-import { Hero } from "@/components/hero";
-import { FeaturesSection } from "@/components/features-section";
-import { PodcastCreationSection } from "@/components/podcast-creation-section";
-import { IntegrationSection } from "@/components/integration-section";
-import { DownloadAppSection } from "@/components/download-app-section";
-import { CtaSection } from "@/components/cta-section";
-import { Footer } from "@/components/footer";
-import { SectionNavHighlight } from "@/components/section-nav-highlight";
-import { Leva } from "leva";
+export const metadata: Metadata = {
+  title: {
+    absolute: siteConfig.title,
+  },
+  description: siteConfig.description,
+  keywords: [...siteConfig.keywords],
+  alternates: {
+    canonical: absoluteUrl("/"),
+  },
+  openGraph: {
+    type: "website",
+    locale: siteConfig.locale,
+    url: absoluteUrl("/"),
+    siteName: siteConfig.name,
+    title: siteConfig.title,
+    description: siteConfig.description,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteConfig.title,
+    description: siteConfig.description,
+  },
+};
 
-export default function Home() {
+export default function HomePage() {
   return (
     <>
-      <SectionNavHighlight />
-      <Header logoVariant="wordmark" />
-      <main>
-        <Hero />
-        <FeaturesSection />
-        <PodcastCreationSection />
-        <IntegrationSection />
-        <DownloadAppSection />
-        <CtaSection />
-      </main>
-      <Footer />
-      <Leva hidden />
+      <JsonLd data={getLandingJsonLd()} />
+      <LandingPage />
     </>
   );
 }

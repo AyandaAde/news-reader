@@ -1,4 +1,4 @@
-import { defaultLanguage, isLanguage, type Language } from "@/lib/i18n";
+import { defaultLanguage, isLanguage, isRtlLanguage, type Language } from "@/lib/i18n";
 import { interpolateCopy } from "@/lib/emails/verification-email-copy";
 
 export type NewDeviceSignInEmailCopy = {
@@ -71,15 +71,7 @@ export function getNewDeviceSignInEmailCopy(locale: string): NewDeviceSignInEmai
     return {
       ...englishCopy,
       htmlLang: locale === "cmn" ? "zh-CN" : locale,
-      dir:
-        locale === "ar" ||
-        locale === "he" ||
-        locale === "fa" ||
-        locale === "ur" ||
-        locale === "ps" ||
-        locale === "sd"
-          ? "rtl"
-          : "ltr",
+      dir: isRtlLanguage(locale) ? "rtl" : "ltr",
     };
   }
 

@@ -28,7 +28,7 @@ import { isLanguage } from "@/lib/i18n";
 import { profileShows } from "@/lib/platform-profile";
 import {
   DEFAULT_PLATFORM_SETTINGS,
-  LANGUAGE_OPTIONS,
+  APP_LANGUAGE_OPTIONS,
   MAX_BRIEFING_ROUTINE_ITEMS,
   getSubscriptionLabel,
   loadPlatformSettings,
@@ -37,6 +37,7 @@ import {
   resolvePodcastLocale,
   ensurePodcastLocalizationForVoice,
   savePlatformSettings,
+  getLanguageRegionalLabel,
   SETTINGS_SECTIONS,
   type BriefingRoutineSlot,
   type ConversationStyle,
@@ -134,7 +135,7 @@ function SubScreenHeader({
 }
 
 function getLanguageLabel(value: string) {
-  return LANGUAGE_OPTIONS.find((option) => option.value === value)?.label ?? "English";
+  return getLanguageRegionalLabel(value);
 }
 
 type ProfileSettingsPanelProps = {
@@ -158,6 +159,59 @@ export function ProfileSettingsPanel({
   const [notificationsDraft, setNotificationsDraft] = useState<NotificationsSettingsDraft | null>(
     null,
   );
+  const [notificationSettingsSaving, setNotificationSettingsSaving] = useState(false);
+  const notificationSaveInFlightRef = useRef(0);
+  const notificationSaveStartedAtRef = useRef(0);
+  const notificationSaveUnlockTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  function beginNotificationSave() {
+    if (notificationSaveUnlockTimerRef.current) {
+      clearTimeout(notificationSaveUnlockTimerRef.current);
+      notificationSaveUnlockTimerRef.current = null;
+    }
+    if (notificationSaveInFlightRef.current === 0) {
+      notificationSaveStartedAtRef.current = Date.now();
+    }
+    notificationSaveInFlightRef.current += 1;
+    setNotificationSettingsSaving(true);
+  }
+
+  function endNotificationSave() {
+    notificationSaveInFlightRef.current = Math.max(
+      0,
+      notificationSaveInFlightRef.current - 1,
+    );
+    if (notificationSaveInFlightRef.current > 0) {
+      return;
+    }
+
+    const remaining = Math.max(
+      0,
+      1000 - (Date.now() - notificationSaveStartedAtRef.current),
+    );
+
+    if (remaining === 0) {
+      setNotificationSettingsSaving(false);
+      return;
+    }
+
+    notificationSaveUnlockTimerRef.current = setTimeout(() => {
+      notificationSaveUnlockTimerRef.current = null;
+      if (notificationSaveInFlightRef.current === 0) {
+        setNotificationSettingsSaving(false);
+      }
+    }, remaining);
+  }
+
+  useEffect(() => {
+    return () => {
+      if (notificationSaveUnlockTimerRef.current) {
+        clearTimeout(notificationSaveUnlockTimerRef.current);
+      }
+    };
+  }, []);
   const previousSectionRef = useRef<SettingsSectionId | null>(null);
 
   useEffect(() => {
@@ -273,7 +327,7 @@ export function ProfileSettingsPanel({
               : "";
         if (
           apiLanguage &&
-          LANGUAGE_OPTIONS.some((option) => option.value === apiLanguage)
+          APP_LANGUAGE_OPTIONS.some((option) => option.value === apiLanguage)
         ) {
           setSettings((current) => {
             const next = {
@@ -387,7 +441,7 @@ export function ProfileSettingsPanel({
         const payload = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        toast.error(payload?.error ?? "Failed to save briefing routine");
+        toast.error(payload?.error ?? t("platform.profile.errorSaveBriefingRoutine"));
         return null;
       }
 
@@ -397,7 +451,7 @@ export function ProfileSettingsPanel({
       );
     } catch (error) {
       console.error("Failed to persist briefing routine:", error);
-      toast.error("Failed to save briefing routine");
+      toast.error(t("platform.profile.errorSaveBriefingRoutine"));
       return null;
     }
   }
@@ -432,7 +486,7 @@ export function ProfileSettingsPanel({
         const payload = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        toast.error(payload?.error ?? "Failed to save weather location");
+        toast.error(payload?.error ?? t("platform.profile.errorSaveWeatherLocation"));
         return false;
       }
 
@@ -460,7 +514,7 @@ export function ProfileSettingsPanel({
       return true;
     } catch (error) {
       console.error("Failed to persist weather settings:", error);
-      toast.error("Failed to save weather location");
+      toast.error(t("platform.profile.errorSaveWeatherLocation"));
       return false;
     }
   }
@@ -562,18 +616,20 @@ export function ProfileSettingsPanel({
     });
   }
 
-  function saveSettings(patch: Partial<PlatformSettings>, message = "Settings saved.") {
+  function saveSettings(patch: Partial<PlatformSettings>, message = t("platform.profile.settingsSaved")) {
     updateSettings(patch);
     showSaved(message);
   }
 
-  function showSaved(message = "Settings saved.") {
+  function showSaved(message = t("platform.profile.settingsSaved")) {
     setSavedMessage(message);
     window.setTimeout(() => setSavedMessage(null), 2000);
   }
 
   function showRoutineSaved() {
-    toast.success("Success", { description: "Routine Saved" });
+    toast.success(t("platform.profile.toastSuccess"), {
+      description: t("platform.profile.routineSaved"),
+    });
   }
 
   async function persistVoiceSettings(
@@ -609,7 +665,7 @@ export function ProfileSettingsPanel({
         const payload = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        toast.error(payload?.error ?? "Failed to save voice settings");
+        toast.error(payload?.error ?? t("platform.profile.errorSaveVoiceSettings"));
         return false;
       }
 
@@ -672,7 +728,7 @@ export function ProfileSettingsPanel({
       return true;
     } catch (error) {
       console.error("Failed to persist voice settings:", error);
-      toast.error("Failed to save voice settings");
+      toast.error(t("platform.profile.errorSaveVoiceSettings"));
       return false;
     }
   }
@@ -685,7 +741,9 @@ export function ProfileSettingsPanel({
     void (async () => {
       const saved = await persistVoiceSettings(voiceDraft);
       if (saved) {
-        toast.success("Success", { description: "Settings Saved" });
+        toast.success(t("platform.profile.toastSuccess"), {
+          description: t("platform.profile.settingsSaved"),
+        });
       }
     })();
   }
@@ -698,7 +756,9 @@ export function ProfileSettingsPanel({
     void (async () => {
       const saved = await persistWeatherSettings(weatherDraft);
       if (saved) {
-        toast.success("Success", { description: "Settings Saved" });
+        toast.success(t("platform.profile.toastSuccess"), {
+          description: t("platform.profile.settingsSaved"),
+        });
       }
     })();
   }
@@ -715,7 +775,9 @@ export function ProfileSettingsPanel({
     void (async () => {
       const saved = await persistWeatherSettings(nextDraft);
       if (saved) {
-        toast.success("Success", { description: "Location Saved" });
+        toast.success(t("platform.profile.toastSuccess"), {
+          description: t("platform.profile.locationSaved"),
+        });
       }
     })();
   }
@@ -763,7 +825,7 @@ export function ProfileSettingsPanel({
         const payload = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        toast.error(payload?.error ?? "Failed to save language settings");
+        toast.error(payload?.error ?? t("platform.profile.errorSaveLanguageSettings"));
         return false;
       }
 
@@ -776,7 +838,7 @@ export function ProfileSettingsPanel({
             : "";
       if (
         apiLanguage &&
-        LANGUAGE_OPTIONS.some((option) => option.value === apiLanguage)
+        APP_LANGUAGE_OPTIONS.some((option) => option.value === apiLanguage)
       ) {
         updateSettings({ language: apiLanguage });
         setLanguageDraft((current) =>
@@ -824,7 +886,7 @@ export function ProfileSettingsPanel({
       return true;
     } catch (error) {
       console.error("Failed to persist language settings:", error);
-      toast.error("Failed to save language settings");
+      toast.error(t("platform.profile.errorSaveLanguageSettings"));
       return false;
     }
   }
@@ -835,7 +897,9 @@ export function ProfileSettingsPanel({
     void (async () => {
       const saved = await persistLanguageSettings(languageDraft);
       if (saved) {
-        toast.success("Success", { description: "Settings Saved" });
+        toast.success(t("platform.profile.toastSuccess"), {
+          description: t("platform.profile.settingsSaved"),
+        });
       }
     })();
   }
@@ -847,6 +911,7 @@ export function ProfileSettingsPanel({
     setNotificationsDraft((current) =>
       current ? { ...current, notifyNewBrief: enabled } : current,
     );
+    beginNotificationSave();
 
     try {
       const response = await fetch("/api/user/notification-settings", {
@@ -859,7 +924,7 @@ export function ProfileSettingsPanel({
         const payload = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        toast.error(payload?.error ?? "Failed to save notification settings");
+        toast.error(payload?.error ?? t("platform.profile.errorSaveNotificationSettings"));
         return false;
       }
 
@@ -875,8 +940,10 @@ export function ProfileSettingsPanel({
       return true;
     } catch (error) {
       console.error("Failed to persist notification settings:", error);
-      toast.error("Failed to save notification settings");
+      toast.error(t("platform.profile.errorSaveNotificationSettings"));
       return false;
+    } finally {
+      endNotificationSave();
     }
   }
 
@@ -887,6 +954,7 @@ export function ProfileSettingsPanel({
     setNotificationsDraft((current) =>
       current ? { ...current, notifyNewEpisode: enabled } : current,
     );
+    beginNotificationSave();
 
     try {
       const response = await fetch("/api/user/notification-settings", {
@@ -899,7 +967,7 @@ export function ProfileSettingsPanel({
         const payload = (await response.json().catch(() => null)) as {
           error?: string;
         } | null;
-        toast.error(payload?.error ?? "Failed to save notification settings");
+        toast.error(payload?.error ?? t("platform.profile.errorSaveNotificationSettings"));
         return false;
       }
 
@@ -915,31 +983,17 @@ export function ProfileSettingsPanel({
       return true;
     } catch (error) {
       console.error("Failed to persist notification settings:", error);
-      toast.error("Failed to save notification settings");
+      toast.error(t("platform.profile.errorSaveNotificationSettings"));
       return false;
+    } finally {
+      endNotificationSave();
     }
   }
 
-  function saveNotificationsDraft() {
-    if (!notificationsDraft) {
-      return;
-    }
-
-    updateSettings({
-      notifyNewBrief: notificationsDraft.notifyNewBrief,
-      notifyLiveStation: notificationsDraft.notifyLiveStation,
-      notifyNewEpisode: notificationsDraft.notifyNewEpisode,
+  function showNotificationSettingSavedToast() {
+    toast.success(t("platform.profile.toastSuccess"), {
+      description: t("platform.profile.settingSuccessfullyChanged"),
     });
-
-    void (async () => {
-      const [briefSaved, episodeSaved] = await Promise.all([
-        persistBriefReadyNotifications(notificationsDraft.notifyNewBrief),
-        persistNewEpisodeNotifications(notificationsDraft.notifyNewEpisode),
-      ]);
-      if (briefSaved && episodeSaved) {
-        toast.success("Success", { description: "Settings Saved" });
-      }
-    })();
   }
 
   function reorderRoutineSlots(next: BriefingRoutineSlot[]) {
@@ -958,9 +1012,7 @@ export function ProfileSettingsPanel({
 
   function addRoutineSlot(slot: Omit<BriefingRoutineSlot, "id">) {
     if (settings.briefingRoutine.length >= MAX_BRIEFING_ROUTINE_ITEMS) {
-      toast.error(
-        `You can add up to ${MAX_BRIEFING_ROUTINE_ITEMS} items to your routine.`,
-      );
+      toast.error(t("platform.profile.routineMax"));
       return;
     }
 
@@ -1070,10 +1122,10 @@ export function ProfileSettingsPanel({
                 void (async () => {
                   const saved = await persistVoiceSettings(nextDraft);
                   if (saved) {
-                    toast.success("Success", {
+                    toast.success(t("platform.profile.toastSuccess"), {
                       description: patch.voiceEngine
-                        ? "Voice engine saved"
-                        : "Conversation style saved",
+                        ? t("platform.profile.voiceEngineSaved")
+                        : t("platform.profile.conversationStyleSaved"),
                     });
                   }
                 })();
@@ -1122,26 +1174,39 @@ export function ProfileSettingsPanel({
         {activeSection === "notifications" && notificationsDraft ? (
           <NotificationsSettingsPanel
             draft={notificationsDraft}
+            saving={notificationSettingsSaving}
             onChange={(patch) => {
               setNotificationsDraft((current) =>
                 current ? { ...current, ...patch } : current,
               );
 
+              if (typeof patch.notifyLiveStation === "boolean") {
+                updateSettings({ notifyLiveStation: patch.notifyLiveStation });
+                showNotificationSettingSavedToast();
+              }
+
               if (
                 typeof patch.notifyNewBrief === "boolean" &&
                 notificationsDraft
               ) {
-                void persistBriefReadyNotifications(patch.notifyNewBrief);
+                void persistBriefReadyNotifications(patch.notifyNewBrief).then(
+                  (ok) => {
+                    if (ok) showNotificationSettingSavedToast();
+                  },
+                );
               }
 
               if (
                 typeof patch.notifyNewEpisode === "boolean" &&
                 notificationsDraft
               ) {
-                void persistNewEpisodeNotifications(patch.notifyNewEpisode);
+                void persistNewEpisodeNotifications(
+                  patch.notifyNewEpisode,
+                ).then((ok) => {
+                  if (ok) showNotificationSettingSavedToast();
+                });
               }
             }}
-            onSave={saveNotificationsDraft}
           />
         ) : null}
 

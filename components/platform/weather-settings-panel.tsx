@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 
+import { useI18n } from "@/components/i18n-provider";
 import {
   Dialog,
   DialogContent,
@@ -77,6 +78,8 @@ function TemperatureUnitToggle({
   value: WeatherTemperatureUnit;
   onChange: (unit: WeatherTemperatureUnit) => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <div className="grid shrink-0 grid-cols-2 gap-1 rounded-[8px] bg-neutral-100 p-0.5 dark:bg-[#1a1a1a]">
       {(["fahrenheit", "celsius"] as const).map((unit) => {
@@ -94,7 +97,9 @@ function TemperatureUnitToggle({
                 : "text-neutral-500 hover:text-neutral-900 dark:text-[#888888] dark:hover:text-white",
             )}
           >
-            {unit === "fahrenheit" ? "Fahrenheit" : "Celsius"}
+            {unit === "fahrenheit"
+              ? t("platform.profile.weatherFahrenheit")
+              : t("platform.profile.weatherCelsius")}
           </button>
         );
       })}
@@ -151,6 +156,7 @@ function DeliveryTimePicker({
   disabled?: boolean;
   onChange: (value: string) => void;
 }) {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const parsed = parseDeliveryTime(value);
   const [pendingHours, setPendingHours] = useState(parsed.hours);
@@ -193,10 +199,12 @@ function DeliveryTimePicker({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="border-neutral-200 bg-white text-neutral-900 sm:max-w-sm dark:border-[#262626] dark:bg-[#141414] dark:text-white">
           <DialogHeader>
-            <DialogTitle className="text-neutral-900 dark:text-white">Delivery Time</DialogTitle>
+            <DialogTitle className="text-neutral-900 dark:text-white">
+              {t("platform.profile.weatherDeliveryTime")}
+            </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-neutral-500 dark:text-[#888888]">
-            Choose when your daily forecast alert should arrive.
+            {t("platform.profile.weatherDeliveryTimeHint")}
           </p>
           <TimeWheelPicker
             hours={pendingHours}
@@ -211,7 +219,7 @@ function DeliveryTimePicker({
             onClick={applySelection}
             className="mt-2 w-full rounded-[10px] bg-neutral-900 px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-black"
           >
-            Done
+            {t("platform.profile.done")}
           </button>
         </DialogContent>
       </Dialog>
@@ -291,6 +299,7 @@ function AddLocationDialog({
   onOpenChange: (open: boolean) => void;
   onAdd: (city: string, options?: { isHome?: boolean }) => void;
 }) {
+  const { t } = useI18n();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CitySearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -332,8 +341,8 @@ function AddLocationDialog({
           if (!cancelled) {
             setError(
               trimmed.length < 2
-                ? "Couldn't load cities. Try searching."
-                : "Couldn't search cities. Try again.",
+                ? t("platform.profile.weatherCitiesLoadError")
+                : t("platform.profile.weatherCitiesSearchError"),
             );
             setResults([]);
           }
@@ -360,10 +369,12 @@ function AddLocationDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="border-neutral-200 bg-white text-neutral-900 sm:max-w-md dark:border-[#262626] dark:bg-[#141414] dark:text-white">
         <DialogHeader>
-          <DialogTitle className="text-neutral-900 dark:text-white">Add Location</DialogTitle>
+          <DialogTitle className="text-neutral-900 dark:text-white">
+            {t("platform.profile.weatherAddLocationTitle")}
+          </DialogTitle>
         </DialogHeader>
         <p className="text-sm text-neutral-500 dark:text-[#888888]">
-          Search for a city to add to your saved locations.
+          {t("platform.profile.weatherAddLocationDesc")}
         </p>
         <div className="relative">
           <MaterialIcon
@@ -373,7 +384,7 @@ function AddLocationDialog({
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search cities..."
+            placeholder={t("platform.profile.weatherSearchCitiesPlaceholder")}
             autoFocus
             className="w-full rounded-[10px] border border-neutral-200 bg-neutral-50 py-3.5 pr-4 pl-10 text-base text-neutral-900 outline-none placeholder:text-neutral-400 focus:border-neutral-400 dark:border-[#2a2a2a] dark:bg-[#1a1a1a] dark:text-white dark:placeholder:text-[#666666] dark:focus:border-white/20"
           />
@@ -386,10 +397,10 @@ function AddLocationDialog({
         >
           <span>
             <span className="block text-[15px] font-medium text-neutral-900 dark:text-white">
-              Set as home city
+              {t("platform.profile.weatherSetHomeCity")}
             </span>
             <span className="mt-0.5 block text-[12px] text-neutral-500 dark:text-[#888888]">
-              Use this city as your primary weather location.
+              {t("platform.profile.weatherSetHomeCityHint")}
             </span>
           </span>
           <span
@@ -412,15 +423,15 @@ function AddLocationDialog({
         <div className="hide-scrollbar max-h-64 overflow-y-auto rounded-[10px] border border-neutral-200 dark:border-[#2a2a2a]">
           {loading ? (
             <p className="px-4 py-6 text-sm text-neutral-500 dark:text-[#888888]">
-              Searching...
+              {t("platform.profile.weatherSearching")}
             </p>
           ) : error ? (
             <p className="px-4 py-6 text-sm text-neutral-500 dark:text-[#888888]">{error}</p>
           ) : results.length === 0 ? (
             <p className="px-4 py-6 text-sm text-neutral-500 dark:text-[#888888]">
               {query.trim().length < 2
-                ? "Popular cities will appear here."
-                : "No cities match your search."}
+                ? t("platform.profile.weatherPopularCitiesEmpty")
+                : t("platform.profile.weatherNoCitiesMatch")}
             </p>
           ) : (
             results.map((result) => (
@@ -454,7 +465,7 @@ function AddLocationDialog({
           onClick={() => onOpenChange(false)}
           className="w-full rounded-[10px] border border-neutral-200 px-4 py-3 text-sm font-medium text-neutral-900 transition-colors hover:bg-neutral-100 dark:border-[#2a2a2a] dark:text-white dark:hover:bg-white/[0.04]"
         >
-          Cancel
+          {t("platform.profile.cancel")}
         </button>
       </DialogContent>
     </Dialog>
@@ -467,6 +478,7 @@ export function WeatherSettingsPanel({
   onSave,
   onAddLocation,
 }: WeatherSettingsPanelProps) {
+  const { t } = useI18n();
   const [addLocationOpen, setAddLocationOpen] = useState(false);
   const [locating, setLocating] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
@@ -514,7 +526,7 @@ export function WeatherSettingsPanel({
     try {
       const coordinates = await requestBrowserLocation();
       if (!coordinates) {
-        setLocationError("Couldn't access your location. Check browser permissions.");
+        setLocationError(t("platform.profile.weatherLocationPermissionError"));
         return;
       }
 
@@ -528,13 +540,15 @@ export function WeatherSettingsPanel({
       } | null;
 
       if (!response.ok || !payload?.label?.trim()) {
-        setLocationError(payload?.error ?? "Couldn't resolve your city.");
+        setLocationError(
+          payload?.error ?? t("platform.profile.weatherResolveCityError"),
+        );
         return;
       }
 
       handleAddLocation(payload.label.trim(), { prepend: true, isHome: true });
     } catch {
-      setLocationError("Couldn't get your current location.");
+      setLocationError(t("platform.profile.weatherCurrentLocationError"));
     } finally {
       setLocating(false);
     }
@@ -543,17 +557,16 @@ export function WeatherSettingsPanel({
   return (
     <div className="flex flex-col gap-5">
       <p className="text-sm leading-6 text-neutral-500 dark:text-[#888888]">
-        Choose a city to see local weather on your home screen. You can save up to{" "}
-        {MAX_WEATHER_SAVED_LOCATIONS} cities.
+        {t("platform.profile.weatherIntro", { max: MAX_WEATHER_SAVED_LOCATIONS })}
       </p>
 
       <div className="grid gap-5 md:grid-cols-2">
         <div className="rounded-[14px] bg-neutral-50 p-4 dark:bg-[#141414]">
-          <WeatherSectionLabel title="City" />
+          <WeatherSectionLabel title={t("platform.profile.weatherCity")} />
           <input
             value={cityValue}
             readOnly
-            placeholder="e.g. Pittsburgh, PA"
+            placeholder={t("platform.profile.weatherCityPlaceholder")}
             className="w-full rounded-[10px] border border-neutral-200 bg-white px-4 py-3.5 text-base text-neutral-900 outline-none placeholder:text-neutral-400 dark:border-[#2a2a2a] dark:bg-[#1a1a1a] dark:text-white dark:placeholder:text-[#666666]"
           />
           <button
@@ -563,11 +576,13 @@ export function WeatherSettingsPanel({
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-[10px] border border-neutral-200 bg-transparent px-4 py-3.5 text-[15px] font-medium text-neutral-900 transition-colors hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent dark:border-[#2a2a2a] dark:text-white dark:hover:bg-white/[0.04] dark:disabled:hover:bg-transparent"
           >
             <MaterialIcon name="my_location" className="text-[18px]" />
-            {locating ? "Locating..." : "Use Current Location"}
+            {locating
+              ? t("platform.profile.weatherLocating")
+              : t("platform.profile.weatherUseCurrentLocation")}
           </button>
           {atLocationLimit ? (
             <p className="mt-2 text-[12px] text-neutral-500 dark:text-[#888888]">
-              Remove a city to use your current location.
+              {t("platform.profile.weatherRemoveCityHint")}
             </p>
           ) : null}
           {locationError ? (
@@ -577,11 +592,13 @@ export function WeatherSettingsPanel({
 
         <div className="rounded-[14px] bg-neutral-50 p-4 dark:bg-[#141414]">
           <WeatherSectionLabel
-            title="Saved Locations"
+            title={t("platform.profile.weatherSavedLocations")}
             action={
               atLocationLimit ? (
                 <span className="text-[13px] text-neutral-400 dark:text-[#666666]">
-                  Max {MAX_WEATHER_SAVED_LOCATIONS}
+                  {t("platform.profile.weatherMaxBadge", {
+                    max: MAX_WEATHER_SAVED_LOCATIONS,
+                  })}
                 </span>
               ) : (
                 <button
@@ -589,7 +606,7 @@ export function WeatherSettingsPanel({
                   onClick={() => setAddLocationOpen(true)}
                   className="text-[13px] font-medium text-neutral-900 transition-opacity hover:opacity-80 dark:text-white"
                 >
-                  + Add Location
+                  {t("platform.profile.weatherAddLocationButton")}
                 </button>
               )
             }
@@ -601,7 +618,9 @@ export function WeatherSettingsPanel({
           />
           {atLocationLimit && draft.weatherSavedLocations.length > 0 ? (
             <p className="mb-2 text-[12px] text-neutral-500 dark:text-[#888888]">
-              You can save up to {MAX_WEATHER_SAVED_LOCATIONS} locations.
+              {t("platform.profile.weatherMaxLocations", {
+                max: MAX_WEATHER_SAVED_LOCATIONS,
+              })}
             </p>
           ) : null}
           <div className="space-y-2">
@@ -615,8 +634,12 @@ export function WeatherSettingsPanel({
                   onClick={() => handleSetHomeLocation(location.id)}
                   aria-label={
                     location.isHome
-                      ? `${location.city} (home city)`
-                      : `Set ${location.city} as home city`
+                      ? t("platform.profile.weatherHomeCityLabel", {
+                          city: location.city,
+                        })
+                      : t("platform.profile.weatherSetHomeAria", {
+                          city: location.city,
+                        })
                   }
                   className="flex min-w-0 flex-1 items-center gap-3 rounded-[10px] px-3 py-3 text-left transition-colors hover:bg-neutral-100 dark:hover:bg-white/[0.04]"
                 >
@@ -626,12 +649,16 @@ export function WeatherSettingsPanel({
                   />
                   <p className="flex-1 truncate text-[15px] text-neutral-900 dark:text-white">
                     {location.city}
-                    {location.isHome ? " (Home)" : ""}
+                    {location.isHome
+                      ? ` ${t("platform.profile.weatherHomeSuffix")}`
+                      : ""}
                   </p>
                 </button>
                 <button
                   type="button"
-                  aria-label={`Remove ${location.city}`}
+                  aria-label={t("platform.profile.weatherRemoveLocationAria", {
+                    city: location.city,
+                  })}
                   onClick={() =>
                     onChange({
                       weatherSavedLocations: draft.weatherSavedLocations.filter(
@@ -652,7 +679,7 @@ export function WeatherSettingsPanel({
       <div className="space-y-5 rounded-[14px] bg-neutral-50 p-4 dark:bg-[#141414]">
         <div className="flex items-center justify-between gap-4 border-b border-neutral-200 pb-4 dark:border-[#262626]">
           <p className="text-[15px] font-medium text-neutral-900 dark:text-white">
-            Temperature Unit
+            {t("platform.profile.weatherTemperatureUnit")}
           </p>
           <TemperatureUnitToggle
             value={draft.weatherTemperatureUnit}
@@ -662,23 +689,23 @@ export function WeatherSettingsPanel({
         <WeatherToggle
           checked={draft.weatherDailyForecastAlerts}
           onChange={(weatherDailyForecastAlerts) => onChange({ weatherDailyForecastAlerts })}
-          label="Daily Forecast Alerts"
-          description="Morning weather summary."
+          label={t("platform.profile.weatherDailyForecastAlerts")}
+          description={t("platform.profile.weatherDailyForecastDesc")}
         />
         <WeatherToggle
           checked={draft.weatherSevereWeatherAlerts}
           onChange={(weatherSevereWeatherAlerts) => onChange({ weatherSevereWeatherAlerts })}
-          label="Severe Weather Alerts"
-          description="Real-time emergency warnings."
+          label={t("platform.profile.weatherSevereAlerts")}
+          description={t("platform.profile.weatherSevereAlertsDesc")}
         />
         <div className="flex items-center justify-between gap-4 border-t border-neutral-200 pt-4 dark:border-[#262626]">
           <div>
             <p className="text-[15px] font-medium text-neutral-900 dark:text-white">
-              Delivery Time
+              {t("platform.profile.weatherDeliveryTime")}
             </p>
             {!draft.weatherDailyForecastAlerts ? (
               <p className="mt-1 text-[13px] text-neutral-500 dark:text-[#888888]">
-                Enable daily forecast alerts to set a delivery time.
+                {t("platform.profile.weatherDeliveryTimeDisabledHint")}
               </p>
             ) : null}
           </div>
@@ -695,7 +722,7 @@ export function WeatherSettingsPanel({
         onClick={onSave}
         className="w-full rounded-[14px] bg-neutral-900 px-4 py-3.5 text-[15px] font-semibold text-white transition-opacity hover:opacity-90 dark:bg-white dark:text-black"
       >
-        Save
+        {t("platform.profile.save")}
       </button>
     </div>
   );
